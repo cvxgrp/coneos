@@ -1,0 +1,13 @@
+fix timing methods
+add optimal warm_start
+change comments to /*
+check/remove NORMALIZE
+change gsl to lapack?
+add SD-cone support:
+	change data struct
+	change mex file
+	change read in data file
+	symmetrize final dual variable (not necessary?)
+add better commenting
+better error/input checking matlab (and elsewhere)
+organize code 

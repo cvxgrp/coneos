@@ -1,0 +1,81 @@
+#ifndef coneOS_H_GUARD                                                              
+#define coneOS_H_GUARD
+
+// redefine printfs and memory allocators as needed
+#ifdef MATLAB_MEX_FILE
+  #include "mex.h"
+  #define coneOS_printf   mexPrintf
+  #define coneOS_free     mxFree
+  #define coneOS_malloc   mxMalloc
+  #define coneOS_calloc   mxCalloc
+#elif defined PYTHON
+  #include <Python.h>
+  #include <stdlib.h>
+  #define coneOS_printf   PySys_WriteStdout
+  #define coneOS_free     free
+  #define coneOS_malloc   malloc
+  #define coneOS_calloc   calloc
+#else
+  #include <stdio.h>
+  #include <stdlib.h>
+  #define coneOS_printf   printf
+  #define coneOS_free     free
+  #define coneOS_malloc   malloc
+  #define coneOS_calloc   calloc
+#endif
+
+
+/* struct that containing standard problem data */
+typedef struct PROBLEM_DATA {
+  int n, m; /* problem dimensions */
+  /* problem data, A, b, c: */
+  double * Ax;
+  int * Ai, * Ap;
+  double * b, * c;
+  int MAX_ITERS, CG_MAX_ITS;
+  double EPS_ABS, EPS_REL, ALPH, CG_TOL, UNDET_TOL;
+  int VERBOSE, NORMALIZE;  // boolean
+} Data;
+
+typedef struct SOL_VARS {
+  double * x, * y;
+  char status[16];
+} Sol;
+
+typedef struct PRIVATE_DATA Priv;
+
+typedef struct WORK {
+  double *u, *v, *u_t, *u_prev;
+  double *h, *g;  
+  double gTh, dual_scale, primal_scale;  // A = dual_scale*A*primal_scale
+  Priv * p;
+  int l;
+} Work;
+
+#include <string.h>    
+#include <sys/time.h>
+#include <math.h>
+#include "cones.h"
+#include "util.h"
+#include "linAlg.h"
+
+// these are actually library "api"'s
+Sol * coneOS(Data * d, Cone * k);
+//void updateDualVars(Work * w);
+//void projectCones(Data * d,Work * w,Cone * k);
+//void projectLinSys(Data * d, Work * w);
+//void sety(Data * d, Work * w, Sol * sol);
+//void setx(Data * d, Work * w, Sol * sol);
+//void printSummary(Data * d,Work * w,int i, double err, double EPS_PRI);
+//void printSol(Data * d, Sol * sol);
+//void freeWork(Work * w);
+//void freePriv(Work * w);
+
+// these are pulled in from private.o
+void privateInitWork(Data * d, Work * w);
+// solves [I A';A -I] x = b, stores result in b
+void solveLinSys(Data * d, Work * w, double * b, const double * s);
+void freePriv(Work * w);
+
+
+#endif
