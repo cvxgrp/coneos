@@ -18,9 +18,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     mxFree(d); mxFree(k);
     mexErrMsgTxt("Data struct must contain a `A` entry.");
   }
-  if (!mxIsSparse(A_mex)){
+  if (mxIsSparse(A_mex)){
     mxFree(d); mxFree(k);
-    mexErrMsgTxt("Input matrix A must be in sparse format (pass in sparse(A))");
+    mexErrMsgTxt("Input matrix A must be in dense format (pass in full(A))");
   }
   const mxArray *b_mex = (mxArray *) mxGetField(data,0,"b");
   if(b_mex == NULL) {
@@ -40,7 +40,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   d->b = mxGetPr(b_mex);
   d->c = mxGetPr(c_mex);
-  
+  d->A = mxGetPr(A_mex);
+
   const mxArray *ALPH_mex = mxGetField(params,0,"ALPHA");
   if (ALPH_mex == NULL) d->ALPH = 1.8;
   else d->ALPH = (double)*mxGetPr(ALPH_mex);
@@ -77,6 +78,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   if (NORMALIZE_mex == NULL) d->NORMALIZE = 0;
   else d->NORMALIZE = (int)*mxGetPr(NORMALIZE_mex);
 
+
   k->f = (int)*mxGetPr(mxGetField(cone,0,"f"));
   k->l = (int)*mxGetPr(mxGetField(cone,0,"l"));
   
@@ -87,19 +89,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   for ( i=0; i < k->qsize; i++ ){
     k->q[i] = (int)q_mex[i]; 
   }
-  
-  int Anz = mxGetNzmax(A_mex);
-  d->Ax = (double *)mxGetPr(A_mex);
-  d->Ap = (int *)mxMalloc(sizeof(int)*Anz);
-  d->Ai = (int *)mxMalloc(sizeof(int)*Anz);
-  long * A_i = (long*)mxGetIr(A_mex);
-  /* XXX fix this crap: */
-  for (i = 0; i < Anz; i++){
-    d->Ai[i] = (int)A_i[i];
-  }
-  long * A_p = (long*)mxGetJc(A_mex);
-  for (i = 0; i < (d->n)+1; i++) {          
-    d->Ap[i] = (int)A_p[i];
+ 
+  double * s_mex = mxGetPr(mxGetField(cone,0,"s"));
+  k->ssize = *(mxGetDimensions(mxGetField(cone,0,"s")));
+  k->s = mxMalloc(sizeof(int)*k->ssize);
+  for ( i=0; i < k->ssize; i++ ){
+    k->s[i] = (int)s_mex[i]; 
   }
 
   /* printConeData(d,k); */

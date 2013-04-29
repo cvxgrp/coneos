@@ -2,9 +2,8 @@
 #define PRIV_H_GUARD
 
 #include "coneOS.h"
-
+#include "linAlg.h"
 #include <lapacke.h>
-#include <cblas.h>
 
 struct PRIVATE_DATA{
 	double * L;

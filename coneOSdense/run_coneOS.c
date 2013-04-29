@@ -5,6 +5,8 @@
 #define DEMO_PATH "../data_coneOS"
 #endif 
 
+#define NUM_TRIALS 1 
+
 int main(int argc, char **argv)
 {
 	tic();
@@ -14,8 +16,10 @@ int main(int argc, char **argv)
 	Data * d = malloc(sizeof(Data));
 	read_in_data(fp,d,k);
 	fclose(fp);
-
-	Sol * sol = coneOS(d,k);
+  int i;
+  Sol * sol;
+  for (i=0;i<NUM_TRIALS;i++)
+  	sol = coneOS(d,k);
 	printf("Total factorize + solve time %4f seconds\n",tocq());
 	freeData(d,k);
 	freeSol(sol);

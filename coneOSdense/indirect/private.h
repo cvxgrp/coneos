@@ -2,7 +2,7 @@
 #define PRIV_H_GUARD
 
 #include "coneOS.h"
-#include <cblas.h>
+#include "cblas.h"
 
 struct PRIVATE_DATA{
 	double * x;

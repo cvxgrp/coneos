@@ -35,7 +35,7 @@ static inline void calcResiduals(Data *d, Work * w,  struct residuals * r);
 
 Sol * coneOS(Data * d, Cone * k)
 {
-	if(d == NULL || k == NULL) {
+  if(d == NULL || k == NULL) {
 		return NULL;
 	}
 	int i;

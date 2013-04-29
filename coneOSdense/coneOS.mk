@@ -1,19 +1,17 @@
 UNAME = $(shell uname -s)
 CC = gcc
-CFLAGS = -g -Wall -pedantic -O3 -I. 
+CFLAGS = -g -Wall -pedantic -O3 -I. -Iexternal/ 
 LDFLAGS = -lm 
-OPENFLAG = -fopenmp
+OPENFLAG = #-fopenmp
 
 # LINK YOUR INSTALLED BLAS LIBRARY BELOW:
 LAFLAGS = -I/opt/local/include -I/usr/local/include
-LALIBS = -L/opt/local/lib -L/usr/local/lib -llapacke
+LALIBS = -L/opt/local/lib -L/usr/local/lib 
 
-# GSLBLAS
-#LALIBS += -lgslcblas 
+#LALIBS += -llapack -lcblas -lgfortran
 
-# OPENBLAS
-LALIBS += -lopenblas 
-#
+LALIBS += -lopenblas
+
 # ATLAS, multi-thread (if atlas compiled with multi-thread support):
 #LALIBS += -L/usr/local/atlas/lib -lpthread -lptcblas -lptf77blas -llapack -latlas
 

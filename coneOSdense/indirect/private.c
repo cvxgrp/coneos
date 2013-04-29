@@ -20,8 +20,8 @@ void privateInitWork(Data * d, Work * w){
   */
 	// form Gram matrix A'A
 	w->p->G = coneOS_malloc(d->n*d->n*sizeof(double));
-	cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans,d->n, d->n, \
-			d->m, 1, A, d->m, A,d->m, 0, w->p->G,d->n);
+	cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans,d->n, d->n, d->m, 1, A, d->m, A,d->m, 0, w->p->G,d->n);
+  //b_dgemm('T', 'N' ,d->n, d->n, d->m, 1, A, d->m, A,d->m, 0, w->p->G,d->n);
   for (j = 0; j < d->n; j++) 
 	{ 
 		w->p->G[j*d->n + j] += 1;
@@ -46,9 +46,11 @@ void solveLinSys(Data *d, Work * w, double * b, const double * s){
 	double * A = d->A;
 	double * x = w->p->x;
 	cblas_dgemv(CblasColMajor, CblasTrans, d->m, d->n, 1, A, d->m, &(b[d->n]),1, 1, r, 1);	
-	cgCustom(d, w, s, d->CG_MAX_ITS, d->CG_TOL);
+	//b_dgemv('T', d->m, d->n, 1, A, d->m, &(b[d->n]),1, 1, r, 1);	
+  cgCustom(d, w, s, d->CG_MAX_ITS, d->CG_TOL);
 	cblas_dgemv(CblasColMajor, CblasNoTrans, d->m, d->n, 1, A, d->m, x,1, -1, &(b[d->n]), 1);
-	memcpy(b, x, d->n*sizeof(double));
+	//b_dgemv('N', d->m, d->n, 1, A, d->m, x,1, -1, &(b[d->n]), 1);
+  memcpy(b, x, d->n*sizeof(double));
 }
 
 
@@ -70,24 +72,33 @@ static void cgCustom(Data *d, Work *w, const double * s, int max_its, double tol
 	else{
 		memcpy(x,s,n*sizeof(double));
 		cblas_dsymv(CblasColMajor, CblasUpper,n, -1, G, n, x,1, 1, r, 1);
-	}
+	  //b_dsymv('U', n, -1, G, n, x,1, 1, r, 1);
+  }
 	memcpy(p, r, n*sizeof(double));
-	double rsold=cblas_dnrm2(n,r,1);
-	for (i=0; i< max_its; i++){
+	//double rsold=cblas_dnrm2(n,r,1);
+	double rsold=calcNorm(r,n);
+  for (i=0; i< max_its; i++){
 		cblas_dsymv(CblasColMajor, CblasUpper,n, 1, G, n, p, 1, 0, Ap, 1);
-		
-		beta = cblas_ddot(n, p, 1, Ap, 1);
-		alpha=(rsold*rsold)/beta;
+		//b_dsymv('U', n, 1, G, n, p, 1, 0, Ap, 1);
+	
+		//beta = cblas_ddot(n, p, 1, Ap, 1);
+		beta = innerProd(p,Ap,n);
+    alpha=(rsold*rsold)/beta;
 
-		cblas_daxpy(n,alpha,p,1,x,1);
-		cblas_daxpy(n,-alpha,Ap,1,r,1);
+    addScaledArray(x,p,n,alpha);
+		//cblas_daxpy(n,alpha,p,1,x,1);
+    addScaledArray(r,Ap,n,-alpha);
+		//cblas_daxpy(n,-alpha,Ap,1,r,1);
 
-		rsnew=cblas_dnrm2(n,r,1);
-		if (rsnew<tol){
+		//rsnew=cblas_dnrm2(n,r,1);
+		rsnew=calcNorm(r,n);
+    if (rsnew<tol){
 			break;
-		}   
-		cblas_dscal(n,(rsnew*rsnew)/(rsold*rsold),p,1);
-		cblas_daxpy(n,1,r,1,p,1);
+		}
+    scaleArray(p,(rsnew*rsnew)/(rsold*rsold),n);
+		//cblas_dscal(n,(rsnew*rsnew)/(rsold*rsold),p,1);
+    addScaledArray(p,r,n,1);
+    //cblas_daxpy(n,1,r,1,p,1);
 		rsold=rsnew;
 	} 
 	//printf("terminating cg residual = %4f, took %i itns\n",rsnew,i);
