@@ -37,7 +37,7 @@ void projCone(double *x, Cone * k, Work * w)
 	/* project onto PSD cone */
 	for (i=0; i < k->ssize; ++i){
 		projectsdc(&(x[count]),k->s[i],w);
-		count += k->s[i]^2;
+		count += (k->s[i])*(k->s[i]);
 	}
 	/* project onto OTHER cones */
 }
@@ -57,21 +57,23 @@ void projectsdc(double *X, int n, Work * w)
     //b_daxpy(n, 1, &(X[i]), n, &(Xs[i*n]), 1);
   }
   
-  // MOVE THIS:
   double EIG_TOL = 1e-4;
   double vlower = -calcNorm(Xs,n*n);
   //double vlower = -cblas_dnrm2(n*n, Xs, 1);
-  //:printf("vlower is %4f calcNorm is %4f\n", vlower, -calcNorm(Xs,n*n));
+  // ******************************
+  // XXX: this is only to target the dual (i.e. the sedumi cvx interface)
+  memcpy(X,Xs,n*n*sizeof(double));
+  scaleArray(X,0.5,n*n);
+  // ******************************
   LAPACKE_dsyevr( LAPACK_COL_MAJOR, 'V', 'V', 'U', n, Xs, n, vlower, 0.0, -1, -1, EIG_TOL, &m, e, Z, n , NULL);
 
-  /* find negative eigen-decomposition */
   memset(Xs, 0, n*n*sizeof(double));
   for (i = 0; i < m; ++i) {
     //cblas_dger(CblasColMajor,n,n, -e[i]/2, &(Z[i*n]), 1, &(Z[i*n]), 1, Xs, n);
     cblas_dsyr(CblasColMajor, CblasLower, n, -e[i]/2, &(Z[i*n]), 1, Xs, n);
     //b_dsyr('L', n, -e[i]/2, &(Z[i*n]), 1, Xs, n);
   }
-  /* fill in upper half */
+  // fill in upper half 
   for (i = 0; i < n; ++i){   
     for (j = i+1; j < n; ++j){   
       Xs[i + j*n] = Xs[j + i*n];    

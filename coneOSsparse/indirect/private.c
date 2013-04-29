@@ -1,11 +1,12 @@
 #include "private.h"
+#include "omp.h"
 
 static inline void calcAx(Data * d, Work * w, const double * x, double * y);
 static void cgCustom(Data *d, Work *w, const double *s, double * b, int max_its, double tol);
 static inline void accumByA(Data * d, Work * w, const double *x, double *y);
 static inline void accumByAtrans(Data *d, Work * w, const double *x, double *y);
 static inline void _accumAtrans(int n, double * Ax, int * Ai, int * Ap, const double *x, double *y);
-static inline void cs_transpose (Data * d, Work * w);
+static inline void transpose (Data * d, Work * w);
 
 
 void privateInitWork(Data * d, Work * w){
@@ -18,10 +19,10 @@ void privateInitWork(Data * d, Work * w){
   w->p->Ati = coneOS_malloc((d->Ap[d->n])*sizeof(int));
   w->p->Atp = coneOS_malloc((d->m+1)*sizeof(int));
   w->p->Atx = coneOS_malloc((d->Ap[d->n])*sizeof(double));
-  cs_transpose(d,w);
+  transpose(d,w);
 }
 
-static inline void cs_transpose (Data * d, Work * w)
+static inline void transpose (Data * d, Work * w)
 {
   int * Ci = w->p->Ati;
   int * Cp = w->p->Atp;
@@ -111,9 +112,9 @@ static void cgCustom(Data *d, Work *w, const double * s, double * b, int max_its
 
 static inline void calcAx(Data * d, Work * w, const double * x, double * y){
 	double * tmp = w->p->tmp;
-	memset(tmp,0.0,d->m*sizeof(double));
+	memset(tmp,0,d->m*sizeof(double));
 	accumByA(d,w,x,tmp);
-	memset(y,0.0,d->n*sizeof(double));
+	memset(y,0,d->n*sizeof(double));
 	accumByAtrans(d,w,tmp,y);
 	addScaledArray(y,x,d->n,1);
 }

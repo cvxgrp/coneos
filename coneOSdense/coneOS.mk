@@ -8,8 +8,10 @@ OPENFLAG = #-fopenmp
 LAFLAGS = -I/opt/local/include -I/usr/local/include
 LALIBS = -L/opt/local/lib -L/usr/local/lib 
 
+# standard blas libs
 #LALIBS += -llapack -lcblas -lgfortran
 
+# openblas
 LALIBS += -lopenblas
 
 # ATLAS, multi-thread (if atlas compiled with multi-thread support):

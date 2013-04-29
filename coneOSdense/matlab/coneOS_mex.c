@@ -97,8 +97,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     k->s[i] = (int)s_mex[i]; 
   }
 
-  /* printConeData(d,k); */
-  /* printData(d); */
+  printConeData(k); 
+  printData(d); 
+  
   Sol *sol = coneOS(d,k);
 
   plhs[0] = mxCreateDoubleMatrix(0, 0, mxREAL);
