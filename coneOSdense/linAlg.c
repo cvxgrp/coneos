@@ -11,7 +11,6 @@ extern double innerProd(const double * x, const double * y, int len);
 
 extern double calcNormDiff(double *a, double *b, int l); 
 
-
 // ||v||_2^2
 extern double calcNormSq(const double * v,int len);
 

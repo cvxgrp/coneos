@@ -61,7 +61,7 @@ void projectsdc(double *X, int n, Work * w)
   double vlower = -calcNorm(Xs,n*n);
   //double vlower = -cblas_dnrm2(n*n, Xs, 1);
   // ******************************
-  // XXX: this is only to target the dual (i.e. the sedumi cvx interface)
+  // comment these two lines out for alternate dual SDP projection:
   memcpy(X,Xs,n*n*sizeof(double));
   scaleArray(X,0.5,n*n);
   // ******************************

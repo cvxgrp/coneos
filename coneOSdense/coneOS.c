@@ -1,3 +1,4 @@
+/* coneos 1.0 */
 #include "coneOS.h"
 
 // constants and data structures
@@ -23,52 +24,71 @@ static inline void updateDualVars(Data * d, Work * w);
 static inline void projectCones(Data * d,Work * w,Cone * k);
 static inline void sety(Data * d, Work * w, Sol * sol);
 static inline void setx(Data * d, Work * w, Sol * sol);
-static inline void getSolution(Data * d, Work * w, Sol * sol);
+static inline int getSolution(Data * d, Work * w, Sol * sol, Info * info);
+static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct residuals * r);
 static inline void printSummary(Data * d,Work * w,int i, struct residuals *r);
 static inline void printHeader();
-static inline void printSol(Data * d, Sol * sol);
+static inline void printSol(Data * d, Sol * sol, Info * info);
 static inline void freeWork(Work * w);
 static inline void projectLinSys(Data * d,Work * w);
 static inline Work * initWork(Data * d, Cone * k);
 static inline void unNormalize(Data *d, Work * w);
 static inline void calcResiduals(Data *d, Work * w,  struct residuals * r); 
 
-Sol * coneOS(Data * d, Cone * k)
+
+/* coneOS returns the following integers:
+	-2 failure
+	-1 undetermined
+	0 feasible, solved
+	1 infeasible
+	2 unbounded
+*/
+
+int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
 {
   if(d == NULL || k == NULL) {
-    return NULL;
+    return -2;
   }
+  tic();
   int i;
   struct residuals r = { -1, -1, -1, -1};
-  Work * w = initWork(d,k);
   if(d->VERBOSE) {
     printHeader();
-    tic();
   }
+  Work * w = initWork(d,k);
   /* coneOS: */
   for (i=0; i < d->MAX_ITERS; ++i){
     memcpy(w->u_prev, w->u, w->l*sizeof(double));
-    projectLinSys(d,w);
+   
+   	projectLinSys(d,w);
     projectCones(d,w,k);
     updateDualVars(d,w);
 
     calcResiduals(d,w,&r);
     if (r.resPri < r.epsPri && r.resDual < r.epsDual) break; 
-    if (d->VERBOSE && i % 10 == 0) printSummary(d,w,i, &r);
+    if (d->VERBOSE && i % 100 == 0) printSummary(d,w,i, &r);
   }
-
-  Sol * sol = coneOS_malloc(sizeof(Sol));
-  getSolution(d,w,sol);
+  int status = getSolution(d,w,sol,info);
+  info->iter = i;
+  getInfo(d,w,sol,info,&r);
   if(d->VERBOSE) {
     printSummary(d,w,i,&r);
-    coneOS_printf("Total solve time is %4.8fs\n", tocq());
-    //printSol(d,sol);
+    coneOS_printf("Total solve time is %4.8f ms\n", info->time);
+    //printSol(d,sol,info);
   }
   unNormalize(d,w);
   freeWork(w);
-  return sol;
+  return status;
 }
 
+static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct residuals * r){
+	info->time = tocq();
+	info->presid = r->resPri;
+	info->dresid = r->resDual;
+	info->pobj = innerProd(d->c,sol->x,d->n);
+	info->dobj = -innerProd(d->b,sol->y,d->m);
+	info->gap = info->pobj-info->dobj;
+}
 
 static inline void unNormalize(Data *d, Work * w){
   if(d->NORMALIZE) {
@@ -193,9 +213,9 @@ static inline void freeWork(Work * w){
   coneOS_free(w);
 }
 
-static inline void printSol(Data * d, Sol * sol){
+static inline void printSol(Data * d, Sol * sol, Info * info){
   int i;
-  coneOS_printf("%s\n",sol->status); 
+  coneOS_printf("%s\n",info->status); 
   if (sol->x != NULL){
     for ( i=0;i<d->n; ++i){
       coneOS_printf("x[%i] = %4f\n",i, sol->x[i]);
@@ -225,34 +245,38 @@ void projectCones(Data *d,Work * w,Cone * k){
   if (w->u[w->l-1]<0.0) w->u[w->l-1] = 0.0;
 }
 
-static inline void getSolution(Data * d,Work * w,Sol * sol){
+static inline int getSolution(Data * d,Work * w,Sol * sol, Info * info){
   double tau = (w->u[w->l-1]+w->u_t[w->l-1])/2;
   double kap = w->v[w->l-1];
   setx(d,w,sol);
   sety(d,w,sol);
   if (tau > d->UNDET_TOL && tau > kap){
-    memcpy(sol->status,"Solved", 7);
+    memcpy(info->status,"Solved", 7);
     scaleArray(sol->x,1.0/tau,d->n);
     scaleArray(sol->y,1.0/tau,d->m);
+	return 0;
   }   
   else{ 
     if (calcNorm(w->u,w->l)<d->UNDET_TOL*sqrt(w->l)){
-      memcpy(sol->status, "Indeterminate", 15);
+      memcpy(info->status, "Indeterminate", 15);
       scaleArray(sol->x,NAN,d->n);
       scaleArray(sol->y,NAN,d->m);
+	  return -1;
     }   
     else {
       double ip_y = innerProd(d->b,sol->y,d->m);  
       double ip_x = innerProd(d->c,sol->x,d->n);  
       if (ip_y < ip_x){
-        memcpy(sol->status,"Infeasible", 12);
+        memcpy(info->status,"Infeasible", 12);
         scaleArray(sol->y,-1/ip_y,d->m);
         scaleArray(sol->x,NAN,d->n);
+		return 1;
       }   
       else{
-        memcpy(sol->status,"Unbounded", 11);
+        memcpy(info->status,"Unbounded", 11);
         scaleArray(sol->x,-1/ip_x,d->n);
         scaleArray(sol->y,NAN,d->m);
+		return 2;
       }   
     }   
   }   
@@ -289,11 +313,22 @@ static inline void printHeader() {
   int i, line_len;
   line_len = 0;
   for(i = 0; i < HEADER_LEN - 1; ++i) {
-    coneOS_printf("%s | ", HEADER[i]);
     line_len += strlen(HEADER[i]) + 3;
   }
-  coneOS_printf("%s\n", HEADER[HEADER_LEN-1]);
   line_len += strlen(HEADER[HEADER_LEN-1]);
+  
+  for(i = 0; i < line_len; ++i) {
+    coneOS_printf("-");
+  }
+  coneOS_printf("\nconeOS 1.0 (dense version)\n");
+  for(i = 0; i < line_len; ++i) {
+    coneOS_printf("-");
+  }
+  coneOS_printf("\n");
+  for(i = 0; i < HEADER_LEN - 1; ++i) {
+    coneOS_printf("%s | ", HEADER[i]);
+  }
+  coneOS_printf("%s\n", HEADER[HEADER_LEN-1]);
   for(i = 0; i < line_len; ++i) {
     coneOS_printf("=");
   }

@@ -9,18 +9,19 @@
 
 int main(int argc, char **argv)
 {
-	tic();
 	FILE * fp;
 	if(open_file(argc, argv, 1, DEMO_PATH, &fp)==-1) return -1;
 	Cone * k = malloc(sizeof(Cone));
 	Data * d = malloc(sizeof(Data));
 	read_in_data(fp,d,k);
 	fclose(fp);
-  int i;
-  Sol * sol;
-  for (i=0;i<NUM_TRIALS;i++)
-  	sol = coneOS(d,k);
-	printf("Total factorize + solve time %4f seconds\n",tocq());
+	int i, status;
+	Sol * sol = malloc(sizeof(Sol));
+	Info * info = malloc(sizeof(Info));
+	for (i=0;i<NUM_TRIALS;i++)
+	{
+		status = coneOS(d,k,sol,info);
+	}
 	freeData(d,k);
 	freeSol(sol);
 	return 0;
@@ -65,9 +66,9 @@ void read_in_data(FILE * fp,Data * d, Cone * k){
 	fscanf(fp, "%lf", &(d->CG_TOL));
 	fscanf(fp, "%i", &(d->VERBOSE));
 	fscanf(fp, "%i", &(d->NORMALIZE));
-	
-  int nm = d->n*d->m;
- 	d->A = malloc(sizeof(double)*nm);
+
+	int nm = d->n*d->m;
+	d->A = malloc(sizeof(double)*nm);
 	for(int i = 0; i < nm; i++)
 	{
 		fscanf(fp, "%lf", &d->A[i]);
@@ -123,7 +124,7 @@ void freeData(Data * d, Cone * k){
 	}
 	if(k) {
 		if(k->q) coneOS_free(k->q);
-    if(k->s) coneOS_free(k->s);
+		if(k->s) coneOS_free(k->s);
 		coneOS_free(k);
 	}
 	d = NULL; k = NULL;

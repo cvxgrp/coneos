@@ -61,7 +61,7 @@ Sol * coneOS(Data * d, Cone * k)
 	getSolution(d,w,sol);
 	if(d->VERBOSE) {
 		printSummary(d,w,i,&r);
-		coneOS_printf("Total solve time is %4.8fs\n", tocq());
+		//coneOS_printf("Total solve time is %4.8fs\n", tocq());
 		//printSol(d,sol);
 	}
 	unNormalize(d,w);

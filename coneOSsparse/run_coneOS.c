@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 	fclose(fp);
 
 	Sol * sol = coneOS(d,k);
-	printf("Total factorize + solve time %4f seconds\n",tocq());
+	printf("Total factorize + solve time %4f milli-seconds\n",tocq());
 	freeData(d,k);
 	freeSol(sol);
 	return 0;

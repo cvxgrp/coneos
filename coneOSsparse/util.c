@@ -1,22 +1,23 @@
 #include "util.h"
+#include <sys/time.h>
 
-static clock_t tic_timestart;
+static struct timeval tic_timestart;
 
 void tic(void) {
-	tic_timestart = clock();
+	gettimeofday(&tic_timestart, NULL);
 }
 
-float toc(void) {
-	clock_t tic_timestop;
-	tic_timestop = clock();
-	coneOS_printf("time: %8.4f seconds.\n", (float)(tic_timestop - tic_timestart) / CLOCKS_PER_SEC);
-	return (float)(tic_timestop - tic_timestart) / CLOCKS_PER_SEC;
+double tocq(void) {
+	struct timeval tic_timestop;
+	gettimeofday(&tic_timestop, NULL);
+	//coneOS_printf("time: %8.4f seconds.\n", (float)(tic_timestop - tic_timestart));
+	double time = tic_timestop.tv_sec*1e3 + tic_timestop.tv_usec/1e3 - tic_timestart.tv_sec*1e3 - tic_timestart.tv_usec/1e3;
+	return time;
 }
 
-float tocq(void) {
-	clock_t tic_timestop;
-	tic_timestop = clock();
-	return (float)(tic_timestop - tic_timestart) / CLOCKS_PER_SEC;
+double toc(void) {
+	double time = tocq();
+	coneOS_printf("time: %8.4f milli-seconds.\n", time);
 }
 
 void printConeData(Cone * k){
@@ -42,17 +43,16 @@ void printData(Data * d){
 	coneOS_printf("d->m is %i\n",d->m);
 	coneOS_printf("d->b[0] is %4f\n",d->b[0]);
 	coneOS_printf("d->c[0] is %4f\n",d->c[0]);
+	coneOS_printf("d->A[0,0] is %4f\n",d->A[0]);
 	coneOS_printf("d->MAX_ITERS is %i\n",d->MAX_ITERS);
 	coneOS_printf("d->CG_MAX_ITS is %i\n",d->CG_MAX_ITS);
+ 	coneOS_printf("d->VERBOSE is %i\n",d->VERBOSE);
+ 	coneOS_printf("d->NORMALIZE is %i\n",d->VERBOSE);
 	coneOS_printf("d->ALPH is %6f\n",d->ALPH);
 	coneOS_printf("d->EPS_ABS is %6f\n",d->EPS_ABS);
-	//coneOS_printf("d->EPS_ABS is %6f\n",d->EPS_ABS);
-	//coneOS_printf("d->UNDET_TOL is %6f\n",d->UNDET_TOL);
+	coneOS_printf("d->EPS_ABS is %6f\n",d->EPS_ABS);
+	coneOS_printf("d->UNDET_TOL is %6f\n",d->UNDET_TOL);
 	coneOS_printf("d->CG_TOL is %6f\n",d->CG_TOL);
-	coneOS_printf("d->Ap[0] is %i\n",d->Ap[0]);
-	coneOS_printf("d->Ap[1] is %i\n",d->Ap[1]);
-	coneOS_printf("d->Ai[0] is %i\n",d->Ai[0]);
-	coneOS_printf("d->Ax[0] is %4f\n",d->Ax[0]);
 }
 
 void printAll(Data * d, Work * w){

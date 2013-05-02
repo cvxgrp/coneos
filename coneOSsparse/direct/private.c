@@ -88,7 +88,7 @@ void factorize(Data * d,Work * w){
 	int * Pinv = cs_pinv(w->p->P, w->l-1);
 	cs * C = cs_symperm(K, Pinv, 1); 
 	LDLFactor(C, NULL, NULL, &w->p->L, &w->p->D);
-	if(d->VERBOSE) coneOS_printf("KKT matrix factorization took %4.8fs\n",tocq());
+	if(d->VERBOSE) coneOS_printf("KKT matrix factorization took %4.8f ms\n",tocq());
 	cs_spfree(C);cs_spfree(K);coneOS_free(Pinv);coneOS_free(info);
 }
 

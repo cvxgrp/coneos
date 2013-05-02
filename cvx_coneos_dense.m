@@ -44,7 +44,7 @@ if isempty( shim.name ),
             tshim.error = sprintf( 'Unexpected error:\n%s\n', errmsg.message );
         end
         if isempty( tshim.error ),
-            otp = regexp( otp, 'coneos \d+\.\d+', 'match' );
+            otp = regexp( otp, 'coneOS \d+\.\d+', 'match' );
             if ~isempty(otp), tshim.version = otp{1}(8:end); end
             tshim.check = @check;
             tshim.solve = @solve;
@@ -214,22 +214,16 @@ data.b = full(c);
 data.c = -full(b);
 K.q = K.q';
 K.s = K.s';
-pars.EPS_ABS = 1e-8;
-pars.EPS_REL = 1e-8;
-pars.UNDET_TOL = 1e-8;
-pars.MAX_ITERS = 5000;
-[ yy, xx, info ] = cvx_run_solver( @coneos, data, K, pars, 'xx', 'yy', 'info', settings, 5 );
-info
+pars.EPS_ABS = 1e-4;
+pars.EPS_REL = 1e-4;
+pars.UNDET_TOL = 1e-6;
+pars.MAX_ITERS = 2000;
+if ~quiet
+	pars.VERBOSE = 1;
+end
 
-%{
-data.A = full(At');
-data.b = full(b);
-data.c = full(c);
-K.q = K.q';
-K.s = K.s';
-[ xx, yy, info ] = cvx_run_solver( @coneos, data, K, pars, 'xx', 'yy', 'info', settings, 5 );
-info
-%}
+[ yy, xx, info ] = cvx_run_solver( @coneos, data, K, pars, 'xx', 'yy', 'info', settings, 5 );
+
 if add_row,
     xx = xx(2:end);
     yy = zeros(0,1);
@@ -237,13 +231,7 @@ if add_row,
     % b  = zeros(0,1);
     c  = c(2:end);
 end
-%if ~isfield( info, 'r0' ) && info.pinf,
-%    info.r0 = 0;
-%    info.iter = 0;
-%    info.numerr = 0;
-%end
-%tol = info.r0;
-%iters = info.iter;
+
 xx = full( xx );
 yy = full( yy );
 status = '';
@@ -251,41 +239,17 @@ x = real( reord * xx );
 y = yy;
 z = real( reord * ( c - At * yy ) );
 if add_row, y = zeros( 0, 1 ); end
-tol=0;
-iters=1;
-%{
-if info.pinf ~= 0,
-    status = 'Infeasible';
-    x = NaN * ones( n, 1 );
-    y = yy;
-    z = - real( reord * ( At * yy ) );
-    if add_row, y = zeros( 0, 1 ); end
-elseif info.dinf ~= 0
-    status = 'Unbounded';
-    y = NaN * ones( m, 1 );
-    z = NaN * ones( n, 1 );
-    x = real( reord * xx );
-else
-    x = real( reord * xx );
-    y = yy;
-    z = real( reord * ( c - At * yy ) );
-    if add_row, y = zeros( 0, 1 ); end
+
+tol = max(info.presid,info.dresid);
+iters = info.iter;
+status = info.status;
+% coneOS targets the dual to sedumi formulation:
+if (strcmp(status,'Unbounded'))
+	status = 'Infeasible';
+elseif (strcmp(status,'Infeasible'))
+	status = 'Unbounded';
 end
-if info.numerr == 2,
-    status = 'Failed';
-    if any( K.q == 2 ),
-        warning( 'CVX:SeDuMi', cvx_error_format( 'This solver failure may possibly be due to a known bug in the SeDuMi solver. Try switching to SDPT3 by inserting "cvx_solver sdpt3" into your model.', ...
-            [66,75], false, '' ) );
-    end
-else
-    if isempty( status ),
-        status = 'Solved';
-    end
-    if info.numerr == 1 && info.r0 > prec(2),
-        status = [ 'Inaccurate/', status ];
-    end
-end
-%}
+
 % Copyright 2012 CVX Research, Inc.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

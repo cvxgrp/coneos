@@ -1,8 +1,0 @@
-fix timing methods
-add optimal warm_start
-change comments to /*
-check/remove NORMALIZE
-change mex file
-add better commenting
-better error/input checking matlab (and elsewhere)
-organize code 

@@ -22,7 +22,7 @@ b2=reshape(b2,mt2,1);
 
 tic
 cvx_begin
-%cvx_solver coneos
+cvx_solver coneos
 variable x(n) 
 variable S(m,m) symmetric
 variable S2(m2,m2) symmetric
@@ -34,6 +34,29 @@ x(1:3)>=0
 A*x + S(:) == b
 A2*x + S2(:) == b2
 
+cvx_end
+toc
+
+%%
+n = 200;
+m = 20;
+A = randn(m,n);
+b = randn(m,1);
+mu = 1;
+
+tic
+cvx_begin
+cvx_solver coneos
+variable x(n)
+minimize(sum_square(A*x-b)+mu*norm(x,1))
+cvx_end
+toc
+
+tic
+cvx_begin
+cvx_solver
+variable x_sed(n)
+minimize(sum_square(A*x_sed-b)+mu*norm(x_sed,1))
 cvx_end
 toc
 
