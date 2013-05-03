@@ -50,34 +50,25 @@ void projectsdc(double *X, int n, Work * w)
   double * e = w->e;
   memcpy(Xs,X,n*n*sizeof(double));
 
-  // Xs = X + X'
-  /* save division by 2 until after eigendecomp */
+  // Xs = X + X', save div by 2 for eigen-recomp
   for (i = 0; i < n; ++i){
     cblas_daxpy(n, 1, &(X[i]), n, &(Xs[i*n]), 1);
     //b_daxpy(n, 1, &(X[i]), n, &(Xs[i*n]), 1);
   }
-  
+ 
   double EIG_TOL = 1e-4;
-  double vlower = -calcNorm(Xs,n*n);
-  //double vlower = -cblas_dnrm2(n*n, Xs, 1);
-  // ******************************
-  // comment these two lines out for alternate dual SDP projection:
-  memcpy(X,Xs,n*n*sizeof(double));
-  scaleArray(X,0.5,n*n);
-  // ******************************
-  LAPACKE_dsyevr( LAPACK_COL_MAJOR, 'V', 'V', 'U', n, Xs, n, vlower, 0.0, -1, -1, EIG_TOL, &m, e, Z, n , NULL);
+  double vupper = calcNorm(Xs,n*n);
+  LAPACKE_dsyevr( LAPACK_COL_MAJOR, 'V', 'V', 'U', n, Xs, n, 0.0, vupper, -1, -1, EIG_TOL, &m, e, Z, n , NULL);
 
-  memset(Xs, 0, n*n*sizeof(double));
+  memset(X, 0, n*n*sizeof(double));
   for (i = 0; i < m; ++i) {
-    //cblas_dger(CblasColMajor,n,n, -e[i]/2, &(Z[i*n]), 1, &(Z[i*n]), 1, Xs, n);
-    cblas_dsyr(CblasColMajor, CblasLower, n, -e[i]/2, &(Z[i*n]), 1, Xs, n);
+    cblas_dsyr(CblasColMajor, CblasLower, n, e[i]/2, &(Z[i*n]), 1, Xs, n);
     //b_dsyr('L', n, -e[i]/2, &(Z[i*n]), 1, Xs, n);
   }
   // fill in upper half 
   for (i = 0; i < n; ++i){   
     for (j = i+1; j < n; ++j){   
-      Xs[i + j*n] = Xs[j + i*n];    
+      X[i + j*n] = X[j + i*n];    
     }   
   }
-  addScaledArray(X,Xs,n*n,1);
 }
