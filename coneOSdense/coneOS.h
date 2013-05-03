@@ -29,7 +29,9 @@
 typedef struct PROBLEM_DATA {
   int n, m; /* problem dimensions */
   /* problem data, A, b, c: */
-  double * A;
+  double * Ax;
+  int * Ai, * Ap;
+  int Anz;
   double * b, * c;
   int MAX_ITERS, CG_MAX_ITS;
   double EPS_ABS, EPS_REL, ALPH, CG_TOL, UNDET_TOL;

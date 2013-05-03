@@ -4,7 +4,7 @@ void privateInitWork(Data * d, Work * w){
 	tic();
 	int k,j, n=d->n, m=d->m;
 	w->p = coneOS_malloc(sizeof(Priv));
-	double * A = d->A;
+	double * A = d->Ax;
 	/* sparse A input: 
 	   w->p->A = coneOS_calloc(m*n, sizeof(double));
 	   for (j = 0; j < n; ++j) {                     
@@ -38,7 +38,7 @@ void freePriv(Work * w){
 
 void solveLinSys(Data *d, Work * w, double * b, const double * s){
 	// solves Mx = b, for x but stores result in b
-	double * A = d->A;
+	double * A = d->Ax;
 	double * L = w->p->L;
 	cblas_dgemv(CblasColMajor, CblasTrans, d->m, d->n, 1, A, d->m, &(b[d->n]), 1, 1, b, 1);
 	//b_dgemv('T', d->m, d->n, 1, A, d->m, &(b[d->n]), 1, 1, b, 1);	

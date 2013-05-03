@@ -67,11 +67,11 @@ void read_in_data(FILE * fp,Data * d, Cone * k){
 	fscanf(fp, "%i", &(d->VERBOSE));
 	fscanf(fp, "%i", &(d->NORMALIZE));
 
-	int nm = d->n*d->m;
-	d->A = malloc(sizeof(double)*nm);
-	for(int i = 0; i < nm; i++)
+	d->Anz = d->n*d->m;
+	d->Ax = malloc(sizeof(double)*d->Anz);
+	for(int i = 0; i < d->Anz; i++)
 	{
-		fscanf(fp, "%lf", &d->A[i]);
+		fscanf(fp, "%lf", &d->Ax[i]);
 	}
 
 
@@ -119,7 +119,7 @@ void freeData(Data * d, Cone * k){
 	if(d) {
 		if(d->b) coneOS_free(d->b);
 		if(d->c) coneOS_free(d->c);
-		if(d->A) coneOS_free(d->A);
+		if(d->Ax) coneOS_free(d->Ax);
 		coneOS_free(d);
 	}
 	if(k) {

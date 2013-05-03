@@ -8,7 +8,7 @@ void privateInitWork(Data * d, Work * w){
 	w->p->p = coneOS_malloc(d->n*sizeof(double));
 	w->p->Ap = coneOS_malloc(d->n*sizeof(double));
 
-  double * A = d->A;
+  double * A = d->Ax;
 	/* sparse A format
   w->p->A = coneOS_calloc(d->m*d->n, sizeof(double));
 	int k;
@@ -43,7 +43,7 @@ void solveLinSys(Data *d, Work * w, double * b, const double * s){
 	// s contains warm-start (if available)
 	w->p->r = b;
 	double * r = w->p->r;
-	double * A = d->A;
+	double * A = d->Ax;
 	double * x = w->p->x;
 	cblas_dgemv(CblasColMajor, CblasTrans, d->m, d->n, 1, A, d->m, &(b[d->n]),1, 1, r, 1);	
 	//b_dgemv('T', d->m, d->n, 1, A, d->m, &(b[d->n]),1, 1, r, 1);	

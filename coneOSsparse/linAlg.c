@@ -1,6 +1,3 @@
-#ifndef LINALG_H_GUARD
-#define LINALG_H_GUARD
-
 #include <math.h>
 #include "coneOS.h"
 
@@ -63,5 +60,3 @@ inline double calcNormDiff(double *a, double *b, int l) {
 	}  
     return sqrt(nmDiff);
 }
-
-#endif

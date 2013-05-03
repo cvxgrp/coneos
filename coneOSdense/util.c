@@ -18,6 +18,7 @@ double tocq(void) {
 double toc(void) {
 	double time = tocq();
 	coneOS_printf("time: %8.4f milli-seconds.\n", time);
+	return time;
 }
 
 void printConeData(Cone * k){
@@ -41,7 +42,7 @@ void printData(Data * d){
 	coneOS_printf("d->m is %i\n",d->m);
 	coneOS_printf("d->b[0] is %4f\n",d->b[0]);
 	coneOS_printf("d->c[0] is %4f\n",d->c[0]);
-	coneOS_printf("d->A[0,0] is %4f\n",d->A[0]);
+	coneOS_printf("d->A[0,0] is %4f\n",d->Ax[0]);
 	coneOS_printf("d->MAX_ITERS is %i\n",d->MAX_ITERS);
 	coneOS_printf("d->CG_MAX_ITS is %i\n",d->CG_MAX_ITS);
  	coneOS_printf("d->VERBOSE is %i\n",d->VERBOSE);

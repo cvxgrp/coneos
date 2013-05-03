@@ -1,6 +1,5 @@
 dense: use matlab built-in lapack and blas libs
 fix linAlg h and c
-add full info support
 add optimal warm_start
 change comments to /*
 fix NORMALIZE
@@ -9,6 +8,5 @@ add better commenting
 better error/input checking matlab (and elsewhere)
 organize code 
 return failure if failed to converge in max_iters
-print footer
 
-changed files: coneOS.h, coneOS.c, coneOS_mex.c, run_coneOS.c, cvx_coneos.m
+changed files: linAlg, coneOS.h, coneOS.c, coneOS_mex.c, run_coneOS.c, cvx_coneos.m, Makefile, install_coneos_cvx.m

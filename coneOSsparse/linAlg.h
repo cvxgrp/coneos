@@ -1,3 +1,6 @@
+#ifndef LINALG_H_GUARD
+#define LINALG_H_GUARD
+
 // x = b*a
 extern void setAsScaledArray(double *x, const double * a,const double b,int len);
 
@@ -20,3 +23,5 @@ extern double calcNormInf(const double *v, int len);
 
 // saxpy
 extern void addScaledArray(double * a, const double * b, int n, const double sc);
+
+#endif
