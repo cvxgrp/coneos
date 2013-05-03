@@ -62,7 +62,7 @@ void projectsdc(double *X, int n, Work * w)
 
   memset(X, 0, n*n*sizeof(double));
   for (i = 0; i < m; ++i) {
-    cblas_dsyr(CblasColMajor, CblasLower, n, e[i]/2, &(Z[i*n]), 1, Xs, n);
+    cblas_dsyr(CblasColMajor, CblasLower, n, e[i]/2, &(Z[i*n]), 1, X, n);
     //b_dsyr('L', n, -e[i]/2, &(Z[i*n]), 1, Xs, n);
   }
   // fill in upper half 

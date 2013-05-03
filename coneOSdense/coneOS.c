@@ -26,7 +26,7 @@ static inline void projectCones(Data * d,Work * w,Cone * k);
 static inline void sety(Data * d, Work * w, Sol * sol);
 static inline void setx(Data * d, Work * w, Sol * sol);
 static inline int getSolution(Data * d, Work * w, Sol * sol, Info * info);
-static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct residuals * r);
+static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct residuals * r, int status);
 static inline void printSummary(Data * d,Work * w,int i, struct residuals *r);
 static inline void printHeader();
 static inline void printFooter(Info * info); 
@@ -72,7 +72,7 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
   }
   int status = getSolution(d,w,sol,info);
   info->iter = i;
-  getInfo(d,w,sol,info,&r);
+  getInfo(d,w,sol,info,&r,status);
   if(d->VERBOSE) {
     printSummary(d,w,i,&r);
     printFooter(info);
@@ -83,12 +83,16 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
   return status;
 }
 
-static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct residuals * r){
+static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct residuals * r,int status){
 	info->time = tocq();
 	info->presid = r->resPri;
 	info->dresid = r->resDual;
 	info->pobj = innerProd(d->c,sol->x,d->n);
 	info->dobj = -innerProd(d->b,sol->y,d->m);
+	if (status == 2)
+		info->pobj = NAN;
+	else if(status == 1)
+		info->dobj = NAN;
 	info->gap = info->pobj-info->dobj;
 }
 
@@ -342,8 +346,12 @@ static inline void printFooter(Info * info) {
   for(i = 0; i < _lineLen_; ++i) {
     coneOS_printf("-");
   }
-  coneOS_printf("\nStatus: %s\n", info->status);
+  coneOS_printf("\nStatus: %s\n",info->status); 
+  coneOS_printf("Primal objective value: %4f\n",info->pobj);
+  coneOS_printf("Dual objective value: %4f\n",info->dobj);
+  coneOS_printf("Duality gap: %e\n", info->gap);
   coneOS_printf("Time taken %4f ms\n",info->time);
+
   for(i = 0; i < _lineLen_; ++i) {
     coneOS_printf("=");
   }
