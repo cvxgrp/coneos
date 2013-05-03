@@ -35,7 +35,6 @@ cs * formKKT(Data * d, Work * w){
 	 *
 	 * forms upper triangular part of [I A'; A -I]
 	 */
-
 	int j, k, kk;
 	/* I at top left */
 	const int Anz = d->Ap[d->n];

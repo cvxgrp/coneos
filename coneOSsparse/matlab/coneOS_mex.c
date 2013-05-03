@@ -87,7 +87,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   for ( i=0; i < k->qsize; i++ ){
     k->q[i] = (int)q_mex[i]; 
   }
-  
+  k->ssize = 0;
+  k->s = NULL; 
   int Anz = mxGetNzmax(A_mex);
   d->Ax = (double *)mxGetPr(A_mex);
   d->Ap = (int *)mxMalloc(sizeof(int)*Anz);
@@ -101,24 +102,64 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   for (i = 0; i < (d->n)+1; i++) {          
     d->Ap[i] = (int)A_p[i];
   }
-
-  /* printConeData(d,k); */
-  /* printData(d); */
-  Sol *sol = coneOS(d,k);
+  
+  Sol sol;
+  Info info;
+  int status = coneOS(d,k,&sol,&info);
 
   plhs[0] = mxCreateDoubleMatrix(0, 0, mxREAL);
-  mxSetPr(plhs[0], sol->x);
+  mxSetPr(plhs[0], sol.x);
   mxSetM(plhs[0], d->n); 
   mxSetN(plhs[0], 1); 
 
   plhs[1] = mxCreateDoubleMatrix(0, 0, mxREAL);
-  mxSetPr(plhs[1], sol->y);
+  mxSetPr(plhs[1], sol.y);
   mxSetM(plhs[1], d->m); 
   mxSetN(plhs[1], 1); 
-
-  plhs[2] = mxCreateString(sol->status);
   
-  //free(d->Ai);free(d->Ap);free(d);free(k->q);free(k);
+  const char * infoFields[] = {"iter","status","pobj","dobj","presid","dresid","gap","time"}; 
+  const int numInfoFields = 8;
+  mwSize one[1] = {1};
+  mxArray * xm;
+  plhs[2] = mxCreateStructArray(1,one,numInfoFields,infoFields);
+
+  mxSetField(plhs[2], 0, "status", mxCreateString(info.status));
+   
+  xm = mxCreateDoubleMatrix(1, 1, mxREAL);
+  mxSetField(plhs[2], 0, "iter", xm);
+  *mxGetPr(xm) = info.iter;
+  
+  xm = mxCreateDoubleMatrix(1, 1, mxREAL);
+  mxSetField(plhs[2], 0, "pobj", xm);
+  *mxGetPr(xm) = info.pobj;
+
+  xm = mxCreateDoubleMatrix(1, 1, mxREAL);
+  mxSetField(plhs[2], 0, "dobj", xm);
+  *mxGetPr(xm) = info.dobj;
+  
+  xm = mxCreateDoubleMatrix(1, 1, mxREAL);
+  mxSetField(plhs[2], 0, "presid", xm);
+  *mxGetPr(xm) = info.presid;
+  
+  xm = mxCreateDoubleMatrix(1, 1, mxREAL);
+  mxSetField(plhs[2], 0, "dresid", xm);
+  *mxGetPr(xm) = info.dresid;
+  
+  xm = mxCreateDoubleMatrix(1, 1, mxREAL);
+  mxSetField(plhs[2], 0, "gap", xm);
+  *mxGetPr(xm) = info.gap;
+
+  //info.time is millisecs - return value in secs
+  xm = mxCreateDoubleMatrix(1, 1, mxREAL);
+  mxSetField(plhs[2], 0, "time", xm);
+  *mxGetPr(xm) = info.time/1e3; 
+
+  if(k->q) coneOS_free(k->q);
+  if(k->s) coneOS_free(k->s);
+  if(d->Ap) coneOS_free(d->Ap);
+  if(d->Ai) coneOS_free(d->Ai);
+  if(d) coneOS_free(d);
+  if(k)  coneOS_free(k);
   return; 
 }
 

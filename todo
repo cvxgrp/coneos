@@ -8,5 +8,3 @@ add better commenting
 better error/input checking matlab (and elsewhere)
 organize code 
 return failure if failed to converge in max_iters
-
-changed files: linAlg, coneOS.h, coneOS.c, coneOS_mex.c, run_coneOS.c, cvx_coneos.m, Makefile, install_coneos_cvx.m

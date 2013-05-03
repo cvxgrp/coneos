@@ -5,20 +5,26 @@
 #define DEMO_PATH "../data_coneOS"
 #endif 
 
+#define NUM_TRIALS 1 
+
 int main(int argc, char **argv)
 {
-	tic();
 	FILE * fp;
 	if(open_file(argc, argv, 1, DEMO_PATH, &fp)==-1) return -1;
 	Cone * k = malloc(sizeof(Cone));
 	Data * d = malloc(sizeof(Data));
 	read_in_data(fp,d,k);
 	fclose(fp);
-
-	Sol * sol = coneOS(d,k);
-	printf("Total factorize + solve time %4f milli-seconds\n",tocq());
+	int i;
+	Sol * sol = malloc(sizeof(Sol));
+	Info * info = malloc(sizeof(Info));
+	for (i=0;i<NUM_TRIALS;i++)
+	{
+		coneOS(d,k,sol,info);
+	}
 	freeData(d,k);
 	freeSol(sol);
+	coneOS_free(info);
 	return 0;
 }
 
@@ -34,7 +40,8 @@ void read_in_data(FILE * fp,Data * d, Cone * k){
 	{ 
 		fscanf(fp, "%i", &k->q[i]);
 	}
-
+	k->ssize = 0;
+	k->s = NULL;
 	d->b = malloc(sizeof(double)*d->m);
 	for(int i = 0; i < d->m; i++)
 	{ 
@@ -57,10 +64,9 @@ void read_in_data(FILE * fp,Data * d, Cone * k){
 	fscanf(fp, "%i", &(d->VERBOSE));
 	fscanf(fp, "%i", &(d->NORMALIZE));
 
-	int Anz;
-	fscanf(fp, "%i", &Anz);
-	d->Ai = malloc(sizeof(int)*Anz);
-	for(int i = 0; i < Anz; i++)
+	fscanf(fp, "%i", &(d->Anz));
+	d->Ai = malloc(sizeof(int)*(d->Anz));
+	for(int i = 0; i < d->Anz; i++)
 	{
 		fscanf(fp, "%i", &d->Ai[i]);
 	}
@@ -69,8 +75,8 @@ void read_in_data(FILE * fp,Data * d, Cone * k){
 	{
 		fscanf(fp, "%i", &d->Ap[i]);
 	}
-	d->Ax = malloc(sizeof(double)*Anz);
-	for(int i = 0; i < Anz; i++)
+	d->Ax = malloc(sizeof(double)*(d->Anz));
+	for(int i = 0; i < (d->Anz); i++)
 	{
 		fscanf(fp, "%lf", &d->Ax[i]);
 	}
@@ -106,6 +112,7 @@ void freeData(Data * d, Cone * k){
 	}
 	if(k) {
 		if(k->q) coneOS_free(k->q);
+		if(k->s) coneOS_free(k->s);
 		coneOS_free(k);
 	}
 	d = NULL; k = NULL;
@@ -115,7 +122,6 @@ void freeSol(Sol *sol){
 	if(sol) {
 		if(sol->x) coneOS_free(sol->x);
 		if(sol->y) coneOS_free(sol->y);
-		//if(sol->status) coneOS_free(sol->status);
 		coneOS_free(sol);
 	}
 	sol = NULL;

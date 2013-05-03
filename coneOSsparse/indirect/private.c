@@ -1,5 +1,4 @@
 #include "private.h"
-#include "omp.h"
 
 static inline void calcAx(Data * d, Work * w, const double * x, double * y);
 static void cgCustom(Data *d, Work *w, const double *s, double * b, int max_its, double tol);

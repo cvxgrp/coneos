@@ -24,6 +24,7 @@ int main(int argc, char **argv)
 	}
 	freeData(d,k);
 	freeSol(sol);
+	coneOS_free(info);
 	return 0;
 }
 
@@ -73,7 +74,8 @@ void read_in_data(FILE * fp,Data * d, Cone * k){
 	{
 		fscanf(fp, "%lf", &d->Ax[i]);
 	}
-
+	d->Ai = NULL;
+	d->Ap = NULL;
 
 	//		fscanf(fp, "%zu", &NNZ);
 	//		int *Kr = malloc(sizeof(int)*NNZ);
@@ -120,6 +122,8 @@ void freeData(Data * d, Cone * k){
 		if(d->b) coneOS_free(d->b);
 		if(d->c) coneOS_free(d->c);
 		if(d->Ax) coneOS_free(d->Ax);
+		if(d->Ai) coneOS_free(d->Ai);
+		if(d->Ap) coneOS_free(d->Ap);
 		coneOS_free(d);
 	}
 	if(k) {

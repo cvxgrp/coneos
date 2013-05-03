@@ -38,10 +38,22 @@ typedef struct PROBLEM_DATA {
   int VERBOSE, NORMALIZE;  // boolean
 } Data;
 
+/* contains primal-dual solution vectors */
 typedef struct SOL_VARS {
   double * x, * y;
-  char status[16];
 } Sol;
+
+/* contains terminating information */
+typedef struct INFO {
+	int iter;
+	char status[16];
+	double pobj;
+	double dobj;
+	double presid;
+	double dresid;
+	double gap;
+	double time;
+} Info;
 
 typedef struct PRIVATE_DATA Priv;
 
@@ -50,6 +62,8 @@ typedef struct WORK {
   double *h, *g;  
   double gTh, dual_scale, primal_scale;  // A = dual_scale*A*primal_scale
   Priv * p;
+  /* workspace for eigenvector decompositions: */
+  double * Xs, *Z, *e;
   int l;
 } Work;
 
@@ -61,20 +75,11 @@ typedef struct WORK {
 #include "linAlg.h"
 
 // these are actually library "api"'s
-Sol * coneOS(Data * d, Cone * k);
-//void updateDualVars(Work * w);
-//void projectCones(Data * d,Work * w,Cone * k);
-//void projectLinSys(Data * d, Work * w);
-//void sety(Data * d, Work * w, Sol * sol);
-//void setx(Data * d, Work * w, Sol * sol);
-//void printSummary(Data * d,Work * w,int i, double err, double EPS_PRI);
-//void printSol(Data * d, Sol * sol);
-//void freeWork(Work * w);
-//void freePriv(Work * w);
+int coneOS(Data * d, Cone * k, Sol * sol, Info * info);
 
 // these are pulled in from private.o
 void privateInitWork(Data * d, Work * w);
-// solves [I A';A -I] x = b, stores result in b
+// solves [I A';A -I] x = b, stores result in b, s contains warm-start
 void solveLinSys(Data * d, Work * w, double * b, const double * s);
 void freePriv(Work * w);
 

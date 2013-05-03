@@ -19,7 +19,6 @@ else
     arr = '';
 end
 
-
 %compile direct
 cmd = sprintf ('mex -v -O %s CFLAGS="-std=c99 -O3 -DMATLAB_MEX_FILE %s" -I../', arr, d) ;
 amd_files = {'amd_order', 'amd_dump', 'amd_postorder', 'amd_post_tree', ...

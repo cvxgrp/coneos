@@ -41,6 +41,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   d->b = mxGetPr(b_mex);
   d->c = mxGetPr(c_mex);
   d->Ax = mxGetPr(A_mex);
+  d->Ai = NULL;
+  d->Ap = NULL;
   d->Anz = d->n*d->m;
   const mxArray *ALPH_mex = mxGetField(params,0,"ALPHA");
   if (ALPH_mex == NULL) d->ALPH = 1.8;
@@ -148,6 +150,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   mxSetField(plhs[2], 0, "time", xm);
   *mxGetPr(xm) = info.time/1e3; 
 
+  if(k->q) coneOS_free(k->q);
+  if(k->s) coneOS_free(k->s);
+  if(d->Ap) coneOS_free(d->Ap);
+  if(d->Ai) coneOS_free(d->Ai);
+  if(d) coneOS_free(d);
+  if(k)  coneOS_free(k);
   return; 
 }
 

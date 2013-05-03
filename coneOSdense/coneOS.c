@@ -54,11 +54,10 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
   tic();
   int i;
   struct residuals r = { -1, -1, -1, -1};
+  Work * w = initWork(d,k);
   if(d->VERBOSE) {
     printHeader();
-  }
-  Work * w = initWork(d,k);
-  /* coneOS: */
+  } /* coneOS: */
   for (i=0; i < d->MAX_ITERS; ++i){
     memcpy(w->u_prev, w->u, w->l*sizeof(double));
    
@@ -160,6 +159,10 @@ static inline Work * initWork(Data *d, Cone * k) {
 	  w->Xs = coneOS_malloc(nMax*nMax*sizeof(double));
 	  w->Z = coneOS_malloc(nMax*nMax*sizeof(double));
 	  w->e = coneOS_malloc(nMax*sizeof(double));
+  } else {
+	  w->Xs = NULL;
+	  w->Z = NULL;
+	  w->e = NULL;
   }
 
   /* initialize the private data: */
@@ -210,16 +213,16 @@ static inline void projectLinSys(Data * d,Work * w){
 
 static inline void freeWork(Work * w){
   freePriv(w);
-  coneOS_free(w->Xs);
-  coneOS_free(w->Z);
-  coneOS_free(w->e);
-  coneOS_free(w->u);
-  coneOS_free(w->v);
-  coneOS_free(w->u_t);
-  coneOS_free(w->u_prev);
-  coneOS_free(w->h);
-  coneOS_free(w->g);
-  coneOS_free(w);
+  if(w->Xs) coneOS_free(w->Xs);
+  if(w->Z) coneOS_free(w->Z);
+  if(w->e) coneOS_free(w->e);
+  if(w->u) coneOS_free(w->u);
+  if(w->v) coneOS_free(w->v);
+  if(w->u_t) coneOS_free(w->u_t);
+  if(w->u_prev) coneOS_free(w->u_prev);
+  if(w->h) coneOS_free(w->h);
+  if(w->g) coneOS_free(w->g);
+  if(w) coneOS_free(w);
 }
 
 static inline void printSol(Data * d, Sol * sol, Info * info){
@@ -329,7 +332,7 @@ static inline void printHeader() {
   for(i = 0; i < _lineLen_; ++i) {
     coneOS_printf("-");
   }
-  coneOS_printf("\nconeOS 1.0 (dense version)\n");
+  coneOS_printf("\nconeOS 1.0\n");
   for(i = 0; i < _lineLen_; ++i) {
     coneOS_printf("-");
   }

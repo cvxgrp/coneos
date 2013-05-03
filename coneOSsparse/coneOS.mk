@@ -1,8 +1,8 @@
 UNAME = $(shell uname -s)
 CC = gcc
-CFLAGS = -g -Wall -pedantic -O3 -I. 
+CFLAGS = -g -Wall -pedantic -O3 -I.
 LDFLAGS = -lm 
-OPENFLAG = -fopenmp
+OPENFLAG = #-fopenmp
 
 ifeq ($(UNAME), Darwin)
 	CFLAGS   += -std=c99

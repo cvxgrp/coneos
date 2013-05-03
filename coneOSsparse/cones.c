@@ -2,7 +2,7 @@
 #include <math.h>
 
 /* in place projection (with branches) */
-void projCone(double *x, Cone * k)
+void projCone(double *x, Cone * k, Work * w)
 {
   int i, j;
   int count;

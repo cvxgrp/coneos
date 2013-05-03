@@ -56,5 +56,6 @@ bin/demo_indirect: run_coneOS.c lib/libconeOSindir.a
 clean:
 	@rm -rf $(TARGETS) $(OBJECTS) $(DIRECT_OBJECTS) direct/private.o indirect/private.o 
 	@rm -rf bin/*.dSYM
+	@rm -rf matlab/*.mex*
 purge: clean 
 	@rm -rf bin lib
