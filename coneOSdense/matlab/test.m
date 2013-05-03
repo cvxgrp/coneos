@@ -2,10 +2,10 @@ clear all
 close all
 %randn('seed',0);rand('seed',0
 n=30;
-m=5;
+m=8;
 mt=m^2;
 
-m2 = 4;
+m2 = 7;
 mt2= m2^2;
 
 A=randn(mt,n);
@@ -22,18 +22,17 @@ b2=reshape(b2,mt2,1);
 
 tic
 cvx_begin
-cvx_solver coneos
+%cvx_solver coneos
 variable x(n) 
-variable S(m,m) symmetric
-variable S2(m2,m2) symmetric
+variable S(m,m)
+variable S2(m2,m2)
 dual variables yy yy2
 minimize(c'*x)
-yy:S==semidefinite(m);
-yy2:S2==semidefinite(m2);
+yy:(S+S')==semidefinite(m);
+yy2:(S2+S2')==semidefinite(m2);
 x(1:3)>=0
 A*x + S(:) == b
 A2*x + S2(:) == b2
-
 cvx_end
 toc
 

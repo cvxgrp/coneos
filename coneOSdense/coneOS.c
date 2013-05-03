@@ -1,6 +1,7 @@
 /* coneos 1.0 */
 #include "coneOS.h"
 
+static int _lineLen_;
 // constants and data structures
 static const char* HEADER[] = {
   "Iter", 
@@ -28,6 +29,7 @@ static inline int getSolution(Data * d, Work * w, Sol * sol, Info * info);
 static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct residuals * r);
 static inline void printSummary(Data * d,Work * w,int i, struct residuals *r);
 static inline void printHeader();
+static inline void printFooter(Info * info); 
 static inline void printSol(Data * d, Sol * sol, Info * info);
 static inline void freeWork(Work * w);
 static inline void projectLinSys(Data * d,Work * w);
@@ -73,7 +75,7 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
   getInfo(d,w,sol,info,&r);
   if(d->VERBOSE) {
     printSummary(d,w,i,&r);
-    coneOS_printf("Total solve time is %4.8f ms\n", info->time);
+    printFooter(info);
     //printSol(d,sol,info);
   }
   unNormalize(d,w);
@@ -310,18 +312,18 @@ static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
 }
 
 static inline void printHeader() {
-  int i, line_len;
-  line_len = 0;
+  int i;  
+  _lineLen_ = 0;
   for(i = 0; i < HEADER_LEN - 1; ++i) {
-    line_len += strlen(HEADER[i]) + 3;
+    _lineLen_ += strlen(HEADER[i]) + 3;
   }
-  line_len += strlen(HEADER[HEADER_LEN-1]);
+  _lineLen_ += strlen(HEADER[HEADER_LEN-1]);
   
-  for(i = 0; i < line_len; ++i) {
+  for(i = 0; i < _lineLen_; ++i) {
     coneOS_printf("-");
   }
   coneOS_printf("\nconeOS 1.0 (dense version)\n");
-  for(i = 0; i < line_len; ++i) {
+  for(i = 0; i < _lineLen_; ++i) {
     coneOS_printf("-");
   }
   coneOS_printf("\n");
@@ -329,7 +331,20 @@ static inline void printHeader() {
     coneOS_printf("%s | ", HEADER[i]);
   }
   coneOS_printf("%s\n", HEADER[HEADER_LEN-1]);
-  for(i = 0; i < line_len; ++i) {
+  for(i = 0; i < _lineLen_; ++i) {
+    coneOS_printf("=");
+  }
+  coneOS_printf("\n");
+}
+
+static inline void printFooter(Info * info) {
+ int i;  
+  for(i = 0; i < _lineLen_; ++i) {
+    coneOS_printf("-");
+  }
+  coneOS_printf("\nStatus: %s\n", info->status);
+  coneOS_printf("Time taken %4f ms\n",info->time);
+  for(i = 0; i < _lineLen_; ++i) {
     coneOS_printf("=");
   }
   coneOS_printf("\n");

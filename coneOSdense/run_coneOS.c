@@ -15,12 +15,12 @@ int main(int argc, char **argv)
 	Data * d = malloc(sizeof(Data));
 	read_in_data(fp,d,k);
 	fclose(fp);
-	int i, status;
+	int i;
 	Sol * sol = malloc(sizeof(Sol));
 	Info * info = malloc(sizeof(Info));
 	for (i=0;i<NUM_TRIALS;i++)
 	{
-		status = coneOS(d,k,sol,info);
+		coneOS(d,k,sol,info);
 	}
 	freeData(d,k);
 	freeSol(sol);
