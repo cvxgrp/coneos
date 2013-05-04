@@ -1,8 +1,8 @@
 #include "private.h"
 
 void privateInitWork(Data * d, Work * w){
-	tic();
-	int k,j, n=d->n, m=d->m;
+  memcpy(w->method, "direct", 7);
+  int k,j, n=d->n, m=d->m;
 	w->p = coneOS_malloc(sizeof(Priv));
 	double * A = d->Ax;
 	/* sparse A input: 

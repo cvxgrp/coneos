@@ -8,7 +8,7 @@ if ~isempty( shim.solve ),
     return
 end
 if isempty( shim.name ),
-    fname = 'coneos.mexmaci64';
+    fname = 'coneos.m';
     [ fs, ps, int_path ] = cvx_version;
     int_path(end+1) = fs;
     int_plen = length( int_path );
@@ -214,12 +214,31 @@ data.b = full(c);
 data.c = -full(b);
 K.q = K.q';
 K.s = K.s';
-pars.EPS_ABS = 1e-4;
-pars.EPS_REL = 1e-4;
-pars.UNDET_TOL = 1e-6;
-pars.MAX_ITERS = 2000;
+
+if (isfield(settings,'UNDET_TOL'))
+    pars.UNDET_TOL = settings.UNDET_TOL;
+else
+    pars.UNDET_TOL = 1e-6;
+end
+if prec(1)==0
+    % just run until MAX_ITERS
+    pars.EPS_ABS = 0;
+    pars.EPS_REL = 0;
+else
+    pars.EPS_ABS = prec(2)*1e3;
+    pars.EPS_REL = pars.EPS_ABS;
+end
+if (isfield(settings,'MAX_ITERS'))
+    pars.MAX_ITERS = settings.MAX_ITERS;
+else
+    pars.MAX_ITERS = 5000;
+end
 if ~quiet
-	pars.VERBOSE = 1;
+    pars.VERBOSE = 1;
+end
+pars.USE_INDIRECT = false;
+if (isfield(settings,'USE_INDIRECT') && settings.USE_INDIRECT)
+    pars.USE_INDIRECT = true;
 end
 
 [ yy, xx, info ] = cvx_run_solver( @coneos, data, K, pars, 'xx', 'yy', 'info', settings, 5 );
@@ -234,7 +253,6 @@ end
 
 xx = full( xx );
 yy = full( yy );
-status = '';
 x = real( reord * xx );
 y = yy;
 z = real( reord * ( c - At * yy ) );
@@ -245,9 +263,9 @@ iters = info.iter;
 status = info.status;
 % coneOS targets the dual to sedumi formulation:
 if (strcmp(status,'Unbounded'))
-	status = 'Infeasible';
+    status = 'Infeasible';
 elseif (strcmp(status,'Infeasible'))
-	status = 'Unbounded';
+    status = 'Unbounded';
 end
 
 % Copyright 2012 CVX Research, Inc.

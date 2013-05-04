@@ -28,7 +28,7 @@ static inline void setx(Data * d, Work * w, Sol * sol);
 static inline int getSolution(Data * d, Work * w, Sol * sol, Info * info);
 static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct residuals * r, int status);
 static inline void printSummary(Data * d,Work * w,int i, struct residuals *r);
-static inline void printHeader();
+static inline void printHeader(Work * w);
 static inline void printFooter(Info * info); 
 static inline void printSol(Data * d, Sol * sol, Info * info);
 static inline void freeWork(Work * w);
@@ -56,7 +56,7 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
   struct residuals r = { -1, -1, -1, -1};
   Work * w = initWork(d,k);
   if(d->VERBOSE) {
-    printHeader();
+    printHeader(w);
   } /* coneOS: */
   for (i=0; i < d->MAX_ITERS; ++i){
     memcpy(w->u_prev, w->u, w->l*sizeof(double));
@@ -321,7 +321,7 @@ static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
   coneOS_printf("%*.4f\n", (int)strlen(HEADER[4]), r->epsDual);//full(d_inf));
 }
 
-static inline void printHeader() {
+static inline void printHeader(Work * w) {
   int i;  
   _lineLen_ = 0;
   for(i = 0; i < HEADER_LEN - 1; ++i) {
@@ -332,7 +332,7 @@ static inline void printHeader() {
   for(i = 0; i < _lineLen_; ++i) {
     coneOS_printf("-");
   }
-  coneOS_printf("\nconeOS 1.0\n");
+  coneOS_printf("\nconeOS 1.0: %s method\n",w->method);
   for(i = 0; i < _lineLen_; ++i) {
     coneOS_printf("-");
   }

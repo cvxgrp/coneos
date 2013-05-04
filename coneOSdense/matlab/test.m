@@ -22,6 +22,9 @@ b2=reshape(b2,mt2,1);
 
 tic
 cvx_begin
+cvx_solver_settings( 'USE_INDIRECT', true )
+%cvx_solver_settings('MAX_ITERS',250)
+%cvx_precision best
 cvx_solver coneos
 variable x(n) 
 variable S(m,m) symmetric
@@ -37,14 +40,15 @@ cvx_end
 toc
 
 %%
-n = 2000;
-m = 200;
+n = 200;
+m = 20;
 A = randn(m,n);
 b = randn(m,1);
 mu = 1;
 
 tic
 cvx_begin
+cvx_solver_settings('USE_INDIRECT', false)
 cvx_solver coneos
 variable x(n)
 minimize(sum_square(A*x-b)+mu*norm(x,1))

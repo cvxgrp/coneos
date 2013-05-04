@@ -27,12 +27,12 @@ amd_files = {'amd_order', 'amd_dump', 'amd_postorder', 'amd_post_tree', ...
 for i = 1 : length (amd_files)
     cmd = sprintf ('%s ../direct/%s.c', cmd, amd_files {i}) ;
 end
-cmd = sprintf ('%s ../direct/ldl.c %s ../direct/private.c -lm -o coneOS_direct', cmd, common_coneOS) ;
+cmd = sprintf ('%s ../direct/ldl.c %s ../direct/private.c -lm -o coneos_direct', cmd, common_coneOS) ;
 eval(cmd);
 
 
 % compile indirect (XXX: openmp?)
-cmd = sprintf('mex -v -O %s CFLAGS="-std=c99 -O3 -DMATLAB_MEX_FILE %s" ../indirect/private.c %s -I../ -o coneOS_indirect -lm',  arr, d, common_coneOS);
+cmd = sprintf('mex -v -O %s CFLAGS="-std=c99 -O3 -DMATLAB_MEX_FILE %s" ../indirect/private.c %s -I../ -o coneos_indirect -lm',  arr, d, common_coneOS);
 eval(cmd);
 
 %mex -v -O COMPFLAGS="/openmp $COMPFLAGS" CFLAGS="\$CFLAGS -fopenmp" LDFLAGS="\$LDFLAGS -fopenmp" -largeArrayDims ../coneOS.c ../linAlg.c ../cones.c ../cs.c ../util.c coneOS_mex.c ../indirect/private.c -I../ -output coneOS_indirect -lm

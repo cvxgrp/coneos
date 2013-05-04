@@ -1,8 +1,8 @@
 #include "private.h"
 
 void privateInitWork(Data * d, Work * w){
-	int j;
-  
+  memcpy(w->method, "indirect", 9);	
+  int j;
   w->p = coneOS_malloc(sizeof(Priv));
 	w->p->x = coneOS_malloc(d->n*sizeof(double));
 	w->p->p = coneOS_malloc(d->n*sizeof(double));
