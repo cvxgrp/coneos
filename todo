@@ -1,12 +1,5 @@
-change to only emit one binary, use direct or indirect as setting
-fix make_coneos
-fix coneos_mex
-fix cvx_coneos
-
-
-
+change ms to secs
 dense: use matlab built-in lapack and blas libs
-fix linAlg h and c
 add optimal warm_start
 change comments to /*
 fix NORMALIZE

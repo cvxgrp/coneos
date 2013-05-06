@@ -40,20 +40,26 @@ cvx_end
 toc
 
 %%
-n = 200;
-m = 20;
+n = 10000;
+m = 1000;
 A = randn(m,n);
 b = randn(m,1);
 mu = 1;
 
-tic
 cvx_begin
 cvx_solver_settings('USE_INDIRECT', false)
 cvx_solver coneos
 variable x(n)
 minimize(sum_square(A*x-b)+mu*norm(x,1))
 cvx_end
-toc
+
+cvx_begin
+cvx_solver_settings('USE_INDIRECT', true)
+cvx_solver coneos
+variable x(n)
+minimize(sum_square(A*x-b)+mu*norm(x,1))
+cvx_end
+
 
 tic
 cvx_begin

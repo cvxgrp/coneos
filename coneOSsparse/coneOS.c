@@ -29,7 +29,7 @@ static inline int getSolution(Data * d, Work * w, Sol * sol, Info * info);
 static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct residuals * r, int status);
 static inline void printSummary(Data * d,Work * w,int i, struct residuals *r);
 static inline void printHeader(Work * w);
-static inline void printFooter(Info * info); 
+static inline void printFooter(Data * d, Info * info); 
 static inline void printSol(Data * d, Sol * sol, Info * info);
 static inline void freeWork(Work * w);
 static inline void projectLinSys(Data * d,Work * w);
@@ -74,7 +74,7 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
   getInfo(d,w,sol,info,&r,status);
   if(d->VERBOSE) {
     printSummary(d,w,i,&r);
-    printFooter(info);
+    printFooter(d, info);
     //printSol(d,sol,info);
   }
   if(d->NORMALIZE) unNormalize(d,w);
@@ -319,6 +319,9 @@ static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
   coneOS_printf("%*.4f   ", (int)strlen(HEADER[2]), r->resDual); // d_res
   coneOS_printf("%*.4f   ", (int)strlen(HEADER[3]), r->epsPri); // full(p_inf));
   coneOS_printf("%*.4f\n", (int)strlen(HEADER[4]), r->epsDual);//full(d_inf));
+#ifdef MATLAB_MEX_FILE
+  mexEvalString("drawnow;");
+#endif
 }
 
 static inline void printHeader(Work * w) {
@@ -347,16 +350,18 @@ static inline void printHeader(Work * w) {
   coneOS_printf("\n");
 }
 
-static inline void printFooter(Info * info) {
+static inline void printFooter(Data * d, Info * info) {
  int i;  
   for(i = 0; i < _lineLen_; ++i) {
     coneOS_printf("-");
   }
-  coneOS_printf("\nStatus: %s\n",info->status); 
+  coneOS_printf("\nStatus: %s\n",info->status);
+  if (info->iter == d->MAX_ITERS)
+    coneOS_printf("Hit MAX_ITERS, solution may be inaccurate\n"); 
   coneOS_printf("Primal objective value: %4f\n",info->pobj);
   coneOS_printf("Dual objective value: %4f\n",info->dobj);
   coneOS_printf("Duality gap: %e\n", info->gap);
-  coneOS_printf("Time taken %4f ms\n",info->time);
+  coneOS_printf("Time taken: %4f seconds\n",info->time/1e3);
 
   for(i = 0; i < _lineLen_; ++i) {
     coneOS_printf("=");

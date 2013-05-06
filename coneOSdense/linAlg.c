@@ -3,6 +3,14 @@
 #include <cblas.h>
 #include <math.h>
 
+
+inline void b_daxpy(const int n, const double alpha, const double *x, const int incx, double *y, const int incy)
+{
+  daxpy(&n,&alpha,x,&incx,y,&incy);
+  //cblas_daxpy(n,alpha,x,incx,y,incy);
+}
+
+
 // x = b*a
 inline void setAsScaledArray(double *x, const double * a,const double b,int len) {
   int i;
@@ -51,13 +59,6 @@ inline double calcNormDiff(double *a, double *b, int l) {
 }
 
 /*
-inline void b_daxpy(const int n, const double alpha, const double *x, const int incx, double *y, const int incy)
-{
-  //daxpy(&n,&alpha,x,&incx,y,&incy);
-  cblas_daxpy(n,alpha,x,incx,y,incy);
-}
-
-
 inline void b_dsyr(char Uplo, const int N, const double alpha, const double *X, const int incX, double *A, const int lda)
 {
   //dsyr(&Uplo,&N,&alpha,X,&incX,A,&lda);
