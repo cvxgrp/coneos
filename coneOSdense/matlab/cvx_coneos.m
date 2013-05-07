@@ -240,6 +240,10 @@ pars.USE_INDIRECT = false;
 if (isfield(settings,'USE_INDIRECT') && settings.USE_INDIRECT)
     pars.USE_INDIRECT = true;
 end
+pars.NORMALIZE = 1;
+if (isfield(settings,'NORMALIZE') && ~settings.NORMALIZE)
+    pars.NORMALIZE = 0;
+end
 
 [ yy, xx, info ] = cvx_run_solver( @coneos, data, K, pars, 'xx', 'yy', 'info', settings, 5 );
 

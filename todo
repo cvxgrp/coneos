@@ -1,10 +1,11 @@
-change ms to secs
-dense: use matlab built-in lapack and blas libs
-add optimal warm_start
+add optimal warm_start for indirect method
+if d->n > d->m else ...
+fix/figure out scaling: NORMALIZE
+return inaccurate if failed to converge in max_iters
+dense: use matlab built-in lapack and blas libs (hard...)
+add CG_TOL and CG_MAX_ITS to cvx solver settings
+
 change comments to /*
-fix NORMALIZE
-create mex files
 add better commenting
 better error/input checking matlab (and elsewhere)
 organize code 
-return failure if failed to converge in max_iters

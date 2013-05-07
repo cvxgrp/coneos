@@ -74,7 +74,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   else d->VERBOSE = (int)*mxGetPr(VERBOSE_mex);
 
   const mxArray *NORMALIZE_mex = mxGetField(params,0,"NORMALIZE");
-  if (NORMALIZE_mex == NULL) d->NORMALIZE = 0;
+  if (NORMALIZE_mex == NULL) d->NORMALIZE = 1;
   else d->NORMALIZE = (int)*mxGetPr(NORMALIZE_mex);
 
   k->f = (int)*mxGetPr(mxGetField(cone,0,"f"));

@@ -69,6 +69,7 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
     if (r.resPri < r.epsPri && r.resDual < r.epsDual) break; 
     if (d->VERBOSE && i % 100 == 0) printSummary(d,w,i, &r);
   }
+  if(d->NORMALIZE) unNormalize(d,w);
   int status = getSolution(d,w,sol,info);
   info->iter = i;
   getInfo(d,w,sol,info,&r,status);
@@ -77,7 +78,6 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
     printFooter(d, info);
     //printSol(d,sol,info);
   }
-  if(d->NORMALIZE) unNormalize(d,w);
   freeWork(w);
   return status;
 }
@@ -96,52 +96,40 @@ static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct re
 }
 
 static inline void unNormalize(Data *d, Work * w){
-	int i, Anz = d->Anz;
-	// unscale data
-	for(i = 0; i < Anz; ++i) {
-		d->Ax[i] /= (w->dual_scale)*(w->primal_scale);
-	}
-	for(i = 0; i < d->n; ++i) {
-		d->c[i] /= w->primal_scale;
-	}
-	for(i = 0; i < d->m; ++i) {
-		d->b[i] /= w->dual_scale;
-	}
+	scaleArray(d->Ax,1/w->A_scale,d->Anz);
+	scaleArray(d->c,1/w->c_scale,d->n);
+	scaleArray(d->b,1/w->b_scale,d->m);
 }
 
 static inline void normalize(Data * d, Work * w){
-	int i, Anz = d->Anz;
 	// scale A,b,c
-	double ds, ps, normA = 0.0;
-	// frobenius norm
-	for(i = 0; i < Anz; ++i) {
-		normA = (normA > fabs(d->Ax[i])) ? normA : fabs(d->Ax[i]);
-		//normA += (d->Ax[i]*d->Ax[i]);//((double)d->m*d->n);
-	}
-	normA = sqrt(normA);
-	ds = pow((double)1.0/normA, (double)(d->n)/((double)(d->m + d->n)));
-	ps = pow((double)1.0/normA, (double)(d->m)/((double)(d->m + d->n)));
+	w->A_scale = sqrt(d->n*d->m)/calcNorm(d->Ax, d->Anz);
+	w->c_scale = sqrt(d->m)/calcNorm(d->c,d->n);
+	w->b_scale = sqrt(d->n)/calcNorm(d->b,d->m);
 
-	for(i = 0; i < Anz; ++i) {
-		d->Ax[i] *= ds*ps;
-	}
-	for(i = 0; i < d->n; ++i) {
-		d->c[i] *= ps;
-	}
-	for(i = 0; i < d->m; ++i) {
-		d->b[i] *= ds;
-	}
-	w->dual_scale = ds;
-	w->primal_scale = ps;
+	scaleArray(d->Ax,w->A_scale,d->Anz);
+	scaleArray(d->c,w->c_scale,d->n);
+	scaleArray(d->b,w->b_scale,d->m);
 }
 
 static inline Work * initWork(Data *d, Cone * k) {
+ 
   Work * w = coneOS_malloc(sizeof(Work));
+
+  if(d->NORMALIZE) {
+	  normalize(d,w);
+  }
+  else {
+	  w->A_scale = 1.0;
+	  w->b_scale = 1.0;
+	  w->c_scale = 1.0;
+  }
+  
   w->l = d->n+d->m+1;
   w->u = coneOS_calloc(w->l,sizeof(double));
-  w->u[w->l-1] = 100;
+  w->u[w->l-1] = 1.0;
   w->v = coneOS_calloc(w->l,sizeof(double));
-  w->v[w->l-1] = 100;
+  w->v[w->l-1] = 0.0;
   w->u_t = coneOS_malloc(w->l*sizeof(double));
   w->u_prev = coneOS_malloc(w->l*sizeof(double));
   w->h = coneOS_malloc((w->l-1)*sizeof(double));
@@ -174,14 +162,6 @@ static inline Work * initWork(Data *d, Cone * k) {
   d->CG_TOL = d->CG_TOL*100;
   scaleArray(&(w->g[d->n]),-1,d->m);
   w->gTh = innerProd(w->h, w->g, w->l-1); 
-
-  if(d->NORMALIZE) {
-  	normalize(d,w);
-  }
-  else {
-	  w->dual_scale = 1.0;
-	  w->primal_scale = 1.0;
-  }
   return w;
 }
 
@@ -299,7 +279,7 @@ static inline void sety(Data * d,Work * w, Sol * sol){
   //memcpy(sol->y, w->z + w->yi, d->m*sizeof(double));
   int i;
   for(i = 0; i < d->m; ++i) {
-    sol->y[i] = 0.5 * w->dual_scale * (w->u[i + d->n]+w->u_t[i + d->n]);
+    sol->y[i] = 0.5 * w->A_scale * (w->u[i + d->n]+w->u_t[i + d->n]) / w->c_scale;
   }
 }
 
@@ -308,7 +288,7 @@ static inline void setx(Data * d,Work * w, Sol * sol){
   //memcpy(sol->x, w->z, d->n*sizeof(double));
   int i;
   for(i = 0; i < d->n; ++i) {
-    sol->x[i] = w->primal_scale * w->u[i];
+    sol->x[i] = w->A_scale * w->u[i] / w->b_scale;
   }
 }
 

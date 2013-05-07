@@ -60,7 +60,7 @@ typedef struct PRIVATE_DATA Priv;
 typedef struct WORK {
   double *u, *v, *u_t, *u_prev;
   double *h, *g;  
-  double gTh, dual_scale, primal_scale;  // A = dual_scale*A*primal_scale
+  double gTh, A_scale, b_scale, c_scale;  // A = dual_scale*A*primal_scale
   Priv * p;
   /* workspace for eigenvector decompositions: */
   double * Xs, *Z, *e;

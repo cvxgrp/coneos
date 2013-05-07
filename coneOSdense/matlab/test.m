@@ -40,8 +40,8 @@ cvx_end
 toc
 
 %%
-n = 10000;
-m = 1000;
+n = 500;
+m = 100;
 A = randn(m,n);
 b = randn(m,1);
 mu = 1;
@@ -64,6 +64,7 @@ cvx_end
 tic
 cvx_begin
 cvx_solver
+cvx_precision low
 variable x_sed(n)
 minimize(sum_square(A*x_sed-b)+mu*norm(x_sed,1))
 cvx_end
