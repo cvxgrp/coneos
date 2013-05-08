@@ -225,7 +225,7 @@ if prec(1)==0
     pars.EPS_ABS = 0;
     pars.EPS_REL = 0;
 else
-    pars.EPS_ABS = prec(2)*1e3;
+    pars.EPS_ABS = prec(2)^(0.7);
     pars.EPS_REL = pars.EPS_ABS;
 end
 if (isfield(settings,'MAX_ITERS'))
@@ -243,6 +243,15 @@ end
 pars.NORMALIZE = 1;
 if (isfield(settings,'NORMALIZE') && ~settings.NORMALIZE)
     pars.NORMALIZE = 0;
+end
+if (isfield(settings,'CG_TOL'))
+    pars.CG_TOL = settings.MAX_ITERS;
+end
+if (isfield(settings,'CG_MAX_ITS'))
+    pars.CG_MAX_ITS = settings.CG_MAX_ITS;
+end
+if (isfield(settings,'ALPHA'))
+    pars.ALPHA = settings.ALPHA;
 end
 
 [ yy, xx, info ] = cvx_run_solver( @coneos, data, K, pars, 'xx', 'yy', 'info', settings, 5 );

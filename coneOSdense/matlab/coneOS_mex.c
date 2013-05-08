@@ -61,7 +61,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   else d->EPS_REL = (double)*mxGetPr(EPS_REL_mex);
 
   const mxArray *UNDET_TOL_mex = mxGetField(params,0,"UNDET_TOL");
-  if (UNDET_TOL_mex == NULL) d->UNDET_TOL = 1e-4;
+  if (UNDET_TOL_mex == NULL) d->UNDET_TOL = 1e-8;
   else d->UNDET_TOL = (double)*mxGetPr(UNDET_TOL_mex);
 
   const mxArray *CG_MAX_ITS_mex = mxGetField(params,0,"CG_MAX_ITS");

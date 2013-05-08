@@ -73,22 +73,24 @@ cs * formKKT(Data * d, Work * w){
 
 
 void factorize(Data * d,Work * w){
-	tic();
+	//tic();
 	cs * K = formKKT(d,w);
-	if(d->VERBOSE) coneOS_printf("KKT matrix factorization info:\n");
+	//if(d->VERBOSE) coneOS_printf("KKT matrix factorization info:\n");
 	double *info;
 	LDLInit(K, w->p->P, &info);
-	if(d->VERBOSE) {
+	/*
+  if(d->VERBOSE) {
 #ifdef DLONG
 		amd_l_info(info);
 #else
 		amd_info(info);
 #endif
 	}
+  */
 	int * Pinv = cs_pinv(w->p->P, w->l-1);
 	cs * C = cs_symperm(K, Pinv, 1); 
 	LDLFactor(C, NULL, NULL, &w->p->L, &w->p->D);
-	if(d->VERBOSE) coneOS_printf("KKT matrix factorization took %4.8f ms\n",tocq());
+	//if(d->VERBOSE) coneOS_printf("KKT matrix factorization took %4.8f ms\n",tocq());
 	cs_spfree(C);cs_spfree(K);coneOS_free(Pinv);coneOS_free(info);
 }
 

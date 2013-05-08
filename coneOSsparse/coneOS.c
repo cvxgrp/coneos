@@ -5,19 +5,17 @@ static int _lineLen_;
 // constants and data structures
 static const char* HEADER[] = {
   "Iter", 
-  " norm(u - u_t) ",
-  " norm(u - u_prev) ",
-  " eps primal ",
-  " eps dual ",
+  " primal resid " ,
+  " dual resid ",
+  " epsilon "
 };
-static const int HEADER_LEN = 5;
+static const int HEADER_LEN = 4;
 
 // to hold residual information
 struct residuals {
   double resPri;
   double resDual;
-  double epsPri;
-  double epsDual;
+  double eps;
 };
 
 // forward declare inline declarations
@@ -53,7 +51,7 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
   }
   tic();
   int i;
-  struct residuals r = { -1, -1, -1, -1};
+  struct residuals r = { -1, -1, -1};
   Work * w = initWork(d,k);
   if(d->VERBOSE) {
     printHeader(w);
@@ -64,9 +62,9 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
    	projectLinSys(d,w);
     projectCones(d,w,k);
     updateDualVars(d,w);
-
+    
     calcResiduals(d,w,&r);
-    if (r.resPri < r.epsPri && r.resDual < r.epsDual) break; 
+    if (r.resPri < r.eps && r.resDual < r.eps) break; 
     if (d->VERBOSE && i % 100 == 0) printSummary(d,w,i, &r);
   }
   if(d->NORMALIZE) unNormalize(d,w);
@@ -166,11 +164,11 @@ static inline Work * initWork(Data *d, Cone * k) {
 }
 
 static inline void calcResiduals(Data *d ,Work *w, struct residuals * r){ 
+  double tau = (w->u[w->l-1]+w->u_t[w->l-1])/2;
+  double kap = w->v[w->l-1];
   r->resPri = calcNormDiff(w->u,w->u_t,w->l);
   r->resDual = calcNormDiff(w->u,w->u_prev,w->l);
-  r->epsPri = sqrt(w->l)*d->EPS_ABS + 
-    d->EPS_REL*fmax(calcNorm(w->u,w->l),calcNorm(w->u_t,w->l));
-  r->epsDual = sqrt(w->l)*d->EPS_ABS + d->EPS_REL*calcNorm(w->v,w->l);
+  r->eps = sqrt(w->l)*d->EPS_ABS + d->EPS_REL*(tau+kap);
 }
 
 static inline void projectLinSys(Data * d,Work * w){
@@ -295,10 +293,10 @@ static inline void setx(Data * d,Work * w, Sol * sol){
 static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
   // coneOS_printf("Iteration %i, primal residual %4f, primal tolerance %4f\n",i,err,EPS_PRI);
   coneOS_printf("%*i | ", (int)strlen(HEADER[0]), i);
-  coneOS_printf("%*.4f   ", (int)strlen(HEADER[1]), r->resPri); // p_res
-  coneOS_printf("%*.4f   ", (int)strlen(HEADER[2]), r->resDual); // d_res
-  coneOS_printf("%*.4f   ", (int)strlen(HEADER[3]), r->epsPri); // full(p_inf));
-  coneOS_printf("%*.4f\n", (int)strlen(HEADER[4]), r->epsDual);//full(d_inf));
+  coneOS_printf("%*.4e    ", (int)strlen(HEADER[1])-2, r->resPri); // p_res
+  coneOS_printf("%*.4e    ", (int)strlen(HEADER[2]), r->resDual); // d_res
+  coneOS_printf("%*.4e", (int)strlen(HEADER[3]), r->eps); // eps;
+  coneOS_printf("\n");
 #ifdef MATLAB_MEX_FILE
   mexEvalString("drawnow;");
 #endif
@@ -307,10 +305,9 @@ static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
 static inline void printHeader(Work * w) {
   int i;  
   _lineLen_ = 0;
-  for(i = 0; i < HEADER_LEN - 1; ++i) {
+  for(i = 0; i < HEADER_LEN; ++i) {
     _lineLen_ += strlen(HEADER[i]) + 3;
   }
-  _lineLen_ += strlen(HEADER[HEADER_LEN-1]);
   
   for(i = 0; i < _lineLen_; ++i) {
     coneOS_printf("-");

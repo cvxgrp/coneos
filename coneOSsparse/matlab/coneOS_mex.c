@@ -58,7 +58,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   else d->EPS_REL = (double)*mxGetPr(EPS_REL_mex);
 
   const mxArray *UNDET_TOL_mex = mxGetField(params,0,"UNDET_TOL");
-  if (UNDET_TOL_mex == NULL) d->UNDET_TOL = 1e-4;
+  if (UNDET_TOL_mex == NULL) d->UNDET_TOL = 1e-8;
   else d->UNDET_TOL = (double)*mxGetPr(UNDET_TOL_mex);
 
   const mxArray *CG_MAX_ITS_mex = mxGetField(params,0,"CG_MAX_ITS");
@@ -89,13 +89,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   }
   k->ssize = 0;
   k->s = NULL; 
-  int Anz = mxGetNzmax(A_mex);
+  d->Anz = mxGetNzmax(A_mex);
   d->Ax = (double *)mxGetPr(A_mex);
-  d->Ap = (int *)mxMalloc(sizeof(int)*Anz);
-  d->Ai = (int *)mxMalloc(sizeof(int)*Anz);
+  d->Ap = (int *)mxMalloc(sizeof(int)*d->Anz);
+  d->Ai = (int *)mxMalloc(sizeof(int)*d->Anz);
   long * A_i = (long*)mxGetIr(A_mex);
   /* XXX fix this crap: */
-  for (i = 0; i < Anz; i++){
+  for (i = 0; i < d->Anz; i++){
     d->Ai[i] = (int)A_i[i];
   }
   long * A_p = (long*)mxGetJc(A_mex);

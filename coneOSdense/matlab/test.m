@@ -48,6 +48,7 @@ mu = 1;
 
 cvx_begin
 cvx_solver_settings('USE_INDIRECT', false)
+cvx_precision high
 cvx_solver coneos
 variable x(n)
 minimize(sum_square(A*x-b)+mu*norm(x,1))
