@@ -1,4 +1,4 @@
-common_coneOS = 'coneOS_mex.c ../coneOS.c ../cones.c ../linAlg.c ../util.c ../external/lapacke.c';
+common_coneOS = 'coneOS_mex.c ../coneOS.c ../cones.c ../linAlg.c ../util.c';
 cd ..
 evalc('system(''make purge'')')
 cd matlab
@@ -14,7 +14,7 @@ else
     d = '-fPIC -m32';
     arr = '';
 end
-LOCS = '-I/opt/local/include -I/usr/local/include -L/opt/local/lib -L/usr/local/lib'
+LOCS = '-I/opt/local/include -I/usr/local/include -L/opt/local/lib -L/usr/local/lib -L/home/bodono/lib'
 
 % compile direct
 delete('coneOS_direct.mex*')

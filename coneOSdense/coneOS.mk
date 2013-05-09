@@ -5,20 +5,20 @@ LDFLAGS = -lm
 OPENFLAG = #-fopenmp
 
 # LINK YOUR INSTALLED BLAS LIBRARY BELOW:
-CFLAGS += -I/opt/local/include -I/usr/local/include
-LDFLAGS += -L/opt/local/lib -L/usr/local/lib 
+CFLAGS += -I/opt/local/include -I/usr/local/include 
+LDFLAGS += -L/opt/local/lib -L/usr/local/lib -L/home/bodono/lib
 
 # standard blas libs
 #LDFLAGS += -llapack -lcblas -lgfortran
 
 # openblas
-#LDFLAGS += -lopenblas
+LDFLAGS += -lopenblas
 
 # ATLAS, multi-thread (if atlas compiled with multi-thread support):
 #LDFLAGS += -L/usr/local/atlas/lib -lpthread -lptcblas -lptf77blas -llapack -latlas
 
 # ATLAS, single thread:
-LDFLAGS += -L/usr/local/atlas/lib -lcblas -lf77blas -llapack -latlas
+#LDFLAGS += -L/usr/local/atlas/lib -lcblas -lf77blas -llapack -latlas
 
 ifeq ($(UNAME), Darwin)
 	CFLAGS   += -std=c99
