@@ -1,6 +1,6 @@
 UNAME = $(shell uname -s)
 CC = gcc
-CFLAGS = -g -Wall -pedantic -O3 -I. -Iexternal/ 
+CFLAGS = -g -Wall -pedantic -O3 -I.
 LDFLAGS = -lm 
 OPENFLAG = #-fopenmp
 
@@ -12,13 +12,13 @@ LDFLAGS += -L/opt/local/lib -L/usr/local/lib
 #LDFLAGS += -llapack -lcblas -lgfortran
 
 # openblas
-LDFLAGS += -lopenblas -lgfortran
+#LDFLAGS += -lopenblas
 
 # ATLAS, multi-thread (if atlas compiled with multi-thread support):
 #LDFLAGS += -L/usr/local/atlas/lib -lpthread -lptcblas -lptf77blas -llapack -latlas
 
 # ATLAS, single thread:
-#LDFLAGS += -L/usr/local/atlas/lib -lcblas -lf77blas -llapack -latlas
+LDFLAGS += -L/usr/local/atlas/lib -lcblas -lf77blas -llapack -latlas
 
 ifeq ($(UNAME), Darwin)
 	CFLAGS   += -std=c99
