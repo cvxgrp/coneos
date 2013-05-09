@@ -87,8 +87,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   for ( i=0; i < k->qsize; i++ ){
     k->q[i] = (int)q_mex[i]; 
   }
-  k->ssize = 0;
-  k->s = NULL; 
+  
+  double * s_mex = mxGetPr(mxGetField(cone,0,"s"));
+  k->ssize = *(mxGetDimensions(mxGetField(cone,0,"s")));
+  k->s = mxMalloc(sizeof(int)*k->ssize);
+  for ( i=0; i < k->ssize; i++ ){
+    k->s[i] = (int)s_mex[i]; 
+  }
+  
   d->Anz = mxGetNzmax(A_mex);
   d->Ax = (double *)mxGetPr(A_mex);
   d->Ap = (int *)mxMalloc(sizeof(int)*d->Anz);

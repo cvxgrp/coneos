@@ -6,7 +6,7 @@ OPENFLAG = #-fopenmp
 
 # LINK YOUR INSTALLED BLAS LIBRARY BELOW:
 CFLAGS += -I/opt/local/include -I/usr/local/include 
-LDFLAGS += -L/opt/local/lib -L/usr/local/lib -L/home/bodono/lib
+LDFLAGS += -L/opt/local/lib -L/usr/local/lib
 
 # standard blas libs
 #LDFLAGS += -llapack -lcblas -lgfortran
@@ -19,6 +19,8 @@ LDFLAGS += -lopenblas
 
 # ATLAS, single thread:
 #LDFLAGS += -L/usr/local/atlas/lib -lcblas -lf77blas -llapack -latlas
+
+CFLAGS += -DLAPACK_LIB_FOUND
 
 ifeq ($(UNAME), Darwin)
 	CFLAGS   += -std=c99

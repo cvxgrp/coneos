@@ -14,7 +14,7 @@ else
     d = '-fPIC -m32';
     arr = '';
 end
-LOCS = '-I/opt/local/include -I/usr/local/include -L/opt/local/lib -L/usr/local/lib -L/home/bodono/lib'
+LOCS = '-I/opt/local/include -I/usr/local/include -L/opt/local/lib -L/usr/local/lib'
 
 % compile direct
 delete('coneOS_direct.mex*')

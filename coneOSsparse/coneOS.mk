@@ -10,6 +10,13 @@ else
 	CFLAGS   += -std=gnu99
 endif
 
+ifeq (1,0)
+  CFLAGS += -I/opt/local/include -I/usr/local/include 
+  LDFLAGS += -L/opt/local/lib -L/usr/local/lib
+  LDFLAGS += -lopenblas
+  CFLAGS += -DLAPACK_LIB_FOUND
+endif
+
 AR = ar
 ARFLAGS = rv
 ARCHIVE = $(AR) $(ARFLAGS)

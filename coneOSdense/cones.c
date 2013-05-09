@@ -1,7 +1,8 @@
 #include "cones.h"
+#ifdef LAPACK_LIB_FOUND
 #include <cblas.h>
 #include <lapacke.h>
-
+#endif
 void projectsdc(double * X, int n, Work * w); 
 
 /* in place projection (with branches) */
@@ -34,14 +35,22 @@ void projCone(double *x, Cone * k, Work * w)
 		}           
 		count += k->q[i];
 	}
+#ifdef LAPACK_LIB_FOUND
 	/* project onto PSD cone */
 	for (i=0; i < k->ssize; ++i){
 		projectsdc(&(x[count]),k->s[i],w);
 		count += (k->s[i])*(k->s[i]);
 	}
+#else
+  if(k->ssize > 0){
+    coneOS_printf("WARNING: solving SDP, no lapack library specified in makefile!\n");
+    coneOS_printf("ConeOS will return a wrong answer!\n");
+}
+#endif
 	/* project onto OTHER cones */
 }
 
+#ifdef LAPACK_LIB_FOUND
 void projectsdc(double *X, int n, Work * w)
 { /* project onto the dual positive semi-definite cone */
   int i, j, m=0;
@@ -56,7 +65,7 @@ void projectsdc(double *X, int n, Work * w)
     //b_daxpy(n, 1, &(X[i]), n, &(Xs[i*n]), 1);
   }
  
-  double EIG_TOL = 1e-4;
+  double EIG_TOL = 1e-8;
   double vupper = calcNorm(Xs,n*n);
   LAPACKE_dsyevr( LAPACK_COL_MAJOR, 'V', 'V', 'U', n, Xs, n, 0.0, vupper, -1, -1, EIG_TOL, &m, e, Z, n , NULL);
 
@@ -72,3 +81,5 @@ void projectsdc(double *X, int n, Work * w)
     }   
   }
 }
+#endif
+

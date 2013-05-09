@@ -325,22 +325,22 @@ LDL_int LDL_numeric	/* returns n if successful, k if D (k,k) is zero */
 
 void LDL_lsolve
 (
-    LDL_int n,		/* L is n-by-n, where n >= 0 */
-    double X [ ],	/* size n.  right-hand-side on input, soln. on output */
-    LDL_int Lp [ ],	/* input of size n+1, not modified */
-    LDL_int Li [ ],	/* input of size lnz=Lp[n], not modified */
-    double Lx [ ]	/* input of size lnz=Lp[n], not modified */
-)
+ LDL_int n,		/* L is n-by-n, where n >= 0 */
+ double X [ ],	/* size n.  right-hand-side on input, soln. on output */
+ LDL_int Lp [ ],	/* input of size n+1, not modified */
+ LDL_int Li [ ],	/* input of size lnz=Lp[n], not modified */
+ double Lx [ ]	/* input of size lnz=Lp[n], not modified */
+ )
 {
-    LDL_int j, p, p2 ;
-    for (j = 0 ; j < n ; j++)
+  LDL_int j, p, p2 ;
+  for (j = 0 ; j < n ; j++)
+  {
+    p2 = Lp [j+1] ;
+    for (p = Lp [j] ; p < p2 ; p++)
     {
-	p2 = Lp [j+1] ;
-	for (p = Lp [j] ; p < p2 ; p++)
-	{
-	    X [Li [p]] -= Lx [p] * X [j] ;
-	}
+      X [Li [p]] -= Lx [p] * X [j] ;
     }
+  }
 }
 
 
@@ -358,7 +358,7 @@ void LDL_dsolve
     LDL_int j ;
     for (j = 0 ; j < n ; j++)
     {
-	X [j] /= D [j] ;
+    	X [j] /= D [j] ;
     }
 }
 
@@ -369,22 +369,22 @@ void LDL_dsolve
 
 void LDL_ltsolve
 (
-    LDL_int n,		/* L is n-by-n, where n >= 0 */
-    double X [ ],	/* size n.  right-hand-side on input, soln. on output */
-    LDL_int Lp [ ],	/* input of size n+1, not modified */
-    LDL_int Li [ ],	/* input of size lnz=Lp[n], not modified */
-    double Lx [ ]	/* input of size lnz=Lp[n], not modified */
-)
+ LDL_int n,		/* L is n-by-n, where n >= 0 */
+ double X [ ],	/* size n.  right-hand-side on input, soln. on output */
+ LDL_int Lp [ ],	/* input of size n+1, not modified */
+ LDL_int Li [ ],	/* input of size lnz=Lp[n], not modified */
+ double Lx [ ]	/* input of size lnz=Lp[n], not modified */
+ )
 {
-    int j, p, p2 ;
-    for (j = n-1 ; j >= 0 ; j--)
+  int j, p, p2 ;
+  for (j = n-1 ; j >= 0 ; j--)
+  {
+    p2 = Lp [j+1] ;
+    for (p = Lp [j] ; p < p2 ; p++)
     {
-	p2 = Lp [j+1] ;
-	for (p = Lp [j] ; p < p2 ; p++)
-	{
-	    X [j] -= Lx [p] * X [Li [p]] ;
-	}
+      X [j] -= Lx [p] * X [Li [p]] ;
     }
+  }
 }
 
 

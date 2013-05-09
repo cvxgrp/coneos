@@ -13,7 +13,7 @@ if isempty( shim.name ),
     int_path(end+1) = fs;
     int_plen = length( int_path );
     shim.name = 'coneos';
-    shim.dualize = true;
+    shim.dualize = false;
     flen = length(fname);
     fpaths = { [ int_path, 'coneos', fs, fname ] };
     fpaths = [ fpaths ; which( fname, '-all' ) ];
@@ -213,9 +213,8 @@ data.A = sparse(At);
 data.b = full(c);
 data.c = -full(b);
 K.q = K.q';
-if (~isempty(K.s))
-	error('coneOS (sparse version) cannot currently handle SDPs');
-end
+K.s = K.s';
+
 if (isfield(settings,'UNDET_TOL'))
     pars.UNDET_TOL = settings.UNDET_TOL;
 else
@@ -254,7 +253,6 @@ end
 if (isfield(settings,'ALPHA'))
     pars.ALPHA = settings.ALPHA;
 end
-
 
 [ yy, xx, info ] = cvx_run_solver( @coneos, data, K, pars, 'xx', 'yy', 'info', settings, 5 );
 
