@@ -24,6 +24,6 @@ inline void addScaledArray(double * a, const double * b, int n, const double sc)
 
 inline double calcNormDiff(double *a, double *b, int l);
 
-static inline void accumByAtrans(int n, double * Ax, int * Ai, int * Ap, const double *x, double *y); 
+static inline void accumByAtrans(Data * d, const double *x, double *y); 
 
-static inline void accumByA(int n, double * Ax, int * Ai, int * Ap, const double *x, double *y);
+static inline void accumByA(Data * d, const double *x, double *y);

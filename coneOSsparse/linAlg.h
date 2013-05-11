@@ -8,6 +8,9 @@
  * compiler. If compiling without optimization, causes code bloat.
  */
 
+static inline void _accumByAtrans(int n, double * Ax, int * Ai, int * Ap, const double *x, double *y);
+static inline void _accumByA(int n, double * Ax, int * Ai, int * Ap, const double *x, double *y);
+
 // x = b*a
 inline void setAsScaledArray(double *x, const double * a,const double b,int len) {
   int i;
@@ -63,7 +66,16 @@ inline double calcNormDiff(double *a, double *b, int l) {
     return sqrt(nmDiff);
 }
 
-static inline void accumByAtrans(int n, double * Ax, int * Ai, int * Ap, const double *x, double *y) 
+static inline void accumByAtrans(Data * d, const double *x, double *y) 
+{
+	_accumByAtrans(d->n, d->Ax, d->Ai, d->Ap, x, y); 
+}
+static inline void accumByA(Data * d, const double *x, double *y) 
+{
+	_accumByA(d->n, d->Ax, d->Ai, d->Ap, x, y);
+}
+
+static inline void _accumByAtrans(int n, double * Ax, int * Ai, int * Ap, const double *x, double *y) 
 {
     /* y  = A'*x 
     A in column compressed format 
@@ -85,7 +97,7 @@ static inline void accumByAtrans(int n, double * Ax, int * Ai, int * Ap, const d
     }   
 }
 
-static inline void accumByA(int n, double * Ax, int * Ai, int * Ap, const double *x, double *y) 
+static inline void _accumByA(int n, double * Ax, int * Ai, int * Ap, const double *x, double *y) 
 {
 /*y  = A*x 
   A in column compressed format  

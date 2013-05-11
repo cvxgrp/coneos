@@ -3,8 +3,8 @@
 
 static inline void calcAx(Data * d, Work * w, const double * x, double * y);
 static void cgCustom(Data *d, Work *w, const double *s, double * b, int max_its, double tol);
-static inline void _accumByA(Data * d, Work * w, const double *x, double *y);
-static inline void _accumByAtrans(Data *d, Work * w, const double *x, double *y);
+static inline void CGaccumByA(Data * d, Work * w, const double *x, double *y);
+static inline void CGaccumByAtrans(Data *d, Work * w, const double *x, double *y);
 static inline void transpose (Data * d, Work * w);
 
 
@@ -63,11 +63,11 @@ void freePriv(Work * w){
 void solveLinSys(Data *d, Work * w, double * b, const double * s){
 	// solves Mx = b, for x but stores result in b
 	// s contains warm-start (if available)
-	_accumByAtrans(d,w, &(b[d->n]), b);
+	CGaccumByAtrans(d,w, &(b[d->n]), b);
 	// solves (I+A'A)x = b, s warm start, solution stored in b
 	cgCustom(d, w, s, b, d->CG_MAX_ITS, d->CG_TOL);
 	scaleArray(&(b[d->n]),-1,d->m);
-	_accumByA(d, w, b, &(b[d->n]));
+	CGaccumByA(d, w, b, &(b[d->n]));
 }
 
 static void cgCustom(Data *d, Work *w, const double * s, double * b, int max_its, double tol){
@@ -113,17 +113,17 @@ static void cgCustom(Data *d, Work *w, const double * s, double * b, int max_its
 static inline void calcAx(Data * d, Work * w, const double * x, double * y){
 	double * tmp = w->p->tmp;
 	memset(tmp,0,d->m*sizeof(double));
-	_accumByA(d,w,x,tmp);
+	CGaccumByA(d,w,x,tmp);
 	memset(y,0,d->n*sizeof(double));
-	_accumByAtrans(d,w,tmp,y);
+	CGaccumByAtrans(d,w,tmp,y);
 	addScaledArray(y,x,d->n,1);
 }
 
-static inline void _accumByA(Data * d, Work * w, const double *x, double *y)
+static inline void CGaccumByA(Data * d, Work * w, const double *x, double *y)
 {
-  accumByAtrans(d->m,w->p->Atx,w->p->Ati,w->p->Atp,x,y);
+  _accumByAtrans(d->m,w->p->Atx,w->p->Ati,w->p->Atp,x,y);
 }
-static inline void _accumByAtrans(Data *d, Work * w, const double *x, double *y)
+static inline void CGaccumByAtrans(Data *d, Work * w, const double *x, double *y)
 {
-  accumByAtrans(d->n,d->Ax,d->Ai,d->Ap,x,y);
+  _accumByAtrans(d->n,d->Ax,d->Ai,d->Ap,x,y);
 }
