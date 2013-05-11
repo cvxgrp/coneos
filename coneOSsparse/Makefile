@@ -30,9 +30,7 @@ direct/amd_post_tree.o	: direct/amd_internal.h direct/amd.h
 direct/amd_postorder.o	: direct/amd_internal.h direct/amd.h
 direct/amd_preprocess.o	: direct/amd_internal.h direct/amd.h
 direct/amd_valid.o		: direct/amd_internal.h direct/amd.h
-
-indirect/private.o	: indirect/private.c
-	$(CC) $(CFLAGS) $(OPENFLAG) -c -o $@ $^ 
+indirect/private.o	: indirect/private.h
 
 lib/libconeOSdir.a: $(OBJECTS) direct/private.o  $(DIRECT_OBJECTS)
 	mkdir -p lib
@@ -50,7 +48,7 @@ bin/demo_direct: run_coneOS.c lib/libconeOSdir.a
 
 bin/demo_indirect: run_coneOS.c lib/libconeOSindir.a
 	mkdir -p bin
-	$(CC) $(CFLAGS) $(OPENFLAG) -DDEMO_PATH="\"$(CURDIR)/data_coneOS\"" -o $@ $^ $(LDFLAGS) 
+	$(CC) $(CFLAGS) -DDEMO_PATH="\"$(CURDIR)/data_coneOS\"" -o $@ $^ $(LDFLAGS) 
 
 .PHONY: clean purge
 clean:

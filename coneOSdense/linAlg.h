@@ -2,23 +2,30 @@
 #define LINALG_H_GUARD
 
 // x = b*a
-extern void setAsScaledArray(double *x, const double * a,const double b,int len);
+inline void setAsScaledArray(double *x, const double * a,const double b,int len);
 
 // a*= b
-extern void scaleArray(double * a,const double b,int len);
+inline void scaleArray(double * a,const double b,int len);
 
 // x'*y
-extern double innerProd(const double * x, const double * y, int len);
+inline double innerProd(const double * x, const double * y, int len);
 
-extern double calcNormDiff(double *a, double *b, int l); 
+inline double calcNormDiff(double *a, double *b, int l); 
 
 // ||v||_2^2
-extern double calcNormSq(const double * v,int len);
+inline double calcNormSq(const double * v,int len);
 
 // ||v||_2
-extern double calcNorm(const double * v,int len);
+inline double calcNorm(const double * v,int len);
 
-// saxpy
-extern void addScaledArray(double * a, const double * b, int n, const double sc);
+// ||v||_inf
+inline double calcNormInf(const double *v, int len);
+
+// daxpy
+inline void addScaledArray(double * a, const double * b, int n, const double sc);
+
+inline void accumByAtrans(int n, double * Ax, int * Ai, int * Ap, const double *x, double *y);
+inline void accumByA(int n, double * Ax, int * Ai, int * Ap, const double *x, double *y);
+
 
 #endif

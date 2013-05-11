@@ -16,6 +16,9 @@ struct residuals {
   double resPri;
   double resDual;
   double eps;
+  double pres;
+  double dres;
+  double dgap;
 };
 
 // forward declare inline declarations
@@ -51,7 +54,7 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
   }
   tic();
   int i;
-  struct residuals r = { -1, -1, -1};
+  struct residuals r = { -1, -1, -1, -1, -1};
   Work * w = initWork(d,k);
   if(d->VERBOSE) {
     printHeader(w);
@@ -64,7 +67,13 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
     updateDualVars(d,w);
     
     calcResiduals(d,w,&r);
-    if (r.resPri < r.eps && r.resDual < r.eps) break; 
+    if (r.resPri < r.eps && r.resDual < r.eps){
+		if(i % 50 == 0){	
+			calcExtResiduals(d,w,&r);
+			if (r.pres < 1e-2 && r.dres < 1e-2 && r.dgap < 1e-2)
+				break; 
+		}
+	}
     if (d->VERBOSE && i % 100 == 0) printSummary(d,w,i, &r);
   }
   if(d->NORMALIZE) unNormalize(d,w);
@@ -170,6 +179,36 @@ static inline void calcResiduals(Data *d ,Work *w, struct residuals * r){
   r->resDual = calcNormDiff(w->u,w->u_prev,w->l);
   r->eps = sqrt(w->l)*d->EPS_ABS + d->EPS_REL*(tau+kap);
 }
+
+static inline void calcExtResiduals(Data *d ,Work *w, struct residuals * r){ 
+	double tau = (w->u[w->l-1]+w->u_t[w->l-1])/2;
+	double kap = w->v[w->l-1];
+	double * dr = coneOS_calloc(d->n,sizeof(double));
+	double * pr = coneOS_calloc(d->m,sizeof(double));
+
+	accumByAtrans(d,&(w->u[d->n]),pr);
+	addScaledArray(pr,&(w->v[d->n]),d->m,1.0)
+	addScaledArray(pr,d->b,d->m,u[d->l-1]);
+	r->pres = calcNorm(pr,d->n);
+
+	accumByA(d,w->u,dr);
+	addScaledArray(dr,d->c,d->n,u[d->l-1]);
+	r->dres = calcNorm(dr,d->m);
+
+	r->dgap = d->v[d->l-1] + innerProd(w->u,d->c,d->n) + innerProd(&(w->u[d->n]),d->b,d->m);
+	
+	free(dr); free(pr);
+}
+
+
+accumByAtrans(int n, double * Ax, int * Ai, int * Ap, const double *x, double *y)	
+  double tau = (w->u[w->l-1]+w->u_t[w->l-1])/2;
+  double kap = w->v[w->l-1];
+  r->resPri = calcNormDiff(w->u,w->u_t,w->l);
+  r->resDual = calcNormDiff(w->u,w->u_prev,w->l);
+  r->eps = sqrt(w->l)*d->EPS_ABS + d->EPS_REL*(tau+kap);
+}
+
 
 static inline void projectLinSys(Data * d,Work * w){
   //memcpy(w->u_t,w->u,w->l*sizeof(double));

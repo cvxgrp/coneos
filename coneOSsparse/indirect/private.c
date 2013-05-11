@@ -1,10 +1,10 @@
 #include "private.h"
+#include "linAlg.h"
 
 static inline void calcAx(Data * d, Work * w, const double * x, double * y);
 static void cgCustom(Data *d, Work *w, const double *s, double * b, int max_its, double tol);
-static inline void accumByA(Data * d, Work * w, const double *x, double *y);
-static inline void accumByAtrans(Data *d, Work * w, const double *x, double *y);
-static inline void _accumAtrans(int n, double * Ax, int * Ai, int * Ap, const double *x, double *y);
+static inline void _accumByA(Data * d, Work * w, const double *x, double *y);
+static inline void _accumByAtrans(Data *d, Work * w, const double *x, double *y);
 static inline void transpose (Data * d, Work * w);
 
 
@@ -54,20 +54,20 @@ void freePriv(Work * w){
 	coneOS_free(w->p->r);
 	coneOS_free(w->p->Ap);
 	coneOS_free(w->p->tmp);
-  coneOS_free(w->p->Ati);
-  coneOS_free(w->p->Atx);
-  coneOS_free(w->p->Atp);
+	coneOS_free(w->p->Ati);
+	coneOS_free(w->p->Atx);
+	coneOS_free(w->p->Atp);
 	coneOS_free(w->p);
 }
 
 void solveLinSys(Data *d, Work * w, double * b, const double * s){
 	// solves Mx = b, for x but stores result in b
 	// s contains warm-start (if available)
-	accumByAtrans(d,w, &(b[d->n]), b);
+	_accumByAtrans(d,w, &(b[d->n]), b);
 	// solves (I+A'A)x = b, s warm start, solution stored in b
 	cgCustom(d, w, s, b, d->CG_MAX_ITS, d->CG_TOL);
 	scaleArray(&(b[d->n]),-1,d->m);
-	accumByA(d, w, b, &(b[d->n]));
+	_accumByA(d, w, b, &(b[d->n]));
 }
 
 static void cgCustom(Data *d, Work *w, const double * s, double * b, int max_its, double tol){
@@ -113,90 +113,17 @@ static void cgCustom(Data *d, Work *w, const double * s, double * b, int max_its
 static inline void calcAx(Data * d, Work * w, const double * x, double * y){
 	double * tmp = w->p->tmp;
 	memset(tmp,0,d->m*sizeof(double));
-	accumByA(d,w,x,tmp);
+	_accumByA(d,w,x,tmp);
 	memset(y,0,d->n*sizeof(double));
-	accumByAtrans(d,w,tmp,y);
+	_accumByAtrans(d,w,tmp,y);
 	addScaledArray(y,x,d->n,1);
 }
 
-static inline void accumByA(Data * d, Work * w, const double *x, double *y)
+static inline void _accumByA(Data * d, Work * w, const double *x, double *y)
 {
-  _accumAtrans(d->m,w->p->Atx,w->p->Ati,w->p->Atp,x,y);
+  accumByAtrans(d->m,w->p->Atx,w->p->Ati,w->p->Atp,x,y);
 }
-static inline void accumByAtrans(Data *d, Work * w, const double *x, double *y){
-  _accumAtrans(d->n,d->Ax,d->Ai,d->Ap,x,y);
-}
-
-static inline void _accumAtrans(int n, double * Ax, int * Ai, int * Ap, const double *x, double *y)
+static inline void _accumByAtrans(Data *d, Work * w, const double *x, double *y)
 {
-	/* y  = A'*x 
-	A in column compressed format 
-	parallelizes over columns (rows of A')
-	*/
-	int p, j;
-	int c1, c2;
-	double yj;
-#pragma omp parallel for private(p,c1,c2,yj) 
-	for (j = 0 ; j < n ; j++)
-	{
-		yj = y[j];
-		c1 = Ap[j]; c2 = Ap[j+1];
-		for (p = c1 ; p < c2 ; p++)        
-		{   
-			yj += Ax[p] * x[ Ai[p] ] ;
-		}
-		y[j] = yj;
-	}
+  accumByAtrans(d->n,d->Ax,d->Ai,d->Ap,x,y);
 }
-
-//
-//void accumByA(Data * d, const double *x, double *y)
-//{
-//*
-///*y  = A*x 
-//	A in column compressed format  
-//	this parallelizes over columns and uses
-//	pragma atomic to prevent concurrent writes to y 
-//	 */
-//	int p, j, n, *Ap, *Ai ;
-//	double *Ax ;
-//	n = d->n ; Ap = d->Ap ; Ai = d->Ai ; Ax = d->Ax ;
-//	int c1, c2;
-//	double xj;
-////#pragma omp parallel for private(p,c1,c2,xj) 
-//	for (j = 0 ; j < n ; j++)
-//	{
-//		xj = x[j];
-//		c1 = Ap[j]; c2 = Ap[j+1];
-//		for (p = c1 ; p < c2 ; p++)        
-//		{
-////#pragma omp atomic
-//			y [Ai[p]] += Ax [p] * xj ;
-//		}
-//	}
-//}
-//
-//void accumByAtrans(Data * d, const double *x, double *y)
-//{
-//	/* y  = A'*x 
-//	A in column compressed format 
-//	parallelizes over columns (rows of A')
-//	*/
-//	int p, j, n, *Ap, *Ai ;
-//	double *Ax ;
-//	n = d->n ; Ap = d->Ap ; Ai = d->Ai ; Ax = d->Ax ;
-//	/* parallel matrix multiply */
-//	int c1, c2;
-//	double yj;
-//#pragma omp parallel for private(p,c1,c2,yj) 
-//	for (j = 0 ; j < n ; j++)
-//	{
-//		yj = y[j];
-//		c1 = Ap[j]; c2 = Ap[j+1];
-//		for (p = c1 ; p < c2 ; p++)        
-//		{   
-//			yj += Ax[p] * x[ Ai[p] ] ;
-//		}
-//		y[j] = yj;
-//	}
-//}
