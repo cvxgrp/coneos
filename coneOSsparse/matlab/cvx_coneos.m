@@ -225,7 +225,7 @@ if prec(1)==0
     pars.EPS_ABS = 0;
     pars.EPS_REL = 0;
 else
-    pars.EPS_ABS = prec(2)^(0.7);
+    pars.EPS_ABS = prec(2)^(0.25);
     pars.EPS_REL = pars.EPS_ABS;
 end
 if (isfield(settings,'MAX_ITERS'))

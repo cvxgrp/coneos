@@ -180,21 +180,25 @@ static inline void calcResiduals(Data *d ,Work *w, struct residuals * r){
 	double kap = w->v[w->l-1];
 	double * dr = coneOS_calloc(d->n,sizeof(double));
 	double * pr = coneOS_calloc(d->m,sizeof(double));
-	
-	accumByA(d,w->u,pr);
-	scaleArray(pr,1/w->A_scale,d->m);
-	addScaledArray(pr,&(w->v[d->n]),d->m,1.0);
-	addScaledArray(pr,d->b,d->m,-tau/w->b_scale);
-	r->pres = calcNorm(pr,d->m);
-	
-	accumByAtrans(d,&(w->u[d->n]),dr);
-	scaleArray(dr,1/w->A_scale,d->n);
-	addScaledArray(dr,d->c,d->n,tau/w->c_scale);
-	r->dres = calcNorm(dr,d->n);
-	
-	r->dgap = kap + innerProd(w->u,d->c,d->n)/w->c_scale + innerProd(&(w->u[d->n]),d->b,d->m)/w->b_scale;
 
-	r->eps = d->EPS_ABS*(tau+kap); 
+	double y[d->m], * x = w->u;
+	memcpy(y,&(w->u[d->n]),d->m*sizeof(double));
+	addScaledArray(y,&(w->u_t[d->n]),d->m,1);
+	scaleArray(y,0.5,d->m);
+
+	accumByA(d,x,pr);
+	addScaledArray(pr,&(w->v[d->n]),d->m,1.0);
+	addScaledArray(pr,d->b,d->m,-tau);
+	r->pres = calcNorm(pr,d->m)/(w->b_scale*(tau+kap));
+	
+	accumByAtrans(d,y,dr);
+	addScaledArray(dr,d->c,d->n,tau);
+	r->dres = calcNorm(dr,d->n)/(w->c_scale*(tau+kap));
+	
+	r->dgap = kap + (w->A_scale/(w->c_scale*w->b_scale))*(innerProd(x,d->c,d->n) + innerProd(y,d->b,d->m));
+	r->dgap = fabs(r->dgap/(tau+kap));
+
+	r->eps = d->EPS_ABS; 
 	
 	coneOS_free(dr); coneOS_free(pr);
 }
