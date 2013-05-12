@@ -1,7 +1,4 @@
 add optimal warm_start for indirect method
-add periodic KKT condition termination check
-if d->n > d->m else ...
-return inaccurate if failed to converge in max_iters
 
 dense: use matlab built-in lapack and blas libs (hard...)
 change comments to /*

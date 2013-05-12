@@ -5,7 +5,7 @@ cd matlab
 
 % open blas:
 %BLASLIB = '-lmwlapack -lcblas -lmwblas';
-BLASLIB = '-lopenblas';
+BLASLIB = '-lopenblas -llapack -llapacke';
 
 if (~isempty (strfind (computer, '64')))
     d = '-fPIC' ;

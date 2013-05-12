@@ -12,7 +12,7 @@ LDFLAGS += -L/opt/local/lib -L/usr/local/lib
 #LDFLAGS += -llapack -lcblas -lgfortran
 
 # openblas
-LDFLAGS += -lopenblas
+LDFLAGS += -lopenblas -llapack -llapacke
 
 # ATLAS, multi-thread (if atlas compiled with multi-thread support):
 #LDFLAGS += -L/usr/local/atlas/lib -lpthread -lptcblas -lptf77blas -llapack -latlas

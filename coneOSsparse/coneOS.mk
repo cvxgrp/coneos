@@ -14,7 +14,7 @@ endif
 ifeq (1,1)
   CFLAGS += -I/opt/local/include -I/usr/local/include 
   LDFLAGS += -L/opt/local/lib -L/usr/local/lib
-  LDFLAGS += -lopenblas
+  LDFLAGS += -lopenblas -llapack -llapacke
   CFLAGS += -DLAPACK_LIB_FOUND
 endif
 
