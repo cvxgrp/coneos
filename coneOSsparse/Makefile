@@ -10,7 +10,7 @@ TARGETS = bin/demo_direct bin/demo_indirect
 default: lib/libconeOSdir.a lib/libconeOSindir.a bin/demo_direct bin/demo_indirect
 
 coneOS.o 	: coneOS.h
-linAlg.o 	: linAlg.h
+linAlg.o 	: linAlg.c
 util.o		: util.h
 cones.o		: cones.c
 cs.o		: cs.h

@@ -34,7 +34,7 @@ typedef struct PROBLEM_DATA {
   int Anz;
   double * b, * c;
   int MAX_ITERS, CG_MAX_ITS;
-  double EPS_ABS, EPS_REL, ALPH, CG_TOL, UNDET_TOL;
+  double EPS_ABS, ALPH, CG_TOL, UNDET_TOL;
   int VERBOSE, NORMALIZE;  // boolean
 } Data;
 

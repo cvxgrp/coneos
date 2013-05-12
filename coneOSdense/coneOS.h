@@ -34,7 +34,7 @@ typedef struct PROBLEM_DATA {
   int Anz;
   double * b, * c;
   int MAX_ITERS, CG_MAX_ITS;
-  double EPS_ABS, EPS_REL, ALPH, CG_TOL, UNDET_TOL;
+  double EPS_ABS, ALPH, CG_TOL, UNDET_TOL;
   int VERBOSE, NORMALIZE;  // boolean
 } Data;
 
@@ -60,7 +60,7 @@ typedef struct PRIVATE_DATA Priv;
 typedef struct WORK {
   double *u, *v, *u_t, *u_prev;
   double *h, *g;  
-  double gTh, A_scale, b_scale, c_scale;  // A = dual_scale*A*primal_scale
+  double gTh, A_scale, b_scale, c_scale; 
   Priv * p;
   /* workspace for eigenvector decompositions: */
   double * Xs, *Z, *e;

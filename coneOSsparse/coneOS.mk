@@ -11,7 +11,7 @@ else
 	CFLAGS   += -std=gnu99
 endif
 
-ifeq (1,0)
+ifeq (1,1)
   CFLAGS += -I/opt/local/include -I/usr/local/include 
   LDFLAGS += -L/opt/local/lib -L/usr/local/lib
   LDFLAGS += -lopenblas

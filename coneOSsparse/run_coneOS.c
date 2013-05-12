@@ -15,9 +15,9 @@ int main(int argc, char **argv)
 	Data * d = malloc(sizeof(Data));
 	read_in_data(fp,d,k);
 	fclose(fp);
-	int i;
 	Sol * sol = malloc(sizeof(Sol));
 	Info * info = malloc(sizeof(Info));
+	int i;
 	for (i=0;i<NUM_TRIALS;i++)
 	{
 		coneOS(d,k,sol,info);
@@ -35,13 +35,18 @@ void read_in_data(FILE * fp,Data * d, Cone * k){
 	fscanf(fp, "%i", &(k->f));
 	fscanf(fp, "%i", &(k->l));
 	fscanf(fp, "%i", &(k->qsize)); 
+	fscanf(fp, "%i", &(k->ssize));
+
 	k->q = malloc(sizeof(int)*k->qsize);
 	for(int i = 0; i < k->qsize; i++)
 	{ 
 		fscanf(fp, "%i", &k->q[i]);
 	}
-	k->ssize = 0;
-	k->s = NULL;
+    k->s = malloc(sizeof(int)*k->ssize);
+    for(int i = 0; i < k->ssize; i++)
+    {   
+        fscanf(fp, "%i", &k->s[i]);
+    }   
 	d->b = malloc(sizeof(double)*d->m);
 	for(int i = 0; i < d->m; i++)
 	{ 
@@ -59,7 +64,6 @@ void read_in_data(FILE * fp,Data * d, Cone * k){
 	fscanf(fp, "%lf", &(d->ALPH));
 	fscanf(fp, "%lf", &(d->UNDET_TOL)); 
 	fscanf(fp, "%lf", &(d->EPS_ABS)); 
-	fscanf(fp, "%lf", &(d->EPS_REL)); 
 	fscanf(fp, "%lf", &(d->CG_TOL));
 	fscanf(fp, "%i", &(d->VERBOSE));
 	fscanf(fp, "%i", &(d->NORMALIZE));

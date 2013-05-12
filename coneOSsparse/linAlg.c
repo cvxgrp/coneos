@@ -27,3 +27,7 @@ inline double calcNormDiff(double *a, double *b, int l);
 static inline void accumByAtrans(Data * d, const double *x, double *y); 
 
 static inline void accumByA(Data * d, const double *x, double *y);
+
+static inline void accumByAtrans(Data * d, const double *x, double *y); 
+
+static inline void accumByA(Data * d, const double *x, double *y);

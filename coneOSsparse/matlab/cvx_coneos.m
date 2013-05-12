@@ -223,10 +223,11 @@ end
 if prec(1)==0
     % just run until MAX_ITERS
     pars.EPS_ABS = 0;
-    pars.EPS_REL = 0;
 else
-    pars.EPS_ABS = prec(2)^(0.25);
-    pars.EPS_REL = pars.EPS_ABS;
+    pars.EPS_ABS = prec(2)^(0.4);
+end
+if (isfield(settings,'EPS'))
+    pars.EPS_ABS = settings.EPS;
 end
 if (isfield(settings,'MAX_ITERS'))
     pars.MAX_ITERS = settings.MAX_ITERS;
@@ -240,6 +241,7 @@ pars.USE_INDIRECT = false;
 if (isfield(settings,'USE_INDIRECT') && settings.USE_INDIRECT)
     pars.USE_INDIRECT = true;
 end
+% normalization doesn't really work yet
 pars.NORMALIZE = 1;
 if (isfield(settings,'NORMALIZE') && ~settings.NORMALIZE)
     pars.NORMALIZE = 0;

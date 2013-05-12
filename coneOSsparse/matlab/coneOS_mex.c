@@ -53,10 +53,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   if (EPS_ABS_mex == NULL) d->EPS_ABS = 1e-4;
   else d->EPS_ABS = (double)*mxGetPr(EPS_ABS_mex);
 
-  const mxArray *EPS_REL_mex = mxGetField(params,0,"EPS_REL");
-  if (EPS_REL_mex == NULL) d->EPS_REL = 1e-4;
-  else d->EPS_REL = (double)*mxGetPr(EPS_REL_mex);
-
   const mxArray *UNDET_TOL_mex = mxGetField(params,0,"UNDET_TOL");
   if (UNDET_TOL_mex == NULL) d->UNDET_TOL = 1e-8;
   else d->UNDET_TOL = (double)*mxGetPr(UNDET_TOL_mex);
