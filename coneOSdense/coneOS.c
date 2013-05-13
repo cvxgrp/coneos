@@ -62,14 +62,14 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
 	}
 	tic();
 	int i;
-	struct residuals r = {-1, -1, -1, -1};
+	struct residuals r = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
 	Work * w = initWork(d,k);
 	if(d->VERBOSE) {
 		printHeader(w);
 	} /* coneOS: */
 	for (i=0; i < d->MAX_ITERS; ++i){
 		memcpy(w->u_prev, w->u, w->l*sizeof(double));
-
+		
 		projectLinSys(d,w);
 		projectCones(d,w,k);
 		updateDualVars(d,w);
@@ -160,7 +160,7 @@ static inline void unNormalize(Data *d, Work * w){
 
 static inline void normalize(Data * d, Work * w){
 	// scale A,b,c
-	w->A_scale = sqrt(d->n*d->m)/calcNorm(d->Ax, d->Anz);
+	w->A_scale = sqrt(d->n)*sqrt(d->m)/calcNorm(d->Ax, d->Anz);
 	w->c_scale = sqrt(d->m)/calcNorm(d->c,d->n);
 	w->b_scale = sqrt(d->n)/calcNorm(d->b,d->m);
 
@@ -230,7 +230,7 @@ static inline void projectLinSys(Data * d,Work * w){
 	//double sc = innerProd(w->u_t,w->h,w->l-1)/(w->fac+1);
 	//addScaledArray(w->u_t, w->beta, w->l-1, -sc);
 	//w->u_t[w->l-1] += sc;
-
+	
 	memcpy(w->u_t,w->u,w->l*sizeof(double));
 	addScaledArray(w->u_t,w->v,w->l,1.0);
 	addScaledArray(w->u_t,w->h,w->l-1,-w->u_t[w->l-1]);
