@@ -45,8 +45,10 @@ cmd = sprintf ('%s ../direct/ldl.c %s ../direct/private.c -lm %s %s -o coneos_di
 eval(cmd);
 
 % compile indirect (XXX: openmp?)
-cmd = sprintf('mex -v -O %s COMPFLAGS="/openmp $COMPFLAGS" CFLAGS="\\$CFLAGS -std=c99 -O3 -fopenmp -pthread -DMATLAB_MEX_FILE %s %s" ../indirect/private.c %s -I../ %s -o coneos_indirect LDFLAGS="\\$LDFLAGS -fopenmp -lm  %s %s"',  arr, d, LCFLAG, common_coneOS, INCS, LOCS, BLASLIB);
+%cmd = sprintf('mex -O %s COMPFLAGS="/openmp $COMPFLAGS" CFLAGS="\\$CFLAGS -std=c99 -O3 -fopenmp -pthread -DMATLAB_MEX_FILE %s %s" ../indirect/private.c %s -I../ %s -o coneos_indirect LDFLAGS="\\$LDFLAGS -fopenmp -lm  %s %s"',  arr, d, LCFLAG, common_coneOS, INCS, LOCS, BLASLIB);
+cmd = sprintf('mex -O %s CFLAGS="-std=c99 -O3 -pthread -DMATLAB_MEX_FILE %s %s" ../indirect/private.c %s -I../ %s -o coneos_indirect LDFLAGS="\\$LDFLAGS -lm  %s %s"',  arr, d, LCFLAG, common_coneOS, INCS, LOCS, BLASLIB);
 eval(cmd);
+
 
 %mex -v -O COMPFLAGS="/openmp $COMPFLAGS" CFLAGS="\$CFLAGS -fopenmp" LDFLAGS="\$LDFLAGS -fopenmp" -largeArrayDims ../coneOS.c ../linAlg.c ../cones.c ../cs.c ../util.c coneOS_mex.c ../indirect/private.c -I../ -output coneOS_indirect -lm
 

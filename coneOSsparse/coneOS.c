@@ -4,23 +4,31 @@
 static int _lineLen_;
 // constants and data structures
 static const char* HEADER[] = {
-	"Iter", 
-	" rel prim res ",
-	" rel dual res ",
-	"  primal obj  ",
-	"   dual obj   ",
-	"   rel gap    ",
+	" Iter ", 
+	"nm(u - u_t)",
+	"nm(u - u_p)",
+	" rel p res ",
+	" rel d res ",
+	"  pri obj  ",
+	"  dual obj ",
+	"  rel gap  ",
+	"    tau    ",
+	"    kap    "
 };
 
-static const int HEADER_LEN = 6;
+static const int HEADER_LEN = 10;
 
 // to hold residual information
 struct residuals {
+	double resDual;
+	double resPri;
 	double pres;
 	double dres;
 	double pobj;
 	double dobj;
 	double dgap;
+	double tau;
+	double kap;
 };
 
 static inline void updateDualVars(Data * d, Work * w);
@@ -88,6 +96,11 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
 static inline int checkResidualsSmall(Data * d, Work * w, struct residuals * r){
 	double tau = (w->u[w->l-1]+w->u_t[w->l-1])/2;
 	double kap = w->v[w->l-1];
+ 	
+	r->resPri = calcNormDiff(w->u,w->u_t,w->l);
+  	r->resDual = calcNormDiff(w->u,w->u_prev,w->l);
+	double ADMMeps = d->EPS_ABS*fmax(calcNorm(w->u,w->l),calcNorm(w->u_t,w->l))/(tau+kap);
+
 	double * dr = coneOS_calloc(d->n,sizeof(double));
 	double * pr = coneOS_calloc(d->m,sizeof(double));
 
@@ -97,28 +110,31 @@ static inline int checkResidualsSmall(Data * d, Work * w, struct residuals * r){
 	scaleArray(y,0.5,d->m);
 
 	accumByA(d,x,pr);
-	double primalScale = 0.5*(calcNorm(pr,d->m)/w->A_scale+calcNorm(d->b,d->m)/w->b_scale + 1e-6);
+	double primalScale = fmax(calcNorm(pr,d->m)/w->A_scale,calcNorm(d->b,d->m)/w->b_scale);
 	addScaledArray(pr,&(w->v[d->n]),d->m,1.0);
 	addScaledArray(pr,d->b,d->m,-tau);
-	r->pres = calcNorm(pr,d->m)/(primalScale*(tau+kap));
+	r->pres = calcNorm(pr,d->m)/(primalScale*(tau+kap)+1e-6);
 	
 	accumByAtrans(d,y,dr);
-	double dualScale = 0.5*(calcNorm(dr,d->n)/w->A_scale+calcNorm(d->c,d->n)/w->c_scale + 1e-6);
+	double dualScale = fmax(calcNorm(dr,d->n)/w->A_scale,calcNorm(d->c,d->n)/w->c_scale);
 	addScaledArray(dr,d->c,d->n,tau);
-	r->dres = calcNorm(dr,d->n)/(dualScale*(tau+kap));
+	r->dres = calcNorm(dr,d->n)/(dualScale*(tau+kap)+1e-6);
 	
 	double sc = w->A_scale/(w->c_scale*w->b_scale)/(tau+kap); 
 	double cTx = innerProd(x,d->c,d->n);
 	double bTy = innerProd(y,d->b,d->m);
 
-	r->dgap = 2*fabs(kap + cTx + bTy)/(fabs(cTx)+fabs(bTy) + 1e-3);
+	r->dgap = fabs(kap + cTx + bTy)/(fmax(fabs(cTx),fabs(bTy))+1e-3);
 	r->pobj = sc*cTx;
 	r->dobj = -sc*bTy;
-
+	r->tau = tau;
+	r->kap = kap;
 	coneOS_free(dr); coneOS_free(pr);
-	
-	if (r->pres < d->EPS_ABS && r->dres < d->EPS_ABS && r->dgap < d->EPS_ABS){
-		return 1;
+
+	if (fmin(tau,kap)/fmax(tau,kap) < d->EPS_ABS){
+		if (r->resPri < ADMMeps && r->resDual < ADMMeps && r->pres < d->EPS_ABS && r->dres < d->EPS_ABS && r->dgap < d->EPS_ABS){
+			return 1;
+		}
 	}
 	return 0;
 }
@@ -327,13 +343,17 @@ static inline void setx(Data * d,Work * w, Sol * sol){
 
 static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
 	// coneOS_printf("Iteration %i, primal residual %4f, primal tolerance %4f\n",i,err,EPS_PRI);
-	coneOS_printf("%*i | ", (int)strlen(HEADER[0]), i);
-	coneOS_printf("%*.4e   ", (int)strlen(HEADER[1])-2, r->pres); 
-	coneOS_printf("%*.4e   ", (int)strlen(HEADER[2]), r->dres);
-	coneOS_printf("%*.4e   ", (int)strlen(HEADER[3]), r->pobj);
-	coneOS_printf("%*.4e   ", (int)strlen(HEADER[4]), r->dobj);
-	coneOS_printf("%*.4e   ", (int)strlen(HEADER[5]), r->dgap);
-	coneOS_printf("\n");
+	coneOS_printf("%*i|", (int)strlen(HEADER[0]), i);
+	coneOS_printf("%*.2e ", (int)strlen(HEADER[1])-1, r->resPri);
+	coneOS_printf(" %*.2e ", (int)strlen(HEADER[2])-1, r->resDual);
+	coneOS_printf(" %*.2e ", (int)strlen(HEADER[3])-1, r->pres); 
+	coneOS_printf(" %*.2e ", (int)strlen(HEADER[4])-1, r->dres);
+	coneOS_printf(" %*.2e ", (int)strlen(HEADER[5])-1, r->pobj);
+	coneOS_printf(" %*.2e ", (int)strlen(HEADER[6])-1, r->dobj);
+	coneOS_printf(" %*.2e ", (int)strlen(HEADER[7])-1, r->dgap);
+	coneOS_printf(" %*.2e ", (int)strlen(HEADER[8])-1, r->tau);
+	coneOS_printf(" %*.2e ", (int)strlen(HEADER[9])-1, r->kap);
+coneOS_printf("\n");
 #ifdef MATLAB_MEX_FILE
 	mexEvalString("drawnow;");
 #endif
@@ -341,9 +361,9 @@ static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
 
 static inline void printHeader(Work * w) {
 	int i;  
-	_lineLen_ = -3;
+	_lineLen_ = -1;
 	for(i = 0; i < HEADER_LEN; ++i) {
-		_lineLen_ += strlen(HEADER[i]) + 3;
+		_lineLen_ += strlen(HEADER[i]) + 1;
 	}
 
 	for(i = 0; i < _lineLen_; ++i) {
@@ -355,7 +375,7 @@ static inline void printHeader(Work * w) {
 	}
 	coneOS_printf("\n");
 	for(i = 0; i < HEADER_LEN - 1; ++i) {
-		coneOS_printf("%s | ", HEADER[i]);
+		coneOS_printf("%s|", HEADER[i]);
 	}
 	coneOS_printf("%s\n", HEADER[HEADER_LEN-1]);
 	for(i = 0; i < _lineLen_; ++i) {
