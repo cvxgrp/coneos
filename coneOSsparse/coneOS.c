@@ -134,8 +134,11 @@ static inline int converged(Data * d, Work * w, struct residuals * r){
 	r->kap = kap;
 	coneOS_free(dr); coneOS_free(pr);
 
-	if (fmin(tau,kap)/fmax(tau,kap) < d->EPS_ABS/100){
-		if (r->resPri < ADMMeps && r->resDual < ADMMeps && r->pres < d->EPS_ABS && r->dres < d->EPS_ABS && r->dgap < d->EPS_ABS){
+	//XXX: hard coded threshold for kap, tau, might be bad:
+	if (fmin(tau,kap)/fmax(tau,kap) < 1e-9)
+	{
+		if (r->resPri < ADMMeps && r->resDual < ADMMeps && r->pres < d->EPS_ABS && r->dres < d->EPS_ABS && r->dgap < d->EPS_ABS)
+		{
 			return 1;
 		}
 	}
