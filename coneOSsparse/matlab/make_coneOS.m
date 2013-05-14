@@ -46,7 +46,6 @@ try
     
 catch err
     
-    disp('Compiling without lapack support - can only solve SOCPs')
     
     BLASLIB = '';
     INCS = '';
@@ -70,6 +69,7 @@ catch err
     eval(cmd);
     %mex -v -O COMPFLAGS="/openmp $COMPFLAGS" CFLAGS="\$CFLAGS -fopenmp" LDFLAGS="\$LDFLAGS -fopenmp" -largeArrayDims ../coneOS.c ../linAlg.c ../cones.c ../cs.c ../util.c coneOS_mex.c ../indirect/private.c -I../ -output coneOS_indirect -lm
     
+    disp('Compiled without lapack support - can only solve SOCPs')
     
 end
 

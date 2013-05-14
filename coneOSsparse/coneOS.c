@@ -12,11 +12,10 @@ static const char* HEADER[] = {
 	"  pri obj  ",
 	"  dual obj ",
 	"  rel gap  ",
-	"    tau    ",
-	"    kap    "
+	"  kap/tau  ",
 };
 
-static const int HEADER_LEN = 10;
+static const int HEADER_LEN = 9;
 
 // to hold residual information
 struct residuals {
@@ -104,10 +103,14 @@ static inline int checkResidualsSmall(Data * d, Work * w, struct residuals * r){
 	double * dr = coneOS_calloc(d->n,sizeof(double));
 	double * pr = coneOS_calloc(d->m,sizeof(double));
 
+	/*
+	// XXX: see discussion in sety function
 	double y[d->m], * x = w->u;
 	memcpy(y,&(w->u[d->n]),d->m*sizeof(double));
 	addScaledArray(y,&(w->u_t[d->n]),d->m,1);
 	scaleArray(y,0.5,d->m);
+	*/
+	double * x = w->u, * y = &(w->u[d->n]);
 
 	accumByA(d,x,pr);
 	double primalScale = fmax(calcNorm(pr,d->m)/w->A_scale,calcNorm(d->b,d->m)/w->b_scale);
@@ -328,7 +331,11 @@ static inline void sety(Data * d,Work * w, Sol * sol){
 	//memcpy(sol->y, w->z + w->yi, d->m*sizeof(double));
 	int i;
 	for(i = 0; i < d->m; ++i) {
-		sol->y[i] = 0.5 * w->A_scale * (w->u[i + d->n]+w->u_t[i + d->n]) / w->c_scale;
+		/* XXX: not taking average has desirable properties, like returning sparse
+		   solutions if l1 penalty used (for example), but will have worse accuracy
+		   and worse dual equality constraint residual */
+		//sol->y[i] = 0.5 * w->A_scale * (w->u[i + d->n]+w->u_t[i + d->n]) / w->c_scale;
+		sol->y[i] = w->A_scale * w->u[i + d->n] / w->c_scale;
 	}
 }
 
@@ -351,8 +358,7 @@ static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[5])-1, r->pobj);
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[6])-1, r->dobj);
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[7])-1, r->dgap);
-	coneOS_printf(" %*.2e ", (int)strlen(HEADER[8])-1, r->tau);
-	coneOS_printf(" %*.2e ", (int)strlen(HEADER[9])-1, r->kap);
+	coneOS_printf(" %*.2e ", (int)strlen(HEADER[8])-1, r->kap/r->tau);
 coneOS_printf("\n");
 #ifdef MATLAB_MEX_FILE
 	mexEvalString("drawnow;");
