@@ -37,14 +37,14 @@ static inline void setx(Data * d, Work * w, Sol * sol);
 static inline int getSolution(Data * d, Work * w, Sol * sol, Info * info);
 static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct residuals * r, int status);
 static inline void printSummary(Data * d,Work * w,int i, struct residuals *r);
-static inline void printHeader(Work * w);
+static inline void printHeader(Data * d, Work * w);
 static inline void printFooter(Data * d, Info * info); 
 static inline void printSol(Data * d, Sol * sol, Info * info);
 static inline void freeWork(Work * w);
 static inline void projectLinSys(Data * d,Work * w);
 static inline Work * initWork(Data * d, Cone * k);
 static inline void unNormalize(Data *d, Work * w);
-static inline int checkResidualsSmall(Data * d, Work * w, struct residuals * r);
+static inline int converged(Data * d, Work * w, struct residuals * r);
 
 /* coneOS returns the following integers:
    -2 failure
@@ -64,7 +64,7 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
 	struct residuals r = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
 	Work * w = initWork(d,k);
 	if(d->VERBOSE) {
-		printHeader(w);
+		printHeader(d, w);
 	} /* coneOS: */
 	for (i=0; i < d->MAX_ITERS; ++i){
 		memcpy(w->u_prev, w->u, w->l*sizeof(double));
@@ -74,7 +74,7 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
 		updateDualVars(d,w);
 	
 		if (i % 100 == 0){
-			if (checkResidualsSmall(d,w,&r)) break;
+			if (converged(d,w,&r)) break;
 			if (d->VERBOSE) printSummary(d,w,i,&r);
 		}
 	
@@ -92,7 +92,7 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
 	return status;
 }
 
-static inline int checkResidualsSmall(Data * d, Work * w, struct residuals * r){
+static inline int converged(Data * d, Work * w, struct residuals * r){
 	double tau = (w->u[w->l-1]+w->u_t[w->l-1])/2;
 	double kap = w->v[w->l-1];
  	
@@ -163,7 +163,7 @@ static inline void unNormalize(Data *d, Work * w){
 
 static inline void normalize(Data * d, Work * w){
 	// scale A,b,c
-	w->A_scale = sqrt(d->n)*sqrt(d->m)/calcNorm(d->Ax, d->Anz);
+	w->A_scale = sqrt(d->Anz)/calcNorm(d->Ax, d->Anz);
 	w->c_scale = sqrt(d->m)/calcNorm(d->c,d->n);
 	w->b_scale = sqrt(d->n)/calcNorm(d->b,d->m);
 
@@ -331,7 +331,8 @@ static inline void sety(Data * d,Work * w, Sol * sol){
 	//memcpy(sol->y, w->z + w->yi, d->m*sizeof(double));
 	int i;
 	for(i = 0; i < d->m; ++i) {
-		/* XXX: not taking average has desirable properties, like returning sparse
+		/* XXX: (see also converged function) 
+		   not taking average has desirable properties, like returning sparse
 		   solutions if l1 penalty used (for example), but will have worse accuracy
 		   and worse dual equality constraint residual */
 		//sol->y[i] = 0.5 * w->A_scale * (w->u[i + d->n]+w->u_t[i + d->n]) / w->c_scale;
@@ -365,7 +366,7 @@ coneOS_printf("\n");
 #endif
 }
 
-static inline void printHeader(Work * w) {
+static inline void printHeader(Data * d, Work * w) {
 	int i;  
 	_lineLen_ = -1;
 	for(i = 0; i < HEADER_LEN; ++i) {
@@ -375,7 +376,7 @@ static inline void printHeader(Work * w) {
 	for(i = 0; i < _lineLen_; ++i) {
 		coneOS_printf("-");
 	}
-	coneOS_printf("\nconeOS 1.0: %s method\n",w->method);
+	coneOS_printf("\nconeOS 1.0: %s method, A matrix density: %4f\n",w->method,((double)d->Anz/d->n)/d->m);
 	for(i = 0; i < _lineLen_; ++i) {
 		coneOS_printf("-");
 	}

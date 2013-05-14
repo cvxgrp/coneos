@@ -1,15 +1,15 @@
 clear all
 close all
 %randn('seed',0);rand('seed',0)
-n=5000;
+n=500;
 s=round(n/10);
-m=100;
+m=10;
 
 x_true=[randn(s,1);zeros(n-s,1)]; % true sparse signal
 x_true=x_true(randperm(n));
 A=randn(m,n);
 b = A*x_true + 0.1*randn(m,1); % measurements
-
+%b = randn(m,1);
 mu = 1;
 
 cvx_begin
