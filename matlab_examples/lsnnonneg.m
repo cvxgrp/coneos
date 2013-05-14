@@ -1,8 +1,8 @@
 clear all
 close all
 
-m = 100;
-n = 10;
+m = 500;
+n = 100;
 A = randn(m,n);
 x_true = pos(randn(n,1));
 %b = A*x_true + 0.1*randn(m,1);
