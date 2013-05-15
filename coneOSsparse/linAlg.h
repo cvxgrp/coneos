@@ -8,8 +8,8 @@
  * compiler. If compiling without optimization, causes code bloat.
  */
 
-static inline void _accumByAtrans(int n, double * Ax, int * Ai, int * Ap, const double *x, double *y);
-static inline void _accumByA(int n, double * Ax, int * Ai, int * Ap, const double *x, double *y);
+inline void _accumByAtrans(int n, double * Ax, int * Ai, int * Ap, const double *x, double *y);
+inline void _accumByA(int n, double * Ax, int * Ai, int * Ap, const double *x, double *y);
 
 // x = b*a
 inline void setAsScaledArray(double *x, const double * a,const double b,int len) {
@@ -48,6 +48,16 @@ inline double calcNorm(const double * v,int len){
   return sqrt(calcNormSq(v, len));
 }
 
+inline double calcNormInf(const double *a, int l){
+	double tmp, max = 0.0;
+	int i;
+	for ( i=0; i<l; ++i){
+		tmp = fabs(a[i]);
+		if(tmp > max) max = tmp;
+	}
+	return max;
+}
+
 // saxpy a += sc*b
 inline void addScaledArray(double * a, const double * b, int n, const double sc){
   int i;
@@ -56,7 +66,7 @@ inline void addScaledArray(double * a, const double * b, int n, const double sc)
   }
 }
 
-inline double calcNormDiff(double *a, double *b, int l) {
+inline double calcNormDiff(const double *a, const double *b, int l) {
     double nmDiff = 0.0, tmp;
     int i;
     for ( i=0; i<l; ++i){
@@ -66,16 +76,26 @@ inline double calcNormDiff(double *a, double *b, int l) {
     return sqrt(nmDiff);
 }
 
-static inline void accumByAtrans(Data * d, const double *x, double *y) 
+inline double calcNormInfDiff(const double *a, const double *b, int l) {
+	double tmp, max = 0.0;
+	int i;
+	for ( i=0; i<l; ++i){
+		tmp = fabs(a[i] - b[i]);
+		if(tmp > max) max = tmp;
+	}
+	return max;
+}
+
+inline void accumByAtrans(Data * d, const double *x, double *y) 
 {
 	_accumByAtrans(d->n, d->Ax, d->Ai, d->Ap, x, y); 
 }
-static inline void accumByA(Data * d, const double *x, double *y) 
+inline void accumByA(Data * d, const double *x, double *y) 
 {
 	_accumByA(d->n, d->Ax, d->Ai, d->Ap, x, y);
 }
 
-static inline void _accumByAtrans(int n, double * Ax, int * Ai, int * Ap, const double *x, double *y) 
+inline void _accumByAtrans(int n, double * Ax, int * Ai, int * Ap, const double *x, double *y) 
 {
     /* y  = A'*x 
     A in column compressed format 
@@ -97,7 +117,7 @@ static inline void _accumByAtrans(int n, double * Ax, int * Ai, int * Ap, const 
     }   
 }
 
-static inline void _accumByA(int n, double * Ax, int * Ai, int * Ap, const double *x, double *y) 
+inline void _accumByA(int n, double * Ax, int * Ai, int * Ap, const double *x, double *y) 
 {
 /*y  = A*x 
   A in column compressed format  

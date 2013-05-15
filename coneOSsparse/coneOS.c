@@ -7,11 +7,11 @@ static const char* HEADER[] = {
 	" Iter ", 
 	"nm(u - u_t)",
 	"nm(u - u_p)",
-	" rel p res ",
-	" rel d res ",
+	"  pri res  ",
+	"  dual res ",
 	"  pri obj  ",
 	"  dual obj ",
-	"  rel gap  ",
+	"    gap    ",
 	"  kap/tau  ",
 };
 
@@ -73,74 +73,31 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
 		projectCones(d,w,k);
 		updateDualVars(d,w);
 	
+		if (converged(d,w,&r)) break;
+
 		if (i % 100 == 0){
-			if (converged(d,w,&r)) break;
 			if (d->VERBOSE) printSummary(d,w,i,&r);
 		}
-	
 	}
+	if(d->VERBOSE) printSummary(d,w,i,&r);
 	if(d->NORMALIZE) unNormalize(d,w);
 	int status = getSolution(d,w,sol,info);
 	info->iter = i;
 	getInfo(d,w,sol,info,&r,status);
-	if(d->VERBOSE) {
-		printSummary(d,w,i,&r);
-		printFooter(d, info);
-		//printSol(d,sol,info);
-	}
+	if(d->VERBOSE) printFooter(d, info);
 	freeWork(w);
 	return status;
 }
 
 static inline int converged(Data * d, Work * w, struct residuals * r){
-	double tau = (w->u[w->l-1]+w->u_t[w->l-1])/2;
+	double tau = fabs((w->u[w->l-1]+w->u_t[w->l-1])/2);
 	double kap = w->v[w->l-1];
  	
-	r->resPri = calcNormDiff(w->u,w->u_t,w->l);
-  	r->resDual = calcNormDiff(w->u,w->u_prev,w->l);
-	double ADMMeps = d->EPS_ABS*fmax(calcNorm(w->u,w->l),calcNorm(w->u_t,w->l))/(tau+kap);
-
-	double * dr = coneOS_calloc(d->n,sizeof(double));
-	double * pr = coneOS_calloc(d->m,sizeof(double));
-
-	/*
-	// XXX: see discussion in sety function
-	double y[d->m], * x = w->u;
-	memcpy(y,&(w->u[d->n]),d->m*sizeof(double));
-	addScaledArray(y,&(w->u_t[d->n]),d->m,1);
-	scaleArray(y,0.5,d->m);
-	*/
-	double * x = w->u, * y = &(w->u[d->n]);
-
-	accumByA(d,x,pr);
-	double primalScale = fmax(calcNorm(pr,d->m)/w->A_scale,calcNorm(d->b,d->m)/w->b_scale);
-	addScaledArray(pr,&(w->v[d->n]),d->m,1.0);
-	addScaledArray(pr,d->b,d->m,-tau);
-	r->pres = calcNorm(pr,d->m)/(primalScale*(tau+kap)+1e-6);
-	
-	accumByAtrans(d,y,dr);
-	double dualScale = fmax(calcNorm(dr,d->n)/w->A_scale,calcNorm(d->c,d->n)/w->c_scale);
-	addScaledArray(dr,d->c,d->n,tau);
-	r->dres = calcNorm(dr,d->n)/(dualScale*(tau+kap)+1e-6);
-	
-	double sc = w->A_scale/(w->c_scale*w->b_scale)/(tau+kap); 
-	double cTx = innerProd(x,d->c,d->n);
-	double bTy = innerProd(y,d->b,d->m);
-
-	r->dgap = fabs(kap + cTx + bTy)/(fmax(fabs(cTx),fabs(bTy))+1e-3);
-	r->pobj = sc*cTx;
-	r->dobj = -sc*bTy;
-	r->tau = tau;
-	r->kap = kap;
-	coneOS_free(dr); coneOS_free(pr);
-
-	//XXX: hard coded threshold for kap, tau, might be bad:
-	if (fmin(tau,kap)/fmax(tau,kap) < 1e-9)
+	r->resPri = calcNormInfDiff(w->u,w->u_t,w->l)/(tau+kap);
+  	r->resDual = calcNormInfDiff(w->u,w->u_prev,w->l)/(tau+kap);
+	if (fmin(tau,kap)/fmax(tau,kap) < 1e-6 && fmax(r->resPri,r->resDual) < d->EPS_ABS)
 	{
-		if (r->resPri < ADMMeps && r->resDual < ADMMeps && r->pres < d->EPS_ABS && r->dres < d->EPS_ABS && r->dgap < d->EPS_ABS)
-		{
-			return 1;
-		}
+		return 1;
 	}
 	return 0;
 }
@@ -167,8 +124,14 @@ static inline void unNormalize(Data *d, Work * w){
 static inline void normalize(Data * d, Work * w){
 	// scale A,b,c
 	w->A_scale = sqrt(d->Anz)/calcNorm(d->Ax, d->Anz);
-	w->c_scale = sqrt(d->m)/calcNorm(d->c,d->n);
-	w->b_scale = sqrt(d->n)/calcNorm(d->b,d->m);
+	double cn = calcNorm(d->c,d->n);
+	if (cn > 1e-12)
+		w->c_scale = sqrt(d->m)/calcNorm(d->c,d->n);
+	else w->c_scale = 1.0;
+	double bn = calcNorm(d->b,d->m);
+	if (bn > 1e-12)
+		w->b_scale = sqrt(d->n)/calcNorm(d->b,d->m);
+	else w->b_scale = 1.0;
 
 	scaleArray(d->Ax,w->A_scale,d->Anz);
 	scaleArray(d->c,w->c_scale,d->n);
@@ -354,6 +317,40 @@ static inline void setx(Data * d,Work * w, Sol * sol){
 
 static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
 	// coneOS_printf("Iteration %i, primal residual %4f, primal tolerance %4f\n",i,err,EPS_PRI);
+	double tau = fabs(w->u[w->l-1]+w->u_t[w->l-1])/2;
+	double kap = w->v[w->l-1];
+ 	
+	double * dr = coneOS_calloc(d->n,sizeof(double));
+	double * pr = coneOS_calloc(d->m,sizeof(double));
+
+	/* XXX: see discussion in sety function
+	double y[d->m], * x = w->u;
+	memcpy(y,&(w->u[d->n]),d->m*sizeof(double));
+	addScaledArray(y,&(w->u_t[d->n]),d->m,1);
+	scaleArray(y,0.5,d->m);
+	*/
+	double * x = w->u, * y = &(w->u[d->n]);
+
+	accumByA(d,x,pr);
+	addScaledArray(pr,&(w->v[d->n]),d->m,1.0);
+	addScaledArray(pr,d->b,d->m,-tau);
+	r->pres = calcNormInf(pr,d->m)/(w->b_scale * tau);
+	
+	accumByAtrans(d,y,dr);
+	addScaledArray(dr,d->c,d->n,tau);
+	r->dres = calcNormInf(dr,d->n)/(w->c_scale * tau);
+	
+	double sc = w->A_scale/(w->c_scale*w->b_scale*tau); 
+	double cTx = innerProd(x,d->c,d->n);
+	double bTy = innerProd(y,d->b,d->m);
+
+	r->dgap = sc*fabs(cTx + bTy);
+	r->pobj = sc*cTx;
+	r->dobj = -sc*bTy;
+	r->tau = tau;
+	r->kap = kap;
+	coneOS_free(dr); coneOS_free(pr);
+
 	coneOS_printf("%*i|", (int)strlen(HEADER[0]), i);
 	coneOS_printf("%*.2e ", (int)strlen(HEADER[1])-1, r->resPri);
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[2])-1, r->resDual);

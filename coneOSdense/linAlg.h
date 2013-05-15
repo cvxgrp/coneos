@@ -30,6 +30,15 @@ inline double calcNorm(const double * v,int len){
   return cblas_dnrm2(len, v, 1);
 }
 
+inline double calcNormInf(const double *a, int l){
+	double tmp, max = 0.0;
+	int i;
+	for ( i=0; i<l; ++i){
+		tmp = fabs(a[i]);
+		if(tmp > max) max = tmp;
+	}
+	return max;
+}
 
 // ||v||_2^2
 inline double calcNormSq(const double * v,int len){
@@ -43,7 +52,7 @@ inline void addScaledArray(double * a, const double * b, int n, const double sc)
   cblas_daxpy(n, sc, b, 1, a, 1);
 }
 
-inline double calcNormDiff(double *a, double *b, int l) {
+inline double calcNormDiff(const double *a,const double *b, int l) {
   double nmDiff = 0.0, tmp;
   int i;
   for ( i=0; i<l; ++i ){
@@ -51,6 +60,16 @@ inline double calcNormDiff(double *a, double *b, int l) {
     nmDiff += tmp * tmp;
   }  
   return sqrt(nmDiff);
+}
+
+inline double calcNormInfDiff(const double *a, const double *b, int l) {
+	double tmp, max = 0.0;
+	int i;
+	for ( i=0; i<l; ++i){
+		tmp = fabs(a[i] - b[i]);
+		if(tmp > max) max = tmp;
+	}
+	return max;
 }
 
 static inline void accumByAtrans(Data * d, const double *x, double *y) 

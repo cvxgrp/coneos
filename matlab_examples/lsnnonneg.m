@@ -5,9 +5,9 @@ m = 500;
 n = 100;
 A = randn(m,n);
 x_true = pos(randn(n,1));
-%b = A*x_true + 0.1*randn(m,1);
-b=randn(m,1);
-mu = 0.1;
+b = A*x_true + 0.1*randn(m,1);
+%b=randn(m,1);
+mu = 1;
 
 cvx_begin
 cvx_solver coneos

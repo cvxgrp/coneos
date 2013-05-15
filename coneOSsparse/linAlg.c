@@ -19,15 +19,19 @@ inline double calcNormSq(const double * v,int len);
 // ||v||_2
 inline double calcNorm(const double * v,int len);
 
+inline double calcNormInf(const double *a, int l);
+
 // saxpy a += sc*b
 inline void addScaledArray(double * a, const double * b, int n, const double sc);
 
-inline double calcNormDiff(double *a, double *b, int l);
+inline double calcNormDiff(const double *a, const double *b, int l);
 
-static inline void accumByAtrans(Data * d, const double *x, double *y); 
+inline double calcNormInfDiff(const double *a, const double *b, int l);
 
-static inline void accumByA(Data * d, const double *x, double *y);
+inline void accumByAtrans(Data * d, const double *x, double *y); 
 
-static inline void accumByAtrans(Data * d, const double *x, double *y); 
+inline void accumByA(Data * d, const double *x, double *y);
 
-static inline void accumByA(Data * d, const double *x, double *y);
+inline void accumByAtrans(Data * d, const double *x, double *y); 
+
+inline void accumByA(Data * d, const double *x, double *y);
