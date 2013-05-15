@@ -1,4 +1,4 @@
-n = 500;
+n = 100;
 r = 10;
 L = randn(r,n);
 L = L'*L;
@@ -9,7 +9,7 @@ mu = 0.1;
 cvx_begin
 cvx_solver coneos
 %cvx_solver_settings('MAX_ITERS',100)
-cvx_solver_settings('USE_INDIRECT',1)
+%cvx_solver_settings('USE_INDIRECT',1)
 %cvx_solver_settings('NORMALIZE',0)
 %cvx_precision high
 variables Lc(n,n) Sc(n,n)
