@@ -224,7 +224,9 @@ if prec(1)==0
     % just run until MAX_ITERS
     pars.EPS_ABS = 0;
 else
-    pars.EPS_ABS = prec(2)^(1/3);
+    % ignores cvx_precision command
+    % use cvx_solver_settings('EPS', xx) instead
+    pars.EPS_ABS = 5e-4;
 end
 if (isfield(settings,'EPS'))
     pars.EPS_ABS = settings.EPS;

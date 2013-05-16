@@ -1,12 +1,12 @@
 clear all;
 close all;
-N1 = 5000;
+N1 = 100000;
 N2 = N1;
 
-n = 500;m=N1+N2;
+n = 50;m=N1+N2;
 
-mu1 = randn(1,n);
-mu2 = randn(1,n);
+mu1 = 0.5*randn(1,n);
+mu2 = 0.5*randn(1,n);
 X1 = randn(N1,n)+ones(N1,1)*mu1;
 X2 = randn(N2,n)+ones(N2,1)*mu2;
 

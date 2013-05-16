@@ -90,11 +90,18 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
 }
 
 static inline int converged(Data * d, Work * w, struct residuals * r){
-	double tau = fabs((w->u[w->l-1]+w->u_t[w->l-1])/2);
+	//double tau = fabs((w->u[w->l-1]+w->u_t[w->l-1])/2);
+	double tau = w->u[w->l-1];
 	double kap = w->v[w->l-1];
- 	
-	r->resPri = calcNormInfDiff(w->u,w->u_t,w->l)/(tau+kap);
-  	r->resDual = calcNormInfDiff(w->u,w->u_prev,w->l)/(tau+kap);
+ 	double as = w->A_scale, cs = w->c_scale, bs = w->b_scale;
+	// this calcs residuals when normalized, kind of messy:
+	double yRes = (as/cs)*calcNormInfDiff(&(w->u[d->n]),&(w->u_t[d->n]),d->m)/(tau+kap);
+	double tauRes = fabs(w->u[w->l-1]-w->u_t[w->l-1])/(tau+kap);
+	r->resPri = fmax(yRes,tauRes);
+	double xpRes = as*calcNormInfDiff(w->u,w->u_prev,d->n)/(bs*(tau+kap));
+	double ypRes = as*calcNormInfDiff(&(w->u[d->n]),&(w->u_prev[d->n]),d->m)/(cs*(tau+kap));
+	double taupRes = fabs(w->u[w->l-1]-w->u_prev[w->l-1])/(tau+kap);
+	r->resDual = fmax(fmax(xpRes,ypRes),taupRes);
 	if (fmin(tau,kap)/fmax(tau,kap) < 1e-6 && fmax(r->resPri,r->resDual) < d->EPS_ABS)
 	{
 		return 1;
@@ -240,14 +247,22 @@ static inline void printSol(Data * d, Sol * sol, Info * info){
 
 static inline void updateDualVars(Data * d, Work * w){
 	int i;
-	for(i = 0; i < w->l; ++i) { 
+	for(i = 0; i < d->n; ++i) { 
+		w->v[i] += w->u[i] - w->u_t[i]; 
+	}
+	//for(i = 0; i < w->l; ++i) { 
+	for(i = d->n; i < w->l; ++i) { 
 		w->v[i] += (w->u[i] - d->ALPH*w->u_t[i] - (1.0 - d->ALPH)*w->u_prev[i]); 
 	}
 }
 
 static inline void projectCones(Data *d,Work * w,Cone * k){
 	int i;
-	for(i = 0; i < w->l; ++i){
+	for(i = 0; i < d->n; ++i) { 
+		w->u[i] = w->u_t[i] - w->v[i];
+	}
+	//for(i = 0; i < w->l; ++i){
+	for(i = d->n; i < w->l; ++i){
 		w->u[i] += d->ALPH*(w->u_t[i] - w->u[i]) - w->v[i];
 	}
 	/* u = [x;y;tau] */
@@ -256,7 +271,8 @@ static inline void projectCones(Data *d,Work * w,Cone * k){
 }
 
 static inline int getSolution(Data * d,Work * w,Sol * sol, Info * info){
-	double tau = (w->u[w->l-1]+w->u_t[w->l-1])/2;
+	//double tau = (w->u[w->l-1]+w->u_t[w->l-1])/2;
+	double tau = w->u[w->l-1];
 	double kap = w->v[w->l-1];
 	setx(d,w,sol);
 	sety(d,w,sol);
@@ -317,7 +333,8 @@ static inline void setx(Data * d,Work * w, Sol * sol){
 
 static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
 	// coneOS_printf("Iteration %i, primal residual %4f, primal tolerance %4f\n",i,err,EPS_PRI);
-	double tau = fabs(w->u[w->l-1]+w->u_t[w->l-1])/2;
+	//double tau = abs(w->u[w->l-1]+w->u_t[w->l-1])/2;
+	double tau = w->u[w->l-1];
 	double kap = w->v[w->l-1];
  	
 	double * dr = coneOS_calloc(d->n,sizeof(double));
@@ -330,12 +347,25 @@ static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
 	scaleArray(y,0.5,d->m);
 	*/
 	double * x = w->u, * y = &(w->u[d->n]);
-
+	
+	// XXX: slower primal resid calculation (mult by A)
+	/*		
 	accumByA(d,x,pr);
 	addScaledArray(pr,&(w->v[d->n]),d->m,1.0);
 	addScaledArray(pr,d->b,d->m,-tau);
-	r->pres = calcNormInf(pr,d->m)/(w->b_scale * tau);
+	*/
 	
+	// XXX: better primal resid calculation
+	double * y_prev = &(w->u_prev[d->n]);
+	double * y_t = &(w->u_t[d->n]);
+	addScaledArray(pr,y_t,d->m,d->ALPH-1.0);
+	addScaledArray(pr,y_prev,d->m,2-d->ALPH);
+	addScaledArray(pr,y,d->m,-1.0);
+	double dt = w->u[w->l-1] - (d->ALPH*w->u_t[w->l-1] + (1-d->ALPH)*(w->u_prev[w->l-1]));
+	addScaledArray(pr,d->b,d->m, dt);
+	
+	r->pres = calcNormInf(pr,d->m)/(w->b_scale * tau);
+
 	accumByAtrans(d,y,dr);
 	addScaledArray(dr,d->c,d->n,tau);
 	r->dres = calcNormInf(dr,d->n)/(w->c_scale * tau);

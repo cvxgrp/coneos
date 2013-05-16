@@ -9,7 +9,9 @@ b=rand(m,1);
 c=rand(n,1);
 
 cvx_begin
-cvx_solver_settings('USE_INDIRECT',1)
+%cvx_solver_settings('USE_INDIRECT',1)
+%cvx_solver_settings('NORMALIZE',0)
+%cvx_solver_settings('ALPHA',1)
 cvx_solver coneos
 variable x_c(n)
 dual variable z_c

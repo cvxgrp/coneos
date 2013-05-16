@@ -1,7 +1,7 @@
 clear all
 close all
-%randn('seed',0);rand('seed',0)
-n=5000;
+randn('seed',0);rand('seed',0)
+n=500;
 s=round(n/10);
 m=100;
 
@@ -14,6 +14,7 @@ mu = 1;
 
 cvx_begin
 %cvx_solver_settings('USE_INDIRECT',1)
+cvx_solver_settings('MAX_ITERS',5)
 cvx_solver coneos
 variable x_c(n)
 minimize(sum_square(A*x_c - b) + mu*norm(x_c,1))
