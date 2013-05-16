@@ -249,7 +249,7 @@ if (isfield(settings,'NORMALIZE') && ~settings.NORMALIZE)
     pars.NORMALIZE = 0;
 end
 if (isfield(settings,'CG_TOL'))
-    pars.CG_TOL = settings.MAX_ITERS;
+    pars.CG_TOL = settings.CG_TOL;
 end
 if (isfield(settings,'CG_MAX_ITS'))
     pars.CG_MAX_ITS = settings.CG_MAX_ITS;

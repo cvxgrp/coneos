@@ -90,8 +90,7 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
 }
 
 static inline int converged(Data * d, Work * w, struct residuals * r){
-	//double tau = fabs((w->u[w->l-1]+w->u_t[w->l-1])/2);
-	double tau = w->u[w->l-1];
+	double tau = fabs((w->u[w->l-1]+w->u_t[w->l-1])/2);
 	double kap = w->v[w->l-1];
  	double as = w->A_scale, cs = w->c_scale, bs = w->b_scale;
 	// this calcs residuals when normalized, kind of messy:
@@ -130,6 +129,8 @@ static inline void unNormalize(Data *d, Work * w){
 
 static inline void normalize(Data * d, Work * w){
 	// scale A,b,c
+	// this scaling breaks symmetry between dense and 
+	// sparse methods:
 	w->A_scale = sqrt(d->Anz)/calcNorm(d->Ax, d->Anz);
 	double cn = calcNorm(d->c,d->n);
 	if (cn > 1e-12)
@@ -333,8 +334,8 @@ static inline void setx(Data * d,Work * w, Sol * sol){
 
 static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
 	// coneOS_printf("Iteration %i, primal residual %4f, primal tolerance %4f\n",i,err,EPS_PRI);
-	//double tau = abs(w->u[w->l-1]+w->u_t[w->l-1])/2;
-	double tau = w->u[w->l-1];
+	double tau = fabs(w->u[w->l-1]+w->u_t[w->l-1])/2;
+	//double tau = w->u[w->l-1];
 	double kap = w->v[w->l-1];
  	
 	double * dr = coneOS_calloc(d->n,sizeof(double));
