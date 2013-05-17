@@ -248,9 +248,11 @@ static inline void printSol(Data * d, Sol * sol, Info * info){
 
 static inline void updateDualVars(Data * d, Work * w){
 	int i;
+	/*
 	for(i = 0; i < d->n; ++i) { 
 		w->v[i] += w->u[i] - w->u_t[i]; 
 	}
+	*/
 	//for(i = 0; i < w->l; ++i) { 
 	for(i = d->n; i < w->l; ++i) { 
 		w->v[i] += (w->u[i] - d->ALPH*w->u_t[i] - (1.0 - d->ALPH)*w->u_prev[i]); 
@@ -259,11 +261,13 @@ static inline void updateDualVars(Data * d, Work * w){
 
 static inline void projectCones(Data *d,Work * w,Cone * k){
 	int i;
+	/*	
 	for(i = 0; i < d->n; ++i) { 
 		w->u[i] = w->u_t[i] - w->v[i];
 	}
-	//for(i = 0; i < w->l; ++i){
-	for(i = d->n; i < w->l; ++i){
+	*/
+	for(i = 0; i < w->l; ++i){
+		//for(i = d->n; i < w->l; ++i){
 		w->u[i] += d->ALPH*(w->u_t[i] - w->u[i]) - w->v[i];
 	}
 	/* u = [x;y;tau] */
@@ -359,11 +363,11 @@ static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
 	// XXX: better primal resid calculation
 	double * y_prev = &(w->u_prev[d->n]);
 	double * y_t = &(w->u_t[d->n]);
-	addScaledArray(pr,y_t,d->m,d->ALPH-1.0);
-	addScaledArray(pr,y_prev,d->m,2-d->ALPH);
-	addScaledArray(pr,y,d->m,-1.0);
 	double dt = w->u[w->l-1] - (d->ALPH*w->u_t[w->l-1] + (1-d->ALPH)*(w->u_prev[w->l-1]));
-	addScaledArray(pr,d->b,d->m, dt);
+	int j;
+	for (j = 0; j < d->m; ++j){
+		pr[j] = d->b[j]*dt - y[j] + (2-d->ALPH)*y_prev[j] - (1-d->ALPH)*y_t[j];	
+	}
 	
 	r->pres = calcNormInf(pr,d->m)/(w->b_scale * tau);
 

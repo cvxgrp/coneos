@@ -30,6 +30,7 @@ umin = -1;
 cvx_begin
 cvx_solver 'coneos'
 %cvx_solver_settings('NORMALIZE',0)
+cvx_solver_settings('ALPHA',1)
 variables X_c(n,T+1) U_c(m,T+1)
 obj=0;
 for t=1:T+1

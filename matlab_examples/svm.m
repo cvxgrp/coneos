@@ -1,6 +1,6 @@
 clear all;
 close all;
-N1 = 100000;
+N1 = 1000;
 N2 = N1;
 
 n = 50;m=N1+N2;
@@ -17,6 +17,7 @@ lam = 1;
 
 cvx_begin
 cvx_solver coneos
+cvx_solver_settings('ALPHA',1.6)
 variables w_c(n) b_c s_c(m)
 minimize(1/2*sum_square(w_c) + lam*norm(s_c,1))
 y.*(A*w_c + b_c) >= 1 - s_c;

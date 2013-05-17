@@ -1,6 +1,7 @@
 clear all
 close all
 
+randn('seed',0);rand('seed',0);
 m = 500;
 n = 100;
 A = randn(m,n);
@@ -12,6 +13,7 @@ mu = 1;
 cvx_begin
 cvx_solver coneos
 %cvx_solver_settings('NORMALIZE',0)
+cvx_solver_settings('ALPHA',1.8)
 variable x_c(n)
 dual variable y_c
 minimize(sum_square(A*x_c - b) + mu*sum_square(x_c))

@@ -1,4 +1,5 @@
-n = 200; m=80;
+n = 100; m=50;
+randn('seed',0);rand('seed',0)
 r = 10;
 L1 = randn(m,r);
 L2 = randn(r,n);
@@ -9,10 +10,11 @@ mu = 0.1;
 
 cvx_begin
 cvx_solver coneos
-cvx_solver_settings('MAX_ITERS',10000)
-cvx_solver_settings('USE_INDIRECT',1)
-cvx_solver_settings('CG_TOL',1e-8)
-cvx_solver_settings('CG_MAX_ITS',100)
+cvx_solver_settings('ALPHA',1.8)
+%cvx_solver_settings('MAX_ITERS',10000)
+%cvx_solver_settings('USE_INDIRECT',1)
+%cvx_solver_settings('CG_TOL',1e-8)
+%cvx_solver_settings('CG_MAX_ITS',100)
 %cvx_solver_settings('NORMALIZE',0)
 %cvx_precision high
 variables Lc(m,n) Sc(m,n)

@@ -14,6 +14,7 @@ mu = 1;
 
 cvx_begin
 %cvx_solver_settings('USE_INDIRECT',1)
+%cvx_solver_settings('ALPHA',1)
 cvx_solver coneos
 variable x_c(n)
 minimize(sum_square(A*x_c - b) + mu*norm(x_c,1))
