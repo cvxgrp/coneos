@@ -133,12 +133,10 @@ static inline void normalize(Data * d, Work * w){
 	// sparse methods:
 	w->A_scale = sqrt(d->Anz)/calcNorm(d->Ax, d->Anz);
 	double cn = calcNorm(d->c,d->n);
-	if (cn > 1e-12)
-		w->c_scale = sqrt(d->m)/calcNorm(d->c,d->n);
+	if (cn > 1e-12)	w->c_scale = sqrt(d->m)/calcNorm(d->c,d->n);
 	else w->c_scale = 1.0;
 	double bn = calcNorm(d->b,d->m);
-	if (bn > 1e-12)
-		w->b_scale = sqrt(d->n)/calcNorm(d->b,d->m);
+	if (bn > 1e-12)	w->b_scale = sqrt(d->n)/calcNorm(d->b,d->m);
 	else w->b_scale = 1.0;
 
 	scaleArray(d->Ax,w->A_scale,d->Anz);
