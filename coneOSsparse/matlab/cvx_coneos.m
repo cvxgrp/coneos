@@ -13,7 +13,7 @@ if isempty( shim.name ),
     int_path(end+1) = fs;
     int_plen = length( int_path );
     shim.name = 'coneos';
-    shim.dualize = false;
+    shim.dualize = true;
     flen = length(fname);
     fpaths = { [ int_path, 'coneos', fs, fname ] };
     fpaths = [ fpaths ; which( fname, '-all' ) ];
@@ -259,9 +259,11 @@ end
 if (isfield(settings,'ALPHA'))
     pars.ALPHA = settings.ALPHA;
 end
+
+undo_normalize = 0;
 if (pars.NORMALIZE)
     if (~isfield(settings,'EPS')) 
-        pars.EPS_ABS = 5e-5;
+        pars.EPS_ABS = 1e-4;
     end
     D = norms(data.A(1:K.f,:)')';
     idx = K.f;
@@ -279,18 +281,24 @@ if (pars.NORMALIZE)
     end
     
     data.A = sparse(diag(1./D))*data.A;
+    nmcolA = mean(norms(data.A));
+    
     data.b = data.b./D;
-    nmD = norm(D);
-    data.c = data.c/nmD;
+    sc_b = nmcolA/norm(data.b);
+    data.b = full(data.b*sc_b);
+    
+    sc_c = 1/norm(data.c);
+    data.c = data.c*sc_c;
+    
+    pars.NORMALIZE = 0;
+    undo_normalize = 1;
 end
 
 [ yy, xx, info ] = cvx_run_solver( @coneos, data, K, pars, 'xx', 'yy', 'info', settings, 5 );
 
-if (pars.NORMALIZE)
-    data.A = sparse(diag(D))*data.A;
-    data.b = data.b.*D;
-    data.c = data.c*nmD;
-    xx = nmD*xx./D;
+if (undo_normalize)
+    xx = xx./(D*sc_c);
+    yy = yy/sc_b;
 end
 
 if add_row,

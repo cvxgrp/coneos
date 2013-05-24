@@ -1,4 +1,4 @@
-n = 200; m=80;
+n = 50; m=30;
 randn('seed',0);rand('seed',0)
 r = 10;
 L1 = randn(m,r);
