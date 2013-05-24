@@ -210,7 +210,9 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 data.A = sparse(At);
+data.bnz = nnz(c);
 data.b = full(c);
+data.cnz = nnz(b);
 data.c = -full(b);
 K.q = K.q';
 K.s = K.s';
@@ -258,7 +260,39 @@ if (isfield(settings,'ALPHA'))
     pars.ALPHA = settings.ALPHA;
 end
 
+if (pars.NORMALIZE)
+    if (~isfield(settings,'EPS')) 
+        pars.EPS_ABS = 5e-5;
+    end
+    D = norms(data.A(1:K.f,:)');
+    idx = K.f;
+    D = [D;norms(data.A(idx+1:idx+K.l,:)')'];
+    idx = idx + K.l;
+    for i=1:length(K.q)
+        nmA = mean(norms(data.A(idx+1:idx+K.q(i))'));
+        D = [D;nmA*ones(K.q(i),1)];
+        idx = idx + K.q(i);
+    end
+    for i=1:length(K.s)
+        nmA = mean(norms(data.A(idx+1:idx+K.s(i))'));
+        D = [D;nmA*ones(K.s(i),1)];
+        idx = idx + K.s(i);
+    end
+    
+    data.A = sparse(diag(1./D))*data.A;
+    data.b = data.b./D;
+    nmD = norm(D);
+    data.c = data.c/nmD;
+end
+
 [ yy, xx, info ] = cvx_run_solver( @coneos, data, K, pars, 'xx', 'yy', 'info', settings, 5 );
+
+if (pars.NORMALIZE)
+    data.A = sparse(diag(D))*data.A;
+    data.b = data.b.*D;
+    data.c = data.c*nmD;
+    xx = nmD*xx./D;
+end
 
 if add_row,
     xx = xx(2:end);

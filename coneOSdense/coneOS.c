@@ -91,7 +91,7 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
 
 static inline int converged(Data * d, Work * w, struct residuals * r){
 	double tau = fabs((w->u[w->l-1]+w->u_t[w->l-1])/2);
-	double kap = w->v[w->l-1];
+	double kap = fabs(w->v[w->l-1])*w->A_scale/(w->c_scale*w->b_scale);
  	double as = w->A_scale, cs = w->c_scale, bs = w->b_scale;
 	// this calcs residuals when normalized, kind of messy:
 	double yRes = (as/cs)*calcNormInfDiff(&(w->u[d->n]),&(w->u_t[d->n]),d->m)/(tau+kap);
@@ -130,14 +130,28 @@ static inline void unNormalize(Data *d, Work * w){
 static inline void normalize(Data * d, Work * w){
 	// scale A,b,c
 	// this scaling breaks symmetry between dense and 
-	// sparse methods:
-	w->A_scale = sqrt(d->Anz)/calcNorm(d->Ax, d->Anz);
+	// sparse methods (due to d->Anz):
+	double as, cs, bs;
+	double an = calcNorm(d->Ax,d->Anz);
 	double cn = calcNorm(d->c,d->n);
-	if (cn > 1e-12)	w->c_scale = sqrt(d->m)/calcNorm(d->c,d->n);
-	else w->c_scale = 1.0;
 	double bn = calcNorm(d->b,d->m);
-	if (bn > 1e-12)	w->b_scale = sqrt(d->n)/calcNorm(d->b,d->m);
-	else w->b_scale = 1.0;
+	
+	if (an > 1e-12) as = (sqrt(d->Anz)/an);
+	else as = 1.0;
+	if (cn > 1e-12)	cs = (sqrt(d->n)/cn);
+	else cs = 1.0;
+	if (bn > 1e-12)	bs = (sqrt(d->m)/bn);
+	else bs = 1.0;
+
+	//as = 1.0;
+	//bs = 1.0;
+	//cs = 1.0;
+
+	double sqrtr = sqrt((an*an*as*as + bn*bn*bs*bs + cn*cn*cs*cs)/(2*(d->n+d->m+1)));
+	
+	w->A_scale = as/sqrtr;
+	w->c_scale = cs/sqrtr;
+	w->b_scale = bs/sqrtr;
 
 	scaleArray(d->Ax,w->A_scale,d->Anz);
 	scaleArray(d->c,w->c_scale,d->n);
@@ -217,16 +231,18 @@ static inline void projectLinSys(Data * d,Work * w){
 
 static inline void freeWork(Work * w){
 	freePriv(w);
-	if(w->Xs) coneOS_free(w->Xs);
-	if(w->Z) coneOS_free(w->Z);
-	if(w->e) coneOS_free(w->e);
-	if(w->u) coneOS_free(w->u);
-	if(w->v) coneOS_free(w->v);
-	if(w->u_t) coneOS_free(w->u_t);
-	if(w->u_prev) coneOS_free(w->u_prev);
-	if(w->h) coneOS_free(w->h);
-	if(w->g) coneOS_free(w->g);
-	if(w) coneOS_free(w);
+	if(w){
+		if(w->Xs) coneOS_free(w->Xs);
+		if(w->Z) coneOS_free(w->Z);
+		if(w->e) coneOS_free(w->e);
+		if(w->u) coneOS_free(w->u);
+		if(w->v) coneOS_free(w->v);
+		if(w->u_t) coneOS_free(w->u_t);
+		if(w->u_prev) coneOS_free(w->u_prev);
+		if(w->h) coneOS_free(w->h);
+		if(w->g) coneOS_free(w->g);
+		coneOS_free(w);
+	}
 }
 
 static inline void printSol(Data * d, Sol * sol, Info * info){
@@ -247,13 +263,23 @@ static inline void printSol(Data * d, Sol * sol, Info * info){
 static inline void updateDualVars(Data * d, Work * w){
 	int i;
 	/*
-	for(i = 0; i < d->n; ++i) { 
-		w->v[i] += w->u[i] - w->u_t[i]; 
-	}
-	*/
+	   for(i = 0; i < d->n; ++i) { 
+	   w->v[i] += w->u[i] - w->u_t[i]; 
+	   }
+	 */
 	//for(i = 0; i < w->l; ++i) { 
-	for(i = d->n; i < w->l; ++i) { 
-		w->v[i] += (w->u[i] - d->ALPH*w->u_t[i] - (1.0 - d->ALPH)*w->u_prev[i]); 
+	if (fabs(d->ALPH - 1.0) < 1e-9) {
+		// this is over-step parameter:
+		//double sig = (1+sqrt(5))/2;
+		double sig = 1.0;
+		for(i = d->n; i < w->l; ++i) { 
+			w->v[i] += sig*(w->u[i] - w->u_t[i]);
+		}
+	}
+	else {
+		for(i = d->n; i < w->l; ++i) { 
+			w->v[i] += (w->u[i] - d->ALPH*w->u_t[i] - (1.0 - d->ALPH)*w->u_prev[i]); 
+		}
 	}
 }
 
@@ -276,7 +302,7 @@ static inline void projectCones(Data *d,Work * w,Cone * k){
 static inline int getSolution(Data * d,Work * w,Sol * sol, Info * info){
 	//double tau = (w->u[w->l-1]+w->u_t[w->l-1])/2;
 	double tau = w->u[w->l-1];
-	double kap = w->v[w->l-1];
+	double kap = fabs(w->v[w->l-1])*w->A_scale/(w->c_scale*w->b_scale);
 	setx(d,w,sol);
 	sety(d,w,sol);
 	if (tau > d->UNDET_TOL && tau > kap){
@@ -338,7 +364,7 @@ static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
 	// coneOS_printf("Iteration %i, primal residual %4f, primal tolerance %4f\n",i,err,EPS_PRI);
 	double tau = fabs(w->u[w->l-1]+w->u_t[w->l-1])/2;
 	//double tau = w->u[w->l-1];
-	double kap = w->v[w->l-1];
+	double kap = fabs(w->v[w->l-1])*w->A_scale/(w->c_scale*w->b_scale);
  	
 	double * dr = coneOS_calloc(d->n,sizeof(double));
 	double * pr = coneOS_calloc(d->m,sizeof(double));
@@ -367,11 +393,11 @@ static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
 		pr[j] = d->b[j]*dt - y[j] + (2-d->ALPH)*y_prev[j] - (1-d->ALPH)*y_t[j];	
 	}
 	
-	r->pres = calcNormInf(pr,d->m)/(w->b_scale * tau);
+	r->pres = calcNorm(pr,d->m)/(w->b_scale * tau);
 
 	accumByAtrans(d,y,dr);
 	addScaledArray(dr,d->c,d->n,tau);
-	r->dres = calcNormInf(dr,d->n)/(w->c_scale * tau);
+	r->dres = calcNorm(dr,d->n)/(w->c_scale * tau);
 	
 	double sc = w->A_scale/(w->c_scale*w->b_scale*tau); 
 	double cTx = innerProd(x,d->c,d->n);

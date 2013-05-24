@@ -1,9 +1,9 @@
 clear all
 close all
 randn('seed',0);rand('seed',0)
-n=10000;
+n=5000;
 s=round(n/10);
-m=1000;
+m=500;
 
 x_true=[randn(s,1);zeros(n-s,1)]; % true sparse signal
 x_true=x_true(randperm(n));
@@ -13,14 +13,13 @@ b = A*x_true + 0.1*randn(m,1); % measurements
 mu = 1;
 
 cvx_begin
-%cvx_solver_settings('NORMALIZE',0)
 %cvx_solver_settings('USE_INDIRECT',1)
-%cvx_solver_settings('ALPHA',1)
 cvx_solver coneos
 variable x_c(n)
 minimize(0.5*sum_square(A*x_c - b) + mu*norm(x_c,1))
 cvx_end
 
+% RESTARTED FISTA
 tic
 x=zeros(n,1);y=x;theta=1;
 t=1/max(eig(A*A')); % step-size

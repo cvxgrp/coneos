@@ -37,7 +37,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const mxArray *params = prhs[2];
   d->n = *(mxGetDimensions(c_mex));
   d->m = *(mxGetDimensions(b_mex));
-
+ 
+  d->bnz = (int)*mxGetPr(mxGetField(data,0,"bnz"));
+  d->cnz = (int)*mxGetPr(mxGetField(data,0,"cnz"));
+	
   d->b = mxGetPr(b_mex);
   d->c = mxGetPr(c_mex);
   
@@ -54,7 +57,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   else d->EPS_ABS = (double)*mxGetPr(EPS_ABS_mex);
 
   const mxArray *UNDET_TOL_mex = mxGetField(params,0,"UNDET_TOL");
-  if (UNDET_TOL_mex == NULL) d->UNDET_TOL = 1e-8;
+  if (UNDET_TOL_mex == NULL) d->UNDET_TOL = 1e-9;
   else d->UNDET_TOL = (double)*mxGetPr(UNDET_TOL_mex);
 
   const mxArray *CG_MAX_ITS_mex = mxGetField(params,0,"CG_MAX_ITS");

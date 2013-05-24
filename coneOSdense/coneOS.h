@@ -31,7 +31,7 @@ typedef struct PROBLEM_DATA {
   /* problem data, A, b, c: */
   double * Ax;
   int * Ai, * Ap;
-  int Anz;
+  int Anz, bnz, cnz;
   double * b, * c;
   int MAX_ITERS, CG_MAX_ITS;
   double EPS_ABS, ALPH, CG_TOL, UNDET_TOL;

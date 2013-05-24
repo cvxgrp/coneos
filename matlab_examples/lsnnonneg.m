@@ -2,28 +2,27 @@ clear all
 close all
 
 randn('seed',0);rand('seed',0);
-m = 5000;
-n = 1000;
+m = 2000;
+n = 500;
 A = randn(m,n);
 x_true = pos(randn(n,1));
-b = A*x_true + 0.1*randn(m,1);
-%b=randn(m,1);
+%b = A*x_true + 0.1*randn(m,1);
+b=randn(m,1);
 
 cvx_begin
 cvx_solver coneos
-cvx_solver_settings('NORMALIZE',0)
-%cvx_solver_settings('ALPHA',1.0)
+cvx_solver_settings('ALPHA',1.8)
 variable x_c(n)
 dual variable y_c
 minimize(sum_square(A*x_c - b))
 y_c:x_c>=0
 cvx_end
 
-
 cvx_begin
 variable x(n)
+dual variable y
 minimize(sum_square(A*x - b))
-x>=0
+y:x>=0
 cvx_end
 %%
 
