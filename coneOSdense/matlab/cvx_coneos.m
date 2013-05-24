@@ -264,19 +264,19 @@ if (pars.NORMALIZE)
     if (~isfield(settings,'EPS')) 
         pars.EPS_ABS = 5e-5;
     end
-    D = norms(data.A(1:K.f,:)');
+    D = norms(data.A(1:K.f,:)')';
     idx = K.f;
     D = [D;norms(data.A(idx+1:idx+K.l,:)')'];
     idx = idx + K.l;
     for i=1:length(K.q)
-        nmA = mean(norms(data.A(idx+1:idx+K.q(i))'));
+        nmA = mean(norms(data.A(idx+1:idx+K.q(i),:)'));
         D = [D;nmA*ones(K.q(i),1)];
         idx = idx + K.q(i);
     end
     for i=1:length(K.s)
-        nmA = mean(norms(data.A(idx+1:idx+K.s(i))'));
-        D = [D;nmA*ones(K.s(i),1)];
-        idx = idx + K.s(i);
+        nmA = mean(norms(data.A(idx+1:idx+K.s(i)^2,:)'));
+        D = [D;nmA*ones(K.s(i)^2,1)];
+        idx = idx + K.s(i)^2;
     end
     
     data.A = sparse(diag(1./D))*data.A;

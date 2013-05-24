@@ -12,12 +12,23 @@ b = A*x_true + 0.1*randn(m,1); % measurements
 %b = randn(m,1);
 mu = 1;
 
+tic
 cvx_begin
 %cvx_solver_settings('USE_INDIRECT',1)
 cvx_solver coneos
 variable x_c(n)
 minimize(0.5*sum_square(A*x_c - b) + mu*norm(x_c,1))
 cvx_end
+toc
+
+tic
+cvx_begin
+%cvx_solver_settings('USE_INDIRECT',1)
+cvx_solver pdos
+variable x_p(n)
+minimize(0.5*sum_square(A*x_p - b) + mu*norm(x_p,1))
+cvx_end
+toc
 
 % RESTARTED FISTA
 tic

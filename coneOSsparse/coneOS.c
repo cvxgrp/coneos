@@ -131,7 +131,7 @@ static inline void normalize(Data * d, Work * w){
 	// scale A,b,c
 	// this scaling breaks symmetry between dense and 
 	// sparse methods (due to d->Anz):
-	double as, cs, bs;
+	double as, cs, bs, sqrtr;
 	double an = calcNorm(d->Ax,d->Anz);
 	double cn = calcNorm(d->c,d->n);
 	double bn = calcNorm(d->b,d->m);
@@ -147,8 +147,8 @@ static inline void normalize(Data * d, Work * w){
 	//bs = 1.0;
 	//cs = 1.0;
 
-	double sqrtr = sqrt((an*an*as*as + bn*bn*bs*bs + cn*cn*cs*cs)/(2*(d->n+d->m+1)));
-	
+	sqrtr = sqrt(0.5*(an*an*as*as + bn*bn*bs*bs + cn*cn*cs*cs)/(1+d->m+d->n));
+
 	w->A_scale = as/sqrtr;
 	w->c_scale = cs/sqrtr;
 	w->b_scale = bs/sqrtr;
