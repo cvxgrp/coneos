@@ -300,8 +300,8 @@ static inline void projectCones(Data *d,Work * w,Cone * k){
 }
 
 static inline int getSolution(Data * d,Work * w,Sol * sol, Info * info){
-	//double tau = (w->u[w->l-1]+w->u_t[w->l-1])/2;
-	double tau = w->u[w->l-1];
+	double tau = (w->u[w->l-1]+w->u_t[w->l-1])/2;
+	//double tau = w->u[w->l-1];
 	double kap = fabs(w->v[w->l-1])*w->A_scale/(w->c_scale*w->b_scale);
 	setx(d,w,sol);
 	sety(d,w,sol);
@@ -346,8 +346,8 @@ static inline void sety(Data * d,Work * w, Sol * sol){
 		   not taking average has desirable properties, like returning sparse
 		   solutions if l1 penalty used (for example), but will have worse accuracy
 		   and worse dual equality constraint residual */
-		//sol->y[i] = 0.5 * w->A_scale * (w->u[i + d->n]+w->u_t[i + d->n]) / w->c_scale;
-		sol->y[i] = w->A_scale * w->u[i + d->n] / w->c_scale;
+		sol->y[i] = 0.5 * w->A_scale * (w->u[i + d->n]+w->u_t[i + d->n]) / w->c_scale;
+		//sol->y[i] = w->A_scale * w->u[i + d->n] / w->c_scale;
 	}
 }
 
