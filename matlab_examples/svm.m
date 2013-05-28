@@ -1,9 +1,9 @@
 clear all;
 close all;
-N1 = 1000;
+N1 = 3000;
 N2 = N1;
 
-n = 50;m=N1+N2;
+n = 200;m=N1+N2;
 
 mu1 = 0.5*randn(1,n);
 mu2 = 0.5*randn(1,n);

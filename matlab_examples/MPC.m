@@ -6,8 +6,8 @@ rand('state',0);
 % System's dimensions and control horizon
 % n - states, m - controls
 %n = 5; m = 2; T = 10; x_init = 5*randn(n,1);
-n = 20; m = 5; T = 20; x_init = 5*randn(n,1);
-%n = 100; m = 30; T = 50;  x_init = 5*randn(n,1);
+%n = 20; m = 5; T = 20; x_init = 5*randn(n,1);
+n = 100; m = 30; T = 50;  x_init = 5*randn(n,1);
 
 A = randn(n);
 A = A/max(abs(eig(A)));
@@ -27,10 +27,9 @@ r = zeros(m,1);
 umax = 1;
 umin = -1;
 
+tic
 cvx_begin
 cvx_solver 'coneos'
-%cvx_solver_settings('NORMALIZE',0)
-cvx_solver_settings('ALPHA',1)
 variables X_c(n,T+1) U_c(m,T+1)
 obj=0;
 for t=1:T+1
@@ -46,8 +45,29 @@ X_c(:,1) == x_init;
 U_c <= umax;
 U_c >= umin;
 cvx_end
+toc
 
+tic
+cvx_begin
+cvx_solver 'pdos'
+variables X_p(n,T+1) U_p(m,T+1)
+obj=0;
+for t=1:T+1
+    obj = obj + 0.5 * [X_p(:,t);U_p(:,t)]'*mat*[X_p(:,t);U_p(:,t)]...
+        + q'*X_p(:,t) + r'*U_p(:,t);
+end
+for t=1:T
+    X_p(:,t+1) == A*X_p(:,t) + B*U_p(:,t) + c;
+end
+minimize (obj/T)
+subject to
+X_p(:,1) == x_init;
+U_p <= umax;
+U_p >= umin;
+cvx_end
+toc
 
+tic
 cvx_begin
 variables X(n,T+1) U(m,T+1)
 obj=0;
@@ -64,4 +84,4 @@ X(:,1) == x_init;
 U <= umax;
 U >= umin;
 cvx_end
-
+toc

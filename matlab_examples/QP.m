@@ -10,16 +10,27 @@ R=randn(p,n);
 c=rand(p,1);
 
 %%
-
+tic
 cvx_begin
 cvx_solver 'coneos'
-variable x_cvx(n)
-dual variable z_cvx
-minimize(0.5*sum_square(R*x_cvx - c))
-z_cvx:A*x_cvx<=b
+variable x_c(n)
+dual variable z_c
+minimize(0.5*sum_square(R*x_c - c))
+z_c:A*x_c<=b
 cvx_end
+toc
 
+tic
+cvx_begin
+cvx_solver 'pdos'
+variable x_p(n)
+dual variable z_p
+minimize(0.5*sum_square(R*x_p - c))
+z_p:A*x_p<=b
+cvx_end
+toc
 
+tic
 cvx_begin
 cvx_solver 'sdpt3'
 variable x_cvx(n)
@@ -27,3 +38,4 @@ dual variable z_cvx
 minimize(0.5*sum_square(R*x_cvx - c))
 z_cvx:A*x_cvx<=b
 cvx_end
+toc

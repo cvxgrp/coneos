@@ -1,9 +1,9 @@
 clear all
 close all
 randn('seed',0);rand('seed',0)
-n=5000;
+n=10000;
 s=round(n/10);
-m=500;
+m=1000;
 
 x_true=[randn(s,1);zeros(n-s,1)]; % true sparse signal
 x_true=x_true(randperm(n));
@@ -15,6 +15,7 @@ mu = 1;
 tic
 cvx_begin
 %cvx_solver_settings('USE_INDIRECT',1)
+cvx_solver_settings('EPS',1e-6)
 cvx_solver coneos
 variable x_c(n)
 minimize(0.5*sum_square(A*x_c - b) + mu*norm(x_c,1))

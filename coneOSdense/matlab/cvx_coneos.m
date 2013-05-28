@@ -262,9 +262,6 @@ end
 
 undo_normalize = 0;
 if (pars.NORMALIZE)
-    if (~isfield(settings,'EPS')) 
-        pars.EPS_ABS = 1e-4;
-    end
     D = norms(data.A(1:K.f,:)')';
     idx = K.f;
     D = [D;norms(data.A(idx+1:idx+K.l,:)')'];
