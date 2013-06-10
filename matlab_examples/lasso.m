@@ -1,9 +1,9 @@
 clear all
 close all
 randn('seed',0);rand('seed',0)
-n=1000;
+n=10000;
 s=round(n/10);
-m=100;
+m=1000;
 
 x_true=[randn(s,1);zeros(n-s,1)]; % true sparse signal
 x_true=x_true(randperm(n));
@@ -19,7 +19,7 @@ cvx_solver coneos_matlab
 cvx_solver_settings('GEN_PLOTS',1)
 cvx_solver_settings('RHOX',1e-3)
 cvx_solver_settings('NORMALIZE',1)
-cvx_solver_settings('ALPHA',1.5)
+cvx_solver_settings('ALPHA',1.8)
 cvx_solver_settings('MAX_ITERS',1000)
 cvx_solver_settings('EPS',1e-6)
 %cvx_solver_settings('SIG',0.5*(1+sqrt(5)))

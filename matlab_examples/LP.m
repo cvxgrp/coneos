@@ -15,6 +15,7 @@ cvx_begin
 %cvx_solver_settings('USE_INDIRECT',1)
 cvx_solver_settings('NORMALIZE',1)
 cvx_solver_settings('ALPHA',1.8)
+cvx_solver_settings('RHO_X',1e-3)
 cvx_solver coneos
 variable x_c(n)
 dual variable z_c

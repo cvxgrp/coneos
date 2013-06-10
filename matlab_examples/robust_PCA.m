@@ -8,11 +8,12 @@ S = sprandn(m,n,0.05);
 M = L + S;
 mu = 0.1;
 
+%%
 cvx_begin
 cvx_solver coneos
 cvx_solver_settings('USE_INDIRECT',1)
 %cvx_solver_settings('CG_TOL',1e-8)
-%cvx_solver_settings('CG_MAX_ITS',100)
+cvx_solver_settings('MAX_ITERS',2000)
 variables Lc(m,n) Sc(m,n)
 dual variable Yc
 minimize(norm_nuc(Lc) + mu*sum(norms(Sc,1)))

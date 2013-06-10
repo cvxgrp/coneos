@@ -162,12 +162,12 @@ static inline void normalize(Data * d, Work * w, Cone * k){
 		}
 	}
 	for (i=0; i < d->m; ++i){
-		D[i] = sqrt(D[i]); // just the norms
+		D[i] = fmax(sqrt(D[i]),1e-6); // just the norms
 	}
 	// now get mean of norms across cones	
     count = k->l+k->f;
 	for(i = 0; i < k->qsize; ++i)
-    {  
+    {
 		wrk = 0;
 		for (j = count; j < count + k->q[i]; ++j){
         	wrk += D[j];
@@ -177,8 +177,9 @@ static inline void normalize(Data * d, Work * w, Cone * k){
         	D[j] = wrk;
 		}
 		count += k->q[i];
-    }   
-    for (i=0; i < k->ssize; ++i){
+    }
+    for (i=0; i < k->ssize; ++i)
+	{
  		wrk = 0;
 		for (j = count; j < count + k->s[i]; ++j){
         	wrk += D[j];
@@ -197,7 +198,7 @@ static inline void normalize(Data * d, Work * w, Cone * k){
 	}
 	// calculate and scale by col norms, E
 	for (i = 0; i < d->n; ++i){
-		E[i] = calcNorm(&(d->Ax[d->Ap[i]]),d->Ap[i+1] - d->Ap[i]);
+		E[i] = fmax(calcNorm(&(d->Ax[d->Ap[i]]),d->Ap[i+1] - d->Ap[i]),1e-6);
 		scaleArray(&(d->Ax[d->Ap[i]]), w->scale/E[i], d->Ap[i+1] - d->Ap[i]);
 	}
 	// scale b
@@ -221,13 +222,12 @@ static inline void normalize(Data * d, Work * w, Cone * k){
 	for (i=0; i < d->m; ++i){
 		meanNormRowA += sqrt(nms[i])/d->m; // just the norms
 	}
-	coneOS_printf("meanNormRowA is %4f\n",meanNormRowA);
 	w->sc_c = meanNormRowA/fmax(calcNorm(d->c,d->n),1e-6);
 	scaleArray(d->c, w->scale * w->sc_c, d->n);
 
 	w->D = D;
 	w->E = E;
-	
+
 	coneOS_free(nms);
 }
 
