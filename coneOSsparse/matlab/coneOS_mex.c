@@ -47,6 +47,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const mxArray *ALPH_mex = mxGetField(params,0,"ALPHA");
   if (ALPH_mex == NULL) d->ALPH = 1.8;
   else d->ALPH = (double)*mxGetPr(ALPH_mex);
+  
+  const mxArray *RHO_X_mex = mxGetField(params,0,"RHO_X");
+  if (RHO_X_mex == NULL) d->RHO_X = 1e-3;
+  else d->RHO_X = (double)*mxGetPr(RHO_X_mex);
 
   const mxArray *MAX_ITERS_mex = mxGetField(params,0,"MAX_ITERS");
   if (MAX_ITERS_mex == NULL) d->MAX_ITERS = 2000;
@@ -61,11 +65,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   else d->UNDET_TOL = (double)*mxGetPr(UNDET_TOL_mex);
 
   const mxArray *CG_MAX_ITS_mex = mxGetField(params,0,"CG_MAX_ITS");
-  if (CG_MAX_ITS_mex == NULL) d->CG_MAX_ITS = 40;
+  if (CG_MAX_ITS_mex == NULL) d->CG_MAX_ITS = 30;
   else d->CG_MAX_ITS = (int)*mxGetPr(CG_MAX_ITS_mex);
 
   const mxArray *CG_TOL_mex = mxGetField(params,0,"CG_TOL");
-  if (CG_TOL_mex == NULL) d->CG_TOL = 1e-6;
+  if (CG_TOL_mex == NULL) d->CG_TOL = 1e-8;
   else d->CG_TOL = (double)*mxGetPr(CG_TOL_mex);
 
   const mxArray *VERBOSE_mex = mxGetField(params,0,"VERBOSE");

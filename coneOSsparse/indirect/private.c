@@ -116,7 +116,7 @@ static inline void calcAx(Data * d, Work * w, const double * x, double * y){
 	CGaccumByA(d,w,x,tmp);
 	memset(y,0,d->n*sizeof(double));
 	CGaccumByAtrans(d,w,tmp,y);
-	addScaledArray(y,x,d->n,1);
+	addScaledArray(y,x,d->n,d->RHO_X);
 }
 
 static inline void CGaccumByA(Data * d, Work * w, const double *x, double *y)

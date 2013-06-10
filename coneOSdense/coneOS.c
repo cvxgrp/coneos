@@ -94,9 +94,10 @@ static inline int converged(Data * d, Work * w, struct residuals * r){
 	double kap = fabs(w->v[w->l-1])*w->A_scale/(w->c_scale*w->b_scale);
  	double as = w->A_scale, cs = w->c_scale, bs = w->b_scale;
 	// this calcs residuals when normalized, kind of messy:
+	double xRes = as*calcNormInfDiff(w->u,w->u_t,d->n)/(bs*(tau+kap));
 	double yRes = (as/cs)*calcNormInfDiff(&(w->u[d->n]),&(w->u_t[d->n]),d->m)/(tau+kap);
 	double tauRes = fabs(w->u[w->l-1]-w->u_t[w->l-1])/(tau+kap);
-	r->resPri = fmax(yRes,tauRes);
+	r->resPri = fmax(fmax(xRes,yRes),tauRes);
 	double xpRes = as*calcNormInfDiff(w->u,w->u_prev,d->n)/(bs*(tau+kap));
 	double ypRes = as*calcNormInfDiff(&(w->u[d->n]),&(w->u_prev[d->n]),d->m)/(cs*(tau+kap));
 	double taupRes = fabs(w->u[w->l-1]-w->u_prev[w->l-1])/(tau+kap);
@@ -138,17 +139,16 @@ static inline void normalize(Data * d, Work * w){
 	
 	if (an > 1e-12) as = (sqrt(d->Anz)/an);
 	else as = 1.0;
-	if (cn > 1e-12)	cs = (sqrt(d->cnz)/cn);
+	if (cn > 1e-12)	cs = (sqrt(d->n)/cn);
 	else cs = 1.0;
-	if (bn > 1e-12)	bs = (sqrt(d->bnz)/bn);
+	if (bn > 1e-12)	bs = (sqrt(d->m)/bn);
 	else bs = 1.0;
 
 	//as = 1.0;
 	//bs = 1.0;
 	//cs = 1.0;
 
-	//sqrtr = sqrt((an*an*as*as + bn*bn*bs*bs + cn*cn*cs*cs)/(d->Anz+d->cnz+d->bnz));
-	sqrtr = 2.0;
+	sqrtr = sqrt(0.5*(an*an*as*as + bn*bn*bs*bs + cn*cn*cs*cs)/(1+d->m+d->n));
 
 	w->A_scale = as/sqrtr;
 	w->c_scale = cs/sqrtr;
@@ -293,7 +293,7 @@ static inline void projectCones(Data *d,Work * w,Cone * k){
 	*/
 	for(i = 0; i < w->l; ++i){
 		//for(i = d->n; i < w->l; ++i){
-		w->u[i] += d->ALPH*(w->u_t[i] - w->u[i]) - w->v[i];
+		w->u[i] = d->ALPH*w->u_t[i] + (1-d->ALPH)*w->u_prev[i] - w->v[i];
 	}
 	/* u = [x;y;tau] */
 	projCone(&(w->u[d->n]),k,w);
@@ -301,8 +301,8 @@ static inline void projectCones(Data *d,Work * w,Cone * k){
 }
 
 static inline int getSolution(Data * d,Work * w,Sol * sol, Info * info){
-	//double tau = (w->u[w->l-1]+w->u_t[w->l-1])/2;
-	double tau = w->u[w->l-1];
+	double tau = (w->u[w->l-1]+w->u_t[w->l-1])/2;
+	//double tau = w->u[w->l-1];
 	double kap = fabs(w->v[w->l-1])*w->A_scale/(w->c_scale*w->b_scale);
 	setx(d,w,sol);
 	sety(d,w,sol);
@@ -347,8 +347,8 @@ static inline void sety(Data * d,Work * w, Sol * sol){
 		   not taking average has desirable properties, like returning sparse
 		   solutions if l1 penalty used (for example), but will have worse accuracy
 		   and worse dual equality constraint residual */
-		//sol->y[i] = 0.5 * w->A_scale * (w->u[i + d->n]+w->u_t[i + d->n]) / w->c_scale;
-		sol->y[i] = w->A_scale * w->u[i + d->n] / w->c_scale;
+		sol->y[i] = 0.5 * w->A_scale * (w->u[i + d->n]+w->u_t[i + d->n]) / w->c_scale;
+		//sol->y[i] = w->A_scale * w->u[i + d->n] / w->c_scale;
 	}
 }
 

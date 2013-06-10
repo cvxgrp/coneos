@@ -1,8 +1,10 @@
 clear all;
+close all;
+%% Defining the problem's parameters
 randn('state',0);
 rand('state',0);
 
-%% Defining the problem's parameters
+
 % System's dimensions and control horizon
 % n - states, m - controls
 %n = 5; m = 2; T = 10; x_init = 5*randn(n,1);
@@ -26,7 +28,38 @@ r = zeros(m,1);
 
 umax = 1;
 umin = -1;
+%%
+cvx_begin
+cvx_solver 'coneos_matlab'
+cvx_solver_settings('GEN_PLOTS',1)
+cvx_solver_settings('RHOX',1e-3)
+cvx_solver_settings('NORMALIZE',1)
+cvx_solver_settings('ALPHA',1.8)
+%cvx_solver_settings('SIG',0.5*(1+sqrt(5)))
+cvx_solver_settings('RELAX_X',0)
+cvx_solver_settings('PDOS_NORM',0)
+cvx_solver_settings('MAX_ITERS',1000)
+cvx_solver_settings('EPS',1e-6)
 
+variables X_m(n,T+1) U_m(m,T+1)
+obj=0;
+for t=1:T+1
+    obj = obj + 0.5 * [X_m(:,t);U_m(:,t)]'*mat*[X_m(:,t);U_m(:,t)]...
+        + q'*X_m(:,t) + r'*U_m(:,t);
+end
+for t=1:T
+    X_m(:,t+1) == A*X_m(:,t) + B*U_m(:,t) + c;
+end
+minimize (obj/T)
+subject to
+X_m(:,1) == x_init;
+U_m <= umax;
+U_m >= umin;
+cvx_end
+
+
+
+%%
 tic
 cvx_begin
 cvx_solver 'coneos'
@@ -47,6 +80,7 @@ U_c >= umin;
 cvx_end
 toc
 
+%%
 tic
 cvx_begin
 cvx_solver 'pdos'
@@ -66,6 +100,7 @@ U_p <= umax;
 U_p >= umin;
 cvx_end
 toc
+%%
 
 tic
 cvx_begin

@@ -1,4 +1,4 @@
-n = 100; m=60;
+n = 300; m=120;
 randn('seed',0);rand('seed',0)
 r = 10;
 L1 = randn(m,r);
@@ -19,6 +19,7 @@ minimize(norm_nuc(Lc) + mu*sum(norms(Sc,1)))
 Yc:Lc + Sc == M;
 cvx_end
 
+%%
 
 cvx_begin
 variables Lt(m,n) St(m,n)

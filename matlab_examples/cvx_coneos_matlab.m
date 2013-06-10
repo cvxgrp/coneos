@@ -8,14 +8,14 @@ if ~isempty( shim.solve ),
     return
 end
 if isempty( shim.name ),
-    fname = 'coneos.m';
+    fname = 'coneos_matlab.m';
     [ fs, ps, int_path ] = cvx_version;
     int_path(end+1) = fs;
     int_plen = length( int_path );
-    shim.name = 'coneos';
+    shim.name = 'coneos_matlab';
     shim.dualize = true;
     flen = length(fname);
-    fpaths = { [ int_path, 'coneos', fs, fname ] };
+    fpaths = { [ int_path, 'coneos_matlab', fs, fname ] };
     fpaths = [ fpaths ; which( fname, '-all' ) ];
     old_dir = pwd;
     oshim = shim;
@@ -209,10 +209,8 @@ if( ~isreal(At) || ~isreal(c) || ~isreal(b) )
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-data.A = full(At);
-data.bnz = nnz(c);                                                                                                      
+data.A = sparse(At);
 data.b = full(c);
-data.cnz = nnz(b);
 data.c = -full(b);
 
 [m1,n1] = size(K.q);
@@ -240,6 +238,19 @@ end
 if (isfield(settings,'EPS'))
     pars.EPS_ABS = settings.EPS;
 end
+if (isfield(settings,'RHOX'))
+    pars.RHOX = settings.RHOX;
+end
+if (isfield(settings,'SIG'))
+    pars.SIG = settings.SIG;
+end
+if (isfield(settings,'RELAX_X'))
+    pars.RELAX_X = settings.RELAX_X;
+end
+if (isfield(settings,'GEN_PLOTS'))
+    pars.GEN_PLOTS = settings.GEN_PLOTS;
+end
+
 if (isfield(settings,'MAX_ITERS'))
     pars.MAX_ITERS = settings.MAX_ITERS;
 else
@@ -250,15 +261,17 @@ if ~quiet
 end
 pars.USE_INDIRECT = false;
 if (isfield(settings,'USE_INDIRECT') && settings.USE_INDIRECT)
-    pars.USE_INDIRECT = true;
+    pars.USE_CG = true;
 end
-% normalization doesn't really work yet
 pars.NORMALIZE = 1;
 if (isfield(settings,'NORMALIZE') && ~settings.NORMALIZE)
     pars.NORMALIZE = 0;
 end
 if (isfield(settings,'CG_TOL'))
     pars.CG_TOL = settings.CG_TOL;
+end
+if (isfield(settings,'PDOS_NORM'))
+    pars.PDOS_NORM = settings.PDOS_NORM;
 end
 if (isfield(settings,'CG_MAX_ITS'))
     pars.CG_MAX_ITS = settings.CG_MAX_ITS;
@@ -267,43 +280,8 @@ if (isfield(settings,'ALPHA'))
     pars.ALPHA = settings.ALPHA;
 end
 
-undo_normalize = 0;
-if (pars.NORMALIZE)
-    D = norms(data.A(1:K.f,:)')';
-    idx = K.f;
-    D = [D;norms(data.A(idx+1:idx+K.l,:)')'];
-    idx = idx + K.l;
-    for i=1:length(K.q)
-        nmA = mean(norms(data.A(idx+1:idx+K.q(i),:)'));
-        D = [D;nmA*ones(K.q(i),1)];
-        idx = idx + K.q(i);
-    end
-    for i=1:length(K.s)
-        nmA = mean(norms(data.A(idx+1:idx+K.s(i)^2,:)'));
-        D = [D;nmA*ones(K.s(i)^2,1)];
-        idx = idx + K.s(i)^2;
-    end
-    
-    data.A = sparse(diag(1./D))*data.A;
-    nmcolA = mean(norms(data.A));
-    
-    data.b = data.b./D;
-    sc_b = nmcolA/norm(data.b);
-    data.b = full(data.b*sc_b);
-    
-    sc_c = 1/norm(data.c);
-    data.c = data.c*sc_c;
-    
-    pars.NORMALIZE = 0;
-    undo_normalize = 1;
-end
+[ yy, xx, info ] = cvx_run_solver( @coneos_matlab, data, K, pars, 'xx', 'yy', 'info', settings, 3);
 
-[ yy, xx, info ] = cvx_run_solver( @coneos, data, K, pars, 'xx', 'yy', 'info', settings, 5 );
-
-if (undo_normalize)
-    xx = xx./(D*sc_c);
-    yy = yy/sc_b;
-end
 if add_row,
     xx = xx(2:end);
     yy = zeros(0,1);
@@ -319,7 +297,7 @@ y = yy;
 z = real( reord * ( c - At * yy ) );
 if add_row, y = zeros( 0, 1 ); end
 
-tol = max(info.presid,info.dresid);
+tol = -1;%max(info.presid,info.dresid);
 iters = info.iter;
 status = info.status;
 % coneOS targets the dual to sedumi formulation:

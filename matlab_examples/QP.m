@@ -1,7 +1,9 @@
 clear all
 close all
-n=500;
-m=1200;
+%%
+randn('seed',0);rand('seed',0);
+n=150;
+m=2000;
 
 A=randn(m,n);
 b=rand(m,1);
@@ -14,12 +16,34 @@ tic
 cvx_begin
 cvx_solver 'coneos'
 variable x_c(n)
+cvx_solver_settings('MAX_ITERS',1100)
 dual variable z_c
 minimize(0.5*sum_square(R*x_c - c))
 z_c:A*x_c<=b
 cvx_end
 toc
 
+%%
+
+tic
+cvx_begin
+%cvx_solver_settings('USE_INDIRECT',1)
+cvx_solver_settings('GEN_PLOTS',1)
+cvx_solver_settings('RHOX',1e-3)
+cvx_solver_settings('NORMALIZE',1)
+cvx_solver_settings('ALPHA',1.8)
+cvx_solver_settings('MAX_ITERS',2000)
+cvx_solver_settings('EPS',1e-5)
+%cvx_solver_settings('SIG',0.5*(1+sqrt(5)))
+cvx_solver_settings('RELAX_X',0)
+cvx_solver 'coneos_matlab'
+variable x_c(n)
+dual variable z_c
+minimize(0.5*sum_square(R*x_c - c))
+z_c:A*x_c<=b
+cvx_end
+toc
+%%
 tic
 cvx_begin
 cvx_solver 'pdos'
@@ -30,6 +54,7 @@ z_p:A*x_p<=b
 cvx_end
 toc
 
+%%
 tic
 cvx_begin
 cvx_solver 'sdpt3'

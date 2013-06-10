@@ -214,8 +214,15 @@ data.bnz = nnz(c);
 data.b = full(c);
 data.cnz = nnz(b);
 data.c = -full(b);
-K.q = K.q';
-K.s = K.s';
+
+[m1,n1] = size(K.q);
+if m1 == 1,
+    K.q = K.q';
+end
+[m1,n1] = size(K.s);
+if m1 == 1,
+    K.s = K.s';
+end
 
 if (isfield(settings,'UNDET_TOL'))
     pars.UNDET_TOL = settings.UNDET_TOL;
@@ -253,6 +260,9 @@ end
 if (isfield(settings,'CG_TOL'))
     pars.CG_TOL = settings.CG_TOL;
 end
+if (isfield(settings,'RHO_X'))
+    pars.RHO_X = settings.RHO_X;
+end
 if (isfield(settings,'CG_MAX_ITS'))
     pars.CG_MAX_ITS = settings.CG_MAX_ITS;
 end
@@ -260,43 +270,7 @@ if (isfield(settings,'ALPHA'))
     pars.ALPHA = settings.ALPHA;
 end
 
-undo_normalize = 0;
-if (pars.NORMALIZE)
-    D = norms(data.A(1:K.f,:)')';
-    idx = K.f;
-    D = [D;norms(data.A(idx+1:idx+K.l,:)')'];
-    idx = idx + K.l;
-    for i=1:length(K.q)
-        nmA = mean(norms(data.A(idx+1:idx+K.q(i),:)'));
-        D = [D;nmA*ones(K.q(i),1)];
-        idx = idx + K.q(i);
-    end
-    for i=1:length(K.s)
-        nmA = mean(norms(data.A(idx+1:idx+K.s(i)^2,:)'));
-        D = [D;nmA*ones(K.s(i)^2,1)];
-        idx = idx + K.s(i)^2;
-    end
-    
-    data.A = sparse(diag(1./D))*data.A;
-    nmcolA = mean(norms(data.A));
-    
-    data.b = data.b./D;
-    sc_b = nmcolA/norm(data.b);
-    data.b = full(data.b*sc_b);
-    
-    sc_c = 1/norm(data.c);
-    data.c = data.c*sc_c;
-    
-    pars.NORMALIZE = 0;
-    undo_normalize = 1;
-end
-
 [ yy, xx, info ] = cvx_run_solver( @coneos, data, K, pars, 'xx', 'yy', 'info', settings, 5 );
-
-if (undo_normalize)
-    xx = xx./(D*sc_c);
-    yy = yy/sc_b;
-end
 
 if add_row,
     xx = xx(2:end);
