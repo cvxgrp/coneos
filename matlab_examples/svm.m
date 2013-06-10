@@ -17,7 +17,7 @@ y = [-ones(N1,1);ones(N2,1)];
 lam = 1;
 
 cvx_begin
-cvx_solver coneos_matlab
+cvx_solver coneos
 cvx_solver_settings('RELAX_X',0)
 cvx_solver_settings('RHOX',1e-3)
 cvx_solver_settings('ALPHA',1.8)

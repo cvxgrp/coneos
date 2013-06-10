@@ -2,8 +2,8 @@ clear all
 close all
 %%
 randn('seed',124);rand('seed',123);
-m = 320;
-n = 600;
+m = 3200;
+n = 6000;
 A = randn(m,n);
 x_true = pos(randn(n,1));
 %b = A*x_true + 0.1*randn(m,1);

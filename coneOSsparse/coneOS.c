@@ -164,7 +164,7 @@ static inline void normalize(Data * d, Work * w, Cone * k){
 	for (i=0; i < d->m; ++i){
 		D[i] = fmax(sqrt(D[i]),1e-6); // just the norms
 	}
-	// now get mean of norms across cones	
+	// mean of norms of rows across each cone	
     count = k->l+k->f;
 	for(i = 0; i < k->qsize; ++i)
     {
@@ -220,7 +220,7 @@ static inline void normalize(Data * d, Work * w, Cone * k){
 		}
 	}
 	for (i=0; i < d->m; ++i){
-		meanNormRowA += sqrt(nms[i])/d->m; // just the norms
+		meanNormRowA += sqrt(nms[i])/d->m;
 	}
 	w->sc_c = meanNormRowA/fmax(calcNorm(d->c,d->n),1e-6);
 	scaleArray(d->c, w->scale * w->sc_c, d->n);

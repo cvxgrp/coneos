@@ -36,6 +36,7 @@ tic
 cvx_begin
 %cvx_solver_settings('USE_INDIRECT',1)
 %cvx_solver_settings('EPS',1e-6)
+cvx_solver_settings('MAX_ITERS',1000)
 cvx_solver coneos
 variable x_c(n)
 minimize(0.5*sum_square(A*x_c - b) + mu*norm(x_c,1))

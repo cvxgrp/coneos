@@ -16,7 +16,7 @@ tic
 cvx_begin
 cvx_solver 'coneos'
 variable x_c(n)
-cvx_solver_settings('MAX_ITERS',1100)
+cvx_solver_settings('MAX_ITERS',1000)
 dual variable z_c
 minimize(0.5*sum_square(R*x_c - c))
 z_c:A*x_c<=b

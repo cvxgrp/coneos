@@ -1,10 +1,10 @@
 clear all;close all
 randn('seed',0);rand('seed',0);
-m = 80;
-n = 50;
+m = 8000;
+n = 500;
 A = randn(m,n);
 b = randn(m,1);
-mu = 1;
+mu = 0;
 
  
 %% CONEOS

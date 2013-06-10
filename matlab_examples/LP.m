@@ -2,8 +2,8 @@ clear all
 close all
 %%
 randn('seed',0);rand('seed',0)
-n=180;
-m=720;
+n=1800;
+m=7200;
 
 A=randn(m,n);
 b=rand(m,1);
