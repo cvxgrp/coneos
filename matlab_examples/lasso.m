@@ -1,9 +1,9 @@
 clear all
 close all
 randn('seed',0);rand('seed',0)
-n=50000;
+n=10000;
 s=round(n/10);
-m=5000;
+m=1000;
 
 x_true=[randn(s,1);zeros(n-s,1)]; % true sparse signal
 x_true=x_true(randperm(n));

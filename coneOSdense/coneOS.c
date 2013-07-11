@@ -391,7 +391,7 @@ static inline void printHeader(Data * d, Work * w) {
 	for(i = 0; i < _lineLen_; ++i) {
 		coneOS_printf("-");
 	}
-	coneOS_printf("\nconeOS 1.0: %s method, A matrix density: %4f, epsilon: %.2e\n",w->method,((double)d->Anz/d->n)/d->m, d->EPS_ABS);
+	coneOS_printf("\nconeOS 1.0: %s method, A matrix density: %4f, EPS: %.2e\n",w->method,((double)d->Anz/d->n)/d->m, d->EPS_ABS);
 	for(i = 0; i < _lineLen_; ++i) {
 		coneOS_printf("-");
 	}

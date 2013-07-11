@@ -2,8 +2,8 @@ clear all
 close all
 %%
 randn('seed',124);rand('seed',123);
-m = 320;
-n = 600;
+m = 1000;
+n = 1000;
 A = randn(m,n);
 x_true = pos(randn(n,1));
 %b = A*x_true + 0.1*randn(m,1);
@@ -15,7 +15,7 @@ tic
 cvx_begin
 cvx_solver coneos_matlab
 cvx_solver_settings('USE_INDIRECT',1)
-cvx_solver_settings('CG_MAX_ITERS',15)
+cvx_solver_settings('CG_MAX_ITERS',1)
 cvx_solver_settings('GEN_PLOTS',1)
 cvx_solver_settings('RHOX',1e-3)
 %cvx_solver_settings('CG_TOL',1e-4)
@@ -38,11 +38,13 @@ cvx_begin
 cvx_solver coneos
 %cvx_solver_settings('NORMALIZE',0)
 cvx_solver_settings('USE_INDIRECT',0)
+cvx_solver_settings('CG_MAX_ITS',2)
+cvx_solver_settings('CG_TOL',1e-12)
 %cvx_solver_settings('NORMALIZE',1)
 %cvx_solver_settings('ALPHA',1.8)
 %cvx_solver_settings('RHO_X',1e-3)
 %cvx_solver_settings('EPS',1e-8)
-cvx_solver_settings('MAX_ITERS',1000)
+cvx_solver_settings('MAX_ITERS',5000)
 variable x_c(n)
 dual variable y_c
 minimize(sum_square(A*x_c - b) + mu*sum_square(x_c))
