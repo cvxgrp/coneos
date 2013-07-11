@@ -1,5 +1,6 @@
 /* coneos 1.0 */
 #include "coneOS.h"
+#include "normalize.h"
 
 static int _lineLen_;
 // constants and data structures
@@ -43,7 +44,6 @@ static inline void printSol(Data * d, Sol * sol, Info * info);
 static inline void freeWork(Work * w);
 static inline void projectLinSys(Data * d,Work * w);
 static inline Work * initWork(Data * d, Cone * k);
-static inline void unNormalize(Data *d, Work * w);
 static inline int converged(Data * d, Work * w, struct residuals * r);
 
 /* coneOS returns the following integers:
@@ -80,8 +80,10 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
 		}
 	}
 	if(d->VERBOSE) printSummary(d,w,i,&r);
-	if(d->NORMALIZE) unNormalize(d,w);
 	int status = getSolution(d,w,sol,info);
+
+	if(d->NORMALIZE) unNormalize(d,w,sol);
+	
 	info->iter = i;
 	getInfo(d,w,sol,info,&r,status);
 	if(d->VERBOSE) printFooter(d, info);
@@ -91,18 +93,11 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
 
 static inline int converged(Data * d, Work * w, struct residuals * r){
 	double tau = fabs((w->u[w->l-1]+w->u_t[w->l-1])/2);
-	double kap = fabs(w->v[w->l-1])*w->A_scale/(w->c_scale*w->b_scale);
- 	double as = w->A_scale, cs = w->c_scale, bs = w->b_scale;
-	// this calcs residuals when normalized, kind of messy:
-	double xRes = as*calcNormInfDiff(w->u,w->u_t,d->n)/(bs*(tau+kap));
-	double yRes = (as/cs)*calcNormInfDiff(&(w->u[d->n]),&(w->u_t[d->n]),d->m)/(tau+kap);
-	double tauRes = fabs(w->u[w->l-1]-w->u_t[w->l-1])/(tau+kap);
-	r->resPri = fmax(fmax(xRes,yRes),tauRes);
-	double xpRes = as*calcNormInfDiff(w->u,w->u_prev,d->n)/(bs*(tau+kap));
-	double ypRes = as*calcNormInfDiff(&(w->u[d->n]),&(w->u_prev[d->n]),d->m)/(cs*(tau+kap));
-	double taupRes = fabs(w->u[w->l-1]-w->u_prev[w->l-1])/(tau+kap);
-	r->resDual = fmax(fmax(xpRes,ypRes),taupRes);
-	if (fmin(tau,kap)/fmax(tau,kap) < 1e-6 && fmax(r->resPri,r->resDual) < d->EPS_ABS)
+	double kap = fabs(w->v[w->l-1]);
+	r->resPri = calcNormDiff(w->u, w->u_t, w->l);
+	r->resDual = calcNormDiff(w->u, w->u_prev, w->l);
+	
+	if (fmin(tau,kap)/fmax(tau,kap) < 1e-6 && fmax(r->resPri,r->resDual) < d->EPS_ABS*(tau+kap))
 	{
 		return 1;
 	}
@@ -122,54 +117,19 @@ static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct re
 	info->gap = info->pobj-info->dobj;
 }
 
-static inline void unNormalize(Data *d, Work * w){
-	scaleArray(d->Ax,1/w->A_scale,d->Anz);
-	scaleArray(d->c,1/w->c_scale,d->n);
-	scaleArray(d->b,1/w->b_scale,d->m);
-}
-
-static inline void normalize(Data * d, Work * w){
-	// scale A,b,c
-	// this scaling breaks symmetry between dense and 
-	// sparse methods (due to d->Anz):
-	double as, cs, bs, sqrtr;
-	double an = calcNorm(d->Ax,d->Anz);
-	double cn = calcNorm(d->c,d->n);
-	double bn = calcNorm(d->b,d->m);
-	
-	if (an > 1e-12) as = (sqrt(d->Anz)/an);
-	else as = 1.0;
-	if (cn > 1e-12)	cs = (sqrt(d->n)/cn);
-	else cs = 1.0;
-	if (bn > 1e-12)	bs = (sqrt(d->m)/bn);
-	else bs = 1.0;
-
-	//as = 1.0;
-	//bs = 1.0;
-	//cs = 1.0;
-
-	sqrtr = sqrt(0.5*(an*an*as*as + bn*bn*bs*bs + cn*cn*cs*cs)/(1+d->m+d->n));
-
-	w->A_scale = as/sqrtr;
-	w->c_scale = cs/sqrtr;
-	w->b_scale = bs/sqrtr;
-
-	scaleArray(d->Ax,w->A_scale,d->Anz);
-	scaleArray(d->c,w->c_scale,d->n);
-	scaleArray(d->b,w->b_scale,d->m);
-}
-
 static inline Work * initWork(Data *d, Cone * k) {
 
 	Work * w = coneOS_malloc(sizeof(Work));
 
 	if(d->NORMALIZE) {
-		normalize(d,w);
+		normalize(d,w,k);
 	}
 	else {
-		w->A_scale = 1.0;
-		w->b_scale = 1.0;
-		w->c_scale = 1.0;
+		w->D = NULL;
+		w->E = NULL;
+		w->sc_c = 1.0;
+		w->sc_b = 1.0;
+		w->scale = 1.0;
 	}
 
 	w->l = d->n+d->m+1;
@@ -213,20 +173,19 @@ static inline Work * initWork(Data *d, Cone * k) {
 }
 
 static inline void projectLinSys(Data * d,Work * w){
-	//memcpy(w->u_t,w->u,w->l*sizeof(double));
-	//addScaledArray(w->u_t,w->v,w->l,1.0);
-	//addScaledArray(w->u_t,w->h,w->l-1,-w->u_t[w->l-1]);
-	//solveLinSys(d, w, w->u_t);
-	//double sc = innerProd(w->u_t,w->h,w->l-1)/(w->fac+1);
-	//addScaledArray(w->u_t, w->beta, w->l-1, -sc);
-	//w->u_t[w->l-1] += sc;
-	
+
+	// ut = u + v
 	memcpy(w->u_t,w->u,w->l*sizeof(double));
 	addScaledArray(w->u_t,w->v,w->l,1.0);
+	
+	scaleArray(w->u_t,d->RHO_X,d->n);
+
 	addScaledArray(w->u_t,w->h,w->l-1,-w->u_t[w->l-1]);
 	addScaledArray(w->u_t, w->h, w->l-1, -innerProd(w->u_t,w->g,w->l-1)/(w->gTh+1));
 	scaleArray(&(w->u_t[d->n]),-1,d->m);
+	
 	solveLinSys(d, w, w->u_t, w->u);
+	
 	w->u_t[w->l-1] += innerProd(w->u_t,w->h,w->l-1);
 }
 
@@ -242,6 +201,8 @@ static inline void freeWork(Work * w){
 		if(w->u_prev) coneOS_free(w->u_prev);
 		if(w->h) coneOS_free(w->h);
 		if(w->g) coneOS_free(w->g);
+		if(w->D) coneOS_free(w->D);
+		if(w->E) coneOS_free(w->E);
 		coneOS_free(w);
 	}
 }
@@ -278,6 +239,7 @@ static inline void updateDualVars(Data * d, Work * w){
 		}
 	}
 	else {
+		// this does not relax 'x' variable
 		for(i = d->n; i < w->l; ++i) { 
 			w->v[i] += (w->u[i] - d->ALPH*w->u_t[i] - (1.0 - d->ALPH)*w->u_prev[i]); 
 		}
@@ -286,13 +248,12 @@ static inline void updateDualVars(Data * d, Work * w){
 
 static inline void projectCones(Data *d,Work * w,Cone * k){
 	int i;
-	/*	
+	// this does not relax 'x' variable
 	for(i = 0; i < d->n; ++i) { 
 		w->u[i] = w->u_t[i] - w->v[i];
 	}
-	*/
-	for(i = 0; i < w->l; ++i){
-		//for(i = d->n; i < w->l; ++i){
+	//for(i = 0; i < w->l; ++i){
+	for(i = d->n; i < w->l; ++i){
 		w->u[i] = d->ALPH*w->u_t[i] + (1-d->ALPH)*w->u_prev[i] - w->v[i];
 	}
 	/* u = [x;y;tau] */
@@ -303,7 +264,7 @@ static inline void projectCones(Data *d,Work * w,Cone * k){
 static inline int getSolution(Data * d,Work * w,Sol * sol, Info * info){
 	double tau = (w->u[w->l-1]+w->u_t[w->l-1])/2;
 	//double tau = w->u[w->l-1];
-	double kap = fabs(w->v[w->l-1])*w->A_scale/(w->c_scale*w->b_scale);
+	double kap = fabs(w->v[w->l-1]);
 	setx(d,w,sol);
 	sety(d,w,sol);
 	if (tau > d->UNDET_TOL && tau > kap){
@@ -340,37 +301,32 @@ static inline int getSolution(Data * d,Work * w,Sol * sol, Info * info){
 
 static inline void sety(Data * d,Work * w, Sol * sol){
 	sol->y = coneOS_malloc(sizeof(double)*d->m);
-	//memcpy(sol->y, w->z + w->yi, d->m*sizeof(double));
 	int i;
 	for(i = 0; i < d->m; ++i) {
 		/* XXX: (see also converged function) 
 		   not taking average has desirable properties, like returning sparse
 		   solutions if l1 penalty used (for example), but will have worse accuracy
 		   and worse dual equality constraint residual */
-		sol->y[i] = 0.5 * w->A_scale * (w->u[i + d->n]+w->u_t[i + d->n]) / w->c_scale;
-		//sol->y[i] = w->A_scale * w->u[i + d->n] / w->c_scale;
+		sol->y[i] = 0.5 * (w->u[i + d->n]+w->u_t[i + d->n]);
+		//sol->y[i] = w->u[i + d->n];
 	}
 }
 
 static inline void setx(Data * d,Work * w, Sol * sol){
 	sol->x = coneOS_malloc(sizeof(double)*d->n);
-	//memcpy(sol->x, w->z, d->n*sizeof(double));
-	int i;
-	for(i = 0; i < d->n; ++i) {
-		sol->x[i] = w->A_scale * w->u[i] / w->b_scale;
-	}
+	memcpy(sol->x, w->u, d->n*sizeof(double));
 }
 
 static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
 	// coneOS_printf("Iteration %i, primal residual %4f, primal tolerance %4f\n",i,err,EPS_PRI);
 	double tau = fabs(w->u[w->l-1]+w->u_t[w->l-1])/2;
 	//double tau = w->u[w->l-1];
-	double kap = fabs(w->v[w->l-1])*w->A_scale/(w->c_scale*w->b_scale);
+	double kap = fabs(w->v[w->l-1]);
  	
 	double * dr = coneOS_calloc(d->n,sizeof(double));
 	double * pr = coneOS_calloc(d->m,sizeof(double));
 
-	/* XXX: see discussion in sety function
+	/* see discussion in sety function
 	double y[d->m], * x = w->u;
 	memcpy(y,&(w->u[d->n]),d->m*sizeof(double));
 	addScaledArray(y,&(w->u_t[d->n]),d->m,1);
@@ -378,14 +334,14 @@ static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
 	*/
 	double * x = w->u, * y = &(w->u[d->n]);
 	
-	// XXX: slower primal resid calculation (mult by A)
+	// slower primal resid calculation (mult by A)
 	/*		
 	accumByA(d,x,pr);
 	addScaledArray(pr,&(w->v[d->n]),d->m,1.0);
 	addScaledArray(pr,d->b,d->m,-tau);
 	*/
 	
-	// XXX: better primal resid calculation
+	// better primal resid calculation
 	double * y_prev = &(w->u_prev[d->n]);
 	double * y_t = &(w->u_t[d->n]);
 	double dt = w->u[w->l-1] - (d->ALPH*w->u_t[w->l-1] + (1-d->ALPH)*(w->u_prev[w->l-1]));
@@ -394,33 +350,32 @@ static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
 		pr[j] = d->b[j]*dt - y[j] + (2-d->ALPH)*y_prev[j] - (1-d->ALPH)*y_t[j];	
 	}
 	
-	r->pres = calcNorm(pr,d->m)/(w->b_scale * tau);
+	r->pres = calcNorm(pr,d->m)/tau;
 
 	accumByAtrans(d,y,dr);
 	addScaledArray(dr,d->c,d->n,tau);
-	r->dres = calcNorm(dr,d->n)/(w->c_scale * tau);
+	r->dres = calcNorm(dr,d->n)/tau;
 	
-	double sc = w->A_scale/(w->c_scale*w->b_scale*tau); 
 	double cTx = innerProd(x,d->c,d->n);
 	double bTy = innerProd(y,d->b,d->m);
 
-	r->dgap = sc*fabs(cTx + bTy);
-	r->pobj = sc*cTx;
-	r->dobj = -sc*bTy;
+	r->dgap = fabs(cTx + bTy);
+	r->pobj = cTx;
+	r->dobj = -bTy;
 	r->tau = tau;
 	r->kap = kap;
 	coneOS_free(dr); coneOS_free(pr);
 
 	coneOS_printf("%*i|", (int)strlen(HEADER[0]), i);
-	coneOS_printf("%*.2e ", (int)strlen(HEADER[1])-1, r->resPri);
-	coneOS_printf(" %*.2e ", (int)strlen(HEADER[2])-1, r->resDual);
+	coneOS_printf("%*.2e ", (int)strlen(HEADER[1])-1, r->resPri/(r->tau+r->kap));
+	coneOS_printf(" %*.2e ", (int)strlen(HEADER[2])-1, r->resDual/(r->tau+r->kap));
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[3])-1, r->pres); 
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[4])-1, r->dres);
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[5])-1, r->pobj);
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[6])-1, r->dobj);
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[7])-1, r->dgap);
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[8])-1, r->kap/r->tau);
-coneOS_printf("\n");
+	coneOS_printf("\n");
 #ifdef MATLAB_MEX_FILE
 	mexEvalString("drawnow;");
 #endif
@@ -436,7 +391,7 @@ static inline void printHeader(Data * d, Work * w) {
 	for(i = 0; i < _lineLen_; ++i) {
 		coneOS_printf("-");
 	}
-	coneOS_printf("\nconeOS 1.0: %s method, A matrix density: %4f\n",w->method,((double)d->Anz/d->n)/d->m);
+	coneOS_printf("\nconeOS 1.0: %s method, A matrix density: %4f, epsilon: %.2e\n",w->method,((double)d->Anz/d->n)/d->m, d->EPS_ABS);
 	for(i = 0; i < _lineLen_; ++i) {
 		coneOS_printf("-");
 	}

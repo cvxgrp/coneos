@@ -1,10 +1,22 @@
 clear all;close all
 randn('seed',0);rand('seed',0);
-m = 8000;
+m = 800;
 n = 500;
 A = randn(m,n);
 b = randn(m,1);
-mu = 0;
+mu = 1;
+
+%%
+
+tic
+cvx_begin
+cvx_solver 'coneos_matlab'
+cvx_solver_settings('GEN_PLOTS',1)
+cvx_solver_settings('RHOX',1e-3)
+variable x_c(n)
+minimize(sum_square(A*x_c - b) + mu*sum_square(x_c))
+cvx_end
+toc
 
  
 %% CONEOS

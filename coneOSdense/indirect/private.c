@@ -18,13 +18,14 @@ void privateInitWork(Data * d, Work * w){
 		}
 	}
   */
-	// form Gram matrix A'A
+	// form Gram matrix I+A'A
 	w->p->G = coneOS_malloc(d->n*d->n*sizeof(double));
 	cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans,d->n, d->n, d->m, 1, A, d->m, A,d->m, 0, w->p->G,d->n);
   //b_dgemm('T', 'N' ,d->n, d->n, d->m, 1, A, d->m, A,d->m, 0, w->p->G,d->n);
   for (j = 0; j < d->n; j++) 
 	{ 
-		w->p->G[j*d->n + j] += 1;
+		//w->p->G[j*d->n + j] += 1;
+		w->p->G[j*d->n + j] += d->RHO_X;
 	}
 }
 

@@ -1,8 +1,1 @@
-add optimal warm_start for indirect method
-fix normalize - at least if c,b,A = 0 be correct, don't give nan
-
-dense: use matlab built-in lapack and blas libs (hard...)
-change comments to /*
-add better commenting
-better error/input checking matlab (and elsewhere)
-organize code 
+both: better print summary

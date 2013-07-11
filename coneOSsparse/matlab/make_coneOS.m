@@ -9,7 +9,7 @@
 %         evalc('system(''make -C .. purge packages CFLAGS="-DMATLAB_MEX_FILE"'')')
 % end
 
-common_coneOS = 'coneOS_mex.c ../coneOS.c ../cones.c ../cs.c ../linAlg.c ../util.c';
+common_coneOS = '../cones.c ../cs.c ../util.c ../coneOS.c coneOS_mex.c';
 if (~isempty (strfind (computer, '64')))
     d = '-fPIC';
     arr = '-largeArrayDims';
@@ -18,7 +18,7 @@ else
     arr = '';
 end
 
-% try to use blas libs, if not available can only solve SOCPs:
+% try to use blas libs; if not available then coneOS cannot solve SDPs:
 try
    
     % EDIT THESE TO POINT TO YOUR BLAS + LAPACK LIBS:
@@ -38,14 +38,12 @@ try
     cmd = sprintf ('%s ../direct/ldl.c %s ../direct/private.c -lm %s %s -o coneos_direct', cmd, common_coneOS, LOCS, BLASLIB) ;
     eval(cmd);
     
-    % compile indirect (XXX: openmp?)
-    %cmd = sprintf('mex -O %s COMPFLAGS="/openmp $COMPFLAGS" CFLAGS="\\$CFLAGS -std=c99 -O3 -fopenmp -pthread -DMATLAB_MEX_FILE %s %s" ../indirect/private.c %s -I../ %s -o coneos_indirect LDFLAGS="\\$LDFLAGS -fopenmp -lm  %s %s"',  arr, d, LCFLAG, common_coneOS, INCS, LOCS, BLASLIB);
-    cmd = sprintf('mex -O %s CFLAGS="-std=c99 -O3 -pthread -DMATLAB_MEX_FILE %s %s" ../indirect/private.c %s -I../ %s -o coneos_indirect LDFLAGS="\\$LDFLAGS -lm  %s %s"',  arr, d, LCFLAG, common_coneOS, INCS, LOCS, BLASLIB);
+    % compile indirect (XXX: if indirect throws errors comment out next line and uncomment the one below:)
+    cmd = sprintf('mex -O %s COMPFLAGS="/openmp \\$COMPFLAGS" CFLAGS="\\$CFLAGS -std=c99 -O3 -fopenmp -pthread -DMATLAB_MEX_FILE %s %s" ../indirect/private.c %s -I../ %s -o coneos_indirect LDFLAGS="\\$LDFLAGS -fopenmp -lm  %s %s"',  arr, d, LCFLAG, common_coneOS, INCS, LOCS, BLASLIB);
+    %cmd = sprintf('mex -O %s CFLAGS="-std=c99 -O3 -pthread -DMATLAB_MEX_FILE %s %s" ../indirect/private.c %s -I../ %s -o coneos_indirect LDFLAGS="\\$LDFLAGS -lm  %s %s"',  arr, d, LCFLAG, common_coneOS, INCS, LOCS, BLASLIB);
     eval(cmd);
-    %mex -v -O COMPFLAGS="/openmp $COMPFLAGS" CFLAGS="\$CFLAGS -fopenmp" LDFLAGS="\$LDFLAGS -fopenmp" -largeArrayDims ../coneOS.c ../linAlg.c ../cones.c ../cs.c ../util.c coneOS_mex.c ../indirect/private.c -I../ -output coneOS_indirect -lm
     
 catch err
-    
     
     BLASLIB = '';
     INCS = '';
@@ -63,13 +61,12 @@ catch err
     cmd = sprintf ('%s ../direct/ldl.c %s ../direct/private.c -lm %s %s -o coneos_direct', cmd, common_coneOS, LOCS, BLASLIB) ;
     eval(cmd);
     
-    % compile indirect (XXX: openmp?)
-    %cmd = sprintf('mex -O %s COMPFLAGS="/openmp $COMPFLAGS" CFLAGS="\\$CFLAGS -std=c99 -O3 -fopenmp -pthread -DMATLAB_MEX_FILE %s %s" ../indirect/private.c %s -I../ %s -o coneos_indirect LDFLAGS="\\$LDFLAGS -fopenmp -lm  %s %s"',  arr, d, LCFLAG, common_coneOS, INCS, LOCS, BLASLIB);
-    cmd = sprintf('mex -O %s CFLAGS="-std=c99 -O3 -pthread -DMATLAB_MEX_FILE %s %s" ../indirect/private.c %s -I../ %s -o coneos_indirect LDFLAGS="\\$LDFLAGS -lm  %s %s"',  arr, d, LCFLAG, common_coneOS, INCS, LOCS, BLASLIB);
+    % compile indirect (XXX: if indirect throws errors comment out next line and uncomment the one below:)
+    cmd = sprintf('mex -O %s COMPFLAGS="/openmp \\$COMPFLAGS" CFLAGS="\\$CFLAGS -std=c99 -O3 -fopenmp -pthread -DMATLAB_MEX_FILE %s %s" ../indirect/private.c %s -I../ %s -o coneos_indirect LDFLAGS="\\$LDFLAGS -fopenmp -lm  %s %s"',  arr, d, LCFLAG, common_coneOS, INCS, LOCS, BLASLIB);
+    %cmd = sprintf('mex -O %s CFLAGS="-std=c99 -O3 -pthread -DMATLAB_MEX_FILE %s %s" ../indirect/private.c %s -I../ %s -o coneos_indirect LDFLAGS="\\$LDFLAGS -lm  %s %s"',  arr, d, LCFLAG, common_coneOS, INCS, LOCS, BLASLIB);
     eval(cmd);
-    %mex -v -O COMPFLAGS="/openmp $COMPFLAGS" CFLAGS="\$CFLAGS -fopenmp" LDFLAGS="\$LDFLAGS -fopenmp" -largeArrayDims ../coneOS.c ../linAlg.c ../cones.c ../cs.c ../util.c coneOS_mex.c ../indirect/private.c -I../ -output coneOS_indirect -lm
     
-    disp('Compiled without lapack support - can only solve SOCPs')
+    disp('Compiled without lapack support - unable to solve SDPs (can solve LPs, QPs, SOCPs)')
     
 end
 

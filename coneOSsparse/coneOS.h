@@ -85,5 +85,4 @@ void privateInitWork(Data * d, Work * w);
 void solveLinSys(Data * d, Work * w, double * b, const double * s);
 void freePriv(Work * w);
 
-
 #endif

@@ -2,8 +2,8 @@ clear all
 close all
 %%
 randn('seed',124);rand('seed',123);
-m = 3200;
-n = 6000;
+m = 320;
+n = 600;
 A = randn(m,n);
 x_true = pos(randn(n,1));
 %b = A*x_true + 0.1*randn(m,1);
@@ -14,7 +14,7 @@ mu = 1;
 tic
 cvx_begin
 cvx_solver coneos_matlab
-cvx_solver_settings('USE_INDIRECT',0)
+cvx_solver_settings('USE_INDIRECT',1)
 cvx_solver_settings('CG_MAX_ITERS',15)
 cvx_solver_settings('GEN_PLOTS',1)
 cvx_solver_settings('RHOX',1e-3)
@@ -22,8 +22,6 @@ cvx_solver_settings('RHOX',1e-3)
 cvx_solver_settings('NORMALIZE',1)
 cvx_solver_settings('ALPHA',1.8)
 cvx_solver_settings('MAX_ITERS',2000)
-cvx_solver_settings('EPS',1e-8)
-%cvx_solver_settings('EPS',1e-8)
 %cvx_solver_settings('SIG',0.5*(1+sqrt(5)))
 cvx_solver_settings('RELAX_X',0)
 cvx_solver_settings('PDOS_NORM',0)
@@ -39,7 +37,7 @@ tic
 cvx_begin
 cvx_solver coneos
 %cvx_solver_settings('NORMALIZE',0)
-%vx_solver_settings('USE_INDIRECT',0)
+cvx_solver_settings('USE_INDIRECT',0)
 %cvx_solver_settings('NORMALIZE',1)
 %cvx_solver_settings('ALPHA',1.8)
 %cvx_solver_settings('RHO_X',1e-3)

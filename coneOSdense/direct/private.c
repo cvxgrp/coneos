@@ -19,7 +19,8 @@ void privateInitWork(Data * d, Work * w){
 	//b_dgemm('T', 'N', n, n, m, 1, A, d->m, A, m, 0, w->p->L, n);
 
 	for (j = 0; j < n; j++) {
-		w->p->L[j*n + j] += 1;
+		//w->p->L[j*n + j] += 1;
+		w->p->L[j*n + j] += d->RHO_X;
 	}  
 	LAPACKE_dpotrf(LAPACK_COL_MAJOR,'L',d->n,w->p->L,d->n);
 	// copy L into top half for faster solve steps

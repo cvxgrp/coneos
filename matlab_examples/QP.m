@@ -2,8 +2,8 @@ clear all
 close all
 %%
 randn('seed',0);rand('seed',0);
-n=150;
-m=2000;
+n=8000;
+m=10000;
 
 A=randn(m,n);
 b=rand(m,1);
@@ -16,7 +16,11 @@ tic
 cvx_begin
 cvx_solver 'coneos'
 variable x_c(n)
-cvx_solver_settings('MAX_ITERS',1000)
+cvx_solver_settings('MAX_ITERS',2000)
+%cvx_solver_settings('USE_INDIRECT',1)
+cvx_solver_settings('NORMALIZE',1)
+cvx_solver_settings('CG_MAX_ITS',1)
+cvx_solver_settings('CG_TOL',1e-12)
 dual variable z_c
 minimize(0.5*sum_square(R*x_c - c))
 z_c:A*x_c<=b
@@ -28,6 +32,9 @@ toc
 tic
 cvx_begin
 %cvx_solver_settings('USE_INDIRECT',1)
+cvx_solver_settings('USE_INDIRECT',1)
+cvx_solver_settings('CG_MAX_ITERS',2)
+cvx_solver_settings('CG_TOL',1e-12)
 cvx_solver_settings('GEN_PLOTS',1)
 cvx_solver_settings('RHOX',1e-3)
 cvx_solver_settings('NORMALIZE',1)

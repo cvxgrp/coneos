@@ -1,7 +1,7 @@
 # MAKEFILE for coneOS
 include coneOS.mk
 
-OBJECTS = coneOS.o linAlg.o util.o cones.o cs.o
+OBJECTS = coneOS.o util.o cones.o cs.o
 AMD_SOURCE = $(wildcard direct/amd_*.c)
 DIRECT_OBJECTS = direct/ldl.o $(AMD_SOURCE:.c=.o) 
 TARGETS = bin/demo_direct bin/demo_indirect
@@ -9,11 +9,10 @@ TARGETS = bin/demo_direct bin/demo_indirect
 .PHONY: default 
 default: lib/libconeOSdir.a lib/libconeOSindir.a bin/demo_direct bin/demo_indirect
 
-coneOS.o 	: coneOS.h
-linAlg.o 	: linAlg.c
-util.o		: util.h
-cones.o		: cones.c
-cs.o		: cs.h
+coneOS.o 	: coneOS.c coneOS.h linAlg.h
+util.o		: util.c util.h
+cones.o		: cones.c cones.h
+cs.o		: cs.c cs.h
 
 direct/private.o		: direct/private.h
 direct/ldl.o			: direct/ldl.h

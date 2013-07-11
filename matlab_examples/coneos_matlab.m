@@ -106,10 +106,10 @@ if (NORMALIZE && ~PDOS_NORM)
             Dt = [Dt;nmA*ones(K.s(i)^2,1)];
             idx = idx + K.s(i)^2;
         end
-        D = D.*Dt;
+        D = max(D.*Dt,1e-6);
         data.A = sparse(diag(1./Dt))*data.A;
         % E Scale
-        Et = max(norms(data.A),1e-8)';
+        Et = max(norms(data.A),1e-6)';
         E = E.*Et;
         data.A = data.A*sparse(diag(1./Et));
     end
@@ -278,14 +278,11 @@ for i=1:MAX_ITERS
     v = v + sig*(u - rel_ut);
     
     %% convergence checking:
-    tau = 0.5*abs(u(l)+ut(l));
+    tau = ut(l);%0.5*abs(u(l)+ut(l));
     kap = abs(v(end));
     %if (i>10 && kap<1e-6)
     %   1+1;
     %end
-    
-    
-    
     
     nm = 2;
     err_pri = norm(u-ut,nm);%/(tau+kap);
@@ -296,8 +293,8 @@ for i=1:MAX_ITERS
         nms(i,2) = err_dual;
         tau_i(i) = ut(end);
         kap_i(i) = v(end);
-        pobj(i) = data.c'*u(1:n)/tau;
-        dobj(i) = -data.b'*u(n+1:n+m)/tau;
+        pobj(i) = data.c'*ut(1:n)/tau;
+        dobj(i) = -data.b'*ut(n+1:n+m)/tau;
     end
     
     if (min(tau,kap)/max(tau,kap) < 1e-6 && max(err_pri,err_dual) < EPS_ABS*(tau+kap))

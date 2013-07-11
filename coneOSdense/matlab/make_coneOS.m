@@ -1,4 +1,4 @@
-common_coneOS = 'coneOS_mex.c ../coneOS.c ../cones.c ../linAlg.c ../util.c';
+common_coneOS = 'coneOS_mex.c ../coneOS.c ../cones.c ../util.c';
 cd ..
 evalc('system(''make purge'')');
 cd matlab

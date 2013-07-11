@@ -12,9 +12,11 @@ c=rand(n,1);
 %%
 tic
 cvx_begin
-%cvx_solver_settings('USE_INDIRECT',1)
+cvx_solver_settings('USE_INDIRECT',1)
 cvx_solver_settings('NORMALIZE',1)
-cvx_solver_settings('ALPHA',1.8)
+cvx_solver_settings('CG_MAX_ITS',1)
+cvx_solver_settings('CG_TOL',1e-12)
+cvx_solver_settings('ALPHA',1.0)
 cvx_solver_settings('RHO_X',1e-3)
 cvx_solver coneos
 variable x_c(n)
@@ -26,15 +28,15 @@ toc
 
 %%
 cvx_begin
-cvx_solver_settings('USE_INDIRECT',0)
+cvx_solver_settings('USE_INDIRECT',1)
 cvx_solver_settings('CG_MAX_ITERS',1)
+cvx_solver_settings('CG_TOL',1e-12)
 cvx_solver_settings('GEN_PLOTS',1)
 cvx_solver_settings('RHOX',1e-3)
-cvx_solver_settings('EPS',1e-6)
-
+%cvx_solver_settings('EPS',1e-6)
 cvx_solver_settings('NORMALIZE',1)
 cvx_solver_settings('ALPHA',1.0)
-cvx_solver_settings('MAX_ITERS',1000)
+cvx_solver_settings('MAX_ITERS',2000)
 cvx_solver_settings('PDOS_NORM',0)
 %cvx_solver_settings('SIG',0.5*(1+sqrt(5)))
 cvx_solver_settings('RELAX_X',0)

@@ -1,5 +1,6 @@
 /* coneos 1.0 */
 #include "coneOS.h"
+#include "normalize.h"
 
 static int _lineLen_;
 // constants and data structures
@@ -43,7 +44,6 @@ static inline void printSol(Data * d, Sol * sol, Info * info);
 static inline void freeWork(Work * w);
 static inline void projectLinSys(Data * d,Work * w);
 static inline Work * initWork(Data * d, Cone * k);
-static inline void unNormalize(Data *d, Work * w, Sol * sol);
 static inline int converged(Data * d, Work * w, struct residuals * r);
 
 /* coneOS returns the following integers:
@@ -115,120 +115,6 @@ static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct re
 	else if(status == 1)
 		info->dobj = NAN;
 	info->gap = info->pobj-info->dobj;
-}
-
-static inline void unNormalize(Data *d, Work * w, Sol * sol){
-	int i, j;
-	double * D = w->D;
-	double * E = w->E;
-	for (i = 0; i < d->n; ++i){
-		sol->x[i] /= (w->E[i] * w->sc_b);
-	}
-	for (i = 0; i < d->m; ++i){
-		sol->y[i] /= (w->D[i] * w->sc_c);
-	}
-	for (i = 0; i < d->n; ++i){
-		d->c[i] *= E[i]/(w->sc_c * w->scale);
-	}
-	for (i = 0; i < d->m; ++i){
-		d->b[i] *= D[i]/(w->sc_b * w->scale);
-	}
-    for(i = 0; i < d->n; ++i){
-        for(j = d->Ap[i]; j < d->Ap[i+1]; ++j) {
-            d->Ax[j] *= D[d->Ai[j]];
-        }   
-    }   
-    for (i = 0; i < d->n; ++i){
-        scaleArray(&(d->Ax[d->Ap[i]]), E[i]/w->scale, d->Ap[i+1] - d->Ap[i]);
-    }   
-}
-
-static inline void normalize(Data * d, Work * w, Cone * k){
-    
-	double * D = coneOS_calloc(d->m, sizeof(double));
-	double * E = coneOS_malloc(d->n*sizeof(double));
-	
-	int i, j, count;
-	double wrk;
-	
-	// heuristic rescaling, seems to do well with a scaling of about 4
-	w->scale = 4.0;
-
-	// calculate row norms
-	for(i = 0; i < d->n; ++i){
-		for(j = d->Ap[i]; j < d->Ap[i+1]; ++j) {
-			wrk = d->Ax[j];
-			D[d->Ai[j]] += wrk*wrk;
-		}
-	}
-	for (i=0; i < d->m; ++i){
-		D[i] = fmax(sqrt(D[i]),1e-6); // just the norms
-	}
-	// mean of norms of rows across each cone	
-    count = k->l+k->f;
-	for(i = 0; i < k->qsize; ++i)
-    {
-		wrk = 0;
-		for (j = count; j < count + k->q[i]; ++j){
-        	wrk += D[j];
-		}
-		wrk /= k->q[i];
-		for (j = count; j < count + k->q[i]; ++j){
-        	D[j] = wrk;
-		}
-		count += k->q[i];
-    }
-    for (i=0; i < k->ssize; ++i)
-	{
- 		wrk = 0;
-		for (j = count; j < count + k->s[i]; ++j){
-        	wrk += D[j];
-		}
-		wrk /= k->s[i];
-		for (j = count; j < count + k->s[i]; ++j){
-        	D[j] = wrk;
-		}
-		count += (k->s[i])*(k->s[i]);
-    }
-	// scale the rows with D
-	for(i = 0; i < d->n; ++i){
-		for(j = d->Ap[i]; j < d->Ap[i+1]; ++j) {
-			d->Ax[j] /= D[d->Ai[j]];
-		}
-	}
-	// calculate and scale by col norms, E
-	for (i = 0; i < d->n; ++i){
-		E[i] = fmax(calcNorm(&(d->Ax[d->Ap[i]]),d->Ap[i+1] - d->Ap[i]),1e-6);
-		scaleArray(&(d->Ax[d->Ap[i]]), w->scale/E[i], d->Ap[i+1] - d->Ap[i]);
-	}
-	// scale b
-	for (i = 0; i < d->m; ++i){
-		d->b[i] /= D[i];
-	}
-	w->sc_b = 1/fmax(calcNorm(d->b,d->m),1e-6);
-	scaleArray(d->b, w->scale * w->sc_b, d->m);
-	// scale c
-	for (i = 0; i < d->n; ++i){
-		d->c[i] /= E[i];
-	}
-	double meanNormRowA = 0.0;
-	double *nms = coneOS_calloc(d->m,sizeof(double));
-	for(i = 0; i < d->n; ++i){
-		for(j = d->Ap[i]; j < d->Ap[i+1]; ++j) {
-			wrk = d->Ax[j];
-			nms[d->Ai[j]] += wrk*wrk;
-		}
-	}
-	for (i=0; i < d->m; ++i){
-		meanNormRowA += sqrt(nms[i])/d->m;
-	}
-	w->sc_c = meanNormRowA/fmax(calcNorm(d->c,d->n),1e-6);
-	scaleArray(d->c, w->scale * w->sc_c, d->n);
-
-	w->D = D;
-	w->E = E;
-
-	coneOS_free(nms);
 }
 
 static inline Work * initWork(Data *d, Cone * k) {
@@ -315,6 +201,8 @@ static inline void freeWork(Work * w){
 		if(w->u_prev) coneOS_free(w->u_prev);
 		if(w->h) coneOS_free(w->h);
 		if(w->g) coneOS_free(w->g);
+		if(w->D) coneOS_free(w->D);
+		if(w->E) coneOS_free(w->E);
 		coneOS_free(w);
 	}
 }
@@ -479,15 +367,15 @@ static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
 	coneOS_free(dr); coneOS_free(pr);
 
 	coneOS_printf("%*i|", (int)strlen(HEADER[0]), i);
-	coneOS_printf("%*.2e ", (int)strlen(HEADER[1])-1, r->resPri);
-	coneOS_printf(" %*.2e ", (int)strlen(HEADER[2])-1, r->resDual);
+	coneOS_printf("%*.2e ", (int)strlen(HEADER[1])-1, r->resPri/(r->tau+r->kap));
+	coneOS_printf(" %*.2e ", (int)strlen(HEADER[2])-1, r->resDual/(r->tau+r->kap));
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[3])-1, r->pres); 
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[4])-1, r->dres);
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[5])-1, r->pobj);
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[6])-1, r->dobj);
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[7])-1, r->dgap);
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[8])-1, r->kap/r->tau);
-coneOS_printf("\n");
+	coneOS_printf("\n");
 #ifdef MATLAB_MEX_FILE
 	mexEvalString("drawnow;");
 #endif
@@ -503,7 +391,7 @@ static inline void printHeader(Data * d, Work * w) {
 	for(i = 0; i < _lineLen_; ++i) {
 		coneOS_printf("-");
 	}
-	coneOS_printf("\nconeOS 1.0: %s method, A matrix density: %4f\n",w->method,((double)d->Anz/d->n)/d->m);
+	coneOS_printf("\nconeOS 1.0: %s method, A matrix density: %4f, EPS: %.2e\n",w->method,((double)d->Anz/d->n)/d->m, d->EPS_ABS);
 	for(i = 0; i < _lineLen_; ++i) {
 		coneOS_printf("-");
 	}

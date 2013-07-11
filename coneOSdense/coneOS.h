@@ -34,7 +34,7 @@ typedef struct PROBLEM_DATA {
   int Anz, bnz, cnz;
   double * b, * c;
   int MAX_ITERS, CG_MAX_ITS;
-  double EPS_ABS, ALPH, CG_TOL, UNDET_TOL;
+  double EPS_ABS, ALPH, CG_TOL, UNDET_TOL, RHO_X;
   int VERBOSE, NORMALIZE;  // boolean
 } Data;
 
@@ -60,7 +60,8 @@ typedef struct PRIVATE_DATA Priv;
 typedef struct WORK {
   double *u, *v, *u_t, *u_prev;
   double *h, *g;  
-  double gTh, A_scale, b_scale, c_scale; 
+  double gTh, sc_b, sc_c, scale;
+  double *D, *E;
   Priv * p;
   /* workspace for eigenvector decompositions: */
   double * Xs, *Z, *e;
@@ -83,6 +84,5 @@ void privateInitWork(Data * d, Work * w);
 // solves [I A';A -I] x = b, stores result in b, s contains warm-start
 void solveLinSys(Data * d, Work * w, double * b, const double * s);
 void freePriv(Work * w);
-
 
 #endif

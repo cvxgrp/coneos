@@ -1,8 +1,7 @@
 #ifndef LINALG_H_GUARD
 #define LINALG_H_GUARD
 
-#include <math.h>
-#include "coneOS.h"
+#include <math.h> 
 /*
  * All basic linear operations are inlined (and further optimized) by the 
  * compiler. If compiling without optimization, causes code bloat.

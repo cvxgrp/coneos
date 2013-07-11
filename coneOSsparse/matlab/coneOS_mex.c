@@ -1,6 +1,7 @@
 #include "mex.h" 
 #include "matrix.h"
 #include "coneOS.h"
+#include "linAlg.h"
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
