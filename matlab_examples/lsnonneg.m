@@ -14,17 +14,15 @@ mu = 1;
 tic
 cvx_begin
 cvx_solver coneos_matlab
-cvx_solver_settings('USE_INDIRECT',1)
-cvx_solver_settings('CG_MAX_ITERS',1)
+cvx_solver_settings('USE_INDIRECT',0)
+cvx_solver_settings('CG_MAX_ITERS',2)
 cvx_solver_settings('GEN_PLOTS',1)
 cvx_solver_settings('RHOX',1e-3)
-%cvx_solver_settings('CG_TOL',1e-4)
+cvx_solver_settings('CG_TOL',1e-12)
 cvx_solver_settings('NORMALIZE',1)
 cvx_solver_settings('ALPHA',1.8)
-cvx_solver_settings('MAX_ITERS',2000)
-%cvx_solver_settings('SIG',0.5*(1+sqrt(5)))
-cvx_solver_settings('RELAX_X',0)
-cvx_solver_settings('PDOS_NORM',0)
+cvx_solver_settings('EPS',1e-12)
+cvx_solver_settings('MAX_ITERS',10000)
 variable x_m(n)
 dual variable y_m
 minimize(sum_square(A*x_m - b) + mu*sum_square(x_m))

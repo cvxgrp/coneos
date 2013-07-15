@@ -2,8 +2,8 @@ clear all
 close all
 %%
 randn('seed',0);rand('seed',0)
-n=1800;
-m=7200;
+n=180;
+m=360;
 
 A=randn(m,n);
 b=rand(m,1);
@@ -12,12 +12,13 @@ c=rand(n,1);
 %%
 tic
 cvx_begin
-cvx_solver_settings('USE_INDIRECT',1)
+cvx_solver_settings('USE_INDIRECT',0)
 cvx_solver_settings('NORMALIZE',1)
 cvx_solver_settings('CG_MAX_ITS',1)
 cvx_solver_settings('CG_TOL',1e-12)
 cvx_solver_settings('ALPHA',1.0)
 cvx_solver_settings('RHO_X',1e-3)
+cvx_solver_settings('GEN_PLOTS',1)
 cvx_solver coneos
 variable x_c(n)
 dual variable z_c

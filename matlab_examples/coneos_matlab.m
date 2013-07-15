@@ -276,6 +276,7 @@ for i=1:MAX_ITERS
     
     % dual update:
     v = v + sig*(u - rel_ut);
+    vt = v + u - u_old;
     
     %% convergence checking:
     tau = ut(l);%0.5*abs(u(l)+ut(l));
@@ -295,6 +296,8 @@ for i=1:MAX_ITERS
         kap_i(i) = v(end);
         pobj(i) = data.c'*ut(1:n)/tau;
         dobj(i) = -data.b'*ut(n+1:n+m)/tau;
+        utv(i) = abs(ut'*v/(tau+kap)); 
+        vtu(i) = abs(vt'*u/(tau+kap));
     end
     
     if (min(tau,kap)/max(tau,kap) < 1e-6 && max(err_pri,err_dual) < EPS_ABS*(tau+kap))
@@ -355,6 +358,7 @@ if GEN_PLOTS
     figure();plot(tau_i);hold on; plot(kap_i,'r');
     legend('tau','kappa')
     figure();plot(pobj);hold on;plot(dobj,'r');
+    figure(); semilogy(utv);hold on;semilogy(vtu,'r');
     if USE_CG;
         figure();plot(cg_its);xlabel('k');ylabel('Conjugate Gradient Iterations');
         figure();semilogy(cumsum(mults),nms(:,1));hold on;semilogy(cumsum(mults),nms(:,2),'r');

@@ -11,7 +11,6 @@ mu = 0.1;
 kap = sum(norms(S,1));
 
 %%
-for i=1:50
 cvx_begin
 cvx_solver coneos
 cvx_solver_settings('USE_INDIRECT',1)
@@ -26,7 +25,7 @@ minimize(norm_nuc(Lc))
 sum(norms(Sc,1)) <= kap
 Yc:Lc + Sc == M;
 cvx_end
-end
+
 
 %%
 tic

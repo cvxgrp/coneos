@@ -91,10 +91,9 @@ while( 20*log10(Us_top/Us_bot) > 1)
   % [b_cur,a_cur] = iir_mag_design_spec_fact(w,L,U,N,M);
   % formulate and solve the magnitude design problem
   cvx_begin
-    %cvx_solver coneos_matlab
-    cvx_solver_settings('RHOX',1e-3)
-    cvx_solver_settings('RELAX_X',0)
-    cvx_solver_settings('EPS',1e-8,'MAX_ITERS',10000)
+    cvx_solver coneos
+    %cvx_solver sedumi
+    cvx_solver_settings('EPS',1e-8,'MAX_ITERS',50000)
     variable c(M,1)
     variable d(N-1,1)
     minimize(sum(c)+sum(d))
@@ -110,6 +109,7 @@ while( 20*log10(Us_top/Us_bot) > 1)
     Anum*c >= 0;
     Aden*[1;d] >= 0;
   cvx_end
+  pause(100)
 
   % bisection
   if strfind(cvx_status,'Solved') % feasible
