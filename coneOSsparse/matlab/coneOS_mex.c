@@ -16,21 +16,21 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
    
   const mxArray *A_mex = (mxArray *) mxGetField(data,0,"A");
   if(A_mex == NULL) {
-    mxFree(d); mxFree(k);
+    coneOS_free(d); coneOS_free(k);
     mexErrMsgTxt("Data struct must contain a `A` entry.");
   }
   if (!mxIsSparse(A_mex)){
-    mxFree(d); mxFree(k);
+    coneOS_free(d); coneOS_free(k);
     mexErrMsgTxt("Input matrix A must be in sparse format (pass in sparse(A))");
   }
   const mxArray *b_mex = (mxArray *) mxGetField(data,0,"b");
   if(b_mex == NULL) {
-    mxFree(d); mxFree(k);
+    coneOS_free(d); coneOS_free(k);
     mexErrMsgTxt("Data struct must contain a `b` entry.");
   }
   const mxArray *c_mex = (mxArray *) mxGetField(data,0,"c"); 
   if(c_mex == NULL) {
-    free(d); free(k);
+    coneOS_free(d); coneOS_free(k);
     mexErrMsgTxt("Data struct must contain a `c` entry.");
   }
 
@@ -39,9 +39,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   d->n = *(mxGetDimensions(c_mex));
   d->m = *(mxGetDimensions(b_mex));
  
-  d->bnz = (int)*mxGetPr(mxGetField(data,0,"bnz"));
-  d->cnz = (int)*mxGetPr(mxGetField(data,0,"cnz"));
-	
   d->b = mxGetPr(b_mex);
   d->c = mxGetPr(c_mex);
   
@@ -70,7 +67,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   else d->CG_MAX_ITS = (int)*mxGetPr(CG_MAX_ITS_mex);
 
   const mxArray *CG_TOL_mex = mxGetField(params,0,"CG_TOL");
-  if (CG_TOL_mex == NULL) d->CG_TOL = 1e-8;
+  if (CG_TOL_mex == NULL) d->CG_TOL = 1e-9;
   else d->CG_TOL = (double)*mxGetPr(CG_TOL_mex);
 
   const mxArray *VERBOSE_mex = mxGetField(params,0,"VERBOSE");

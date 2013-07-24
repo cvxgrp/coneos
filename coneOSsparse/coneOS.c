@@ -50,8 +50,8 @@ static inline int converged(Data * d, Work * w, struct residuals * r);
    -2 failure
    -1 undetermined
    0 feasible, solved
-   1 infeasible
-   2 unbounded
+   1 primal infeasible, dual unbounded
+   2 primal unbounded, dual infeasible
  */
 
 int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
@@ -391,7 +391,7 @@ static inline void printHeader(Data * d, Work * w) {
 	for(i = 0; i < _lineLen_; ++i) {
 		coneOS_printf("-");
 	}
-	coneOS_printf("\nconeOS 1.0: %s method, A matrix density: %4f, EPS: %.2e\n",w->method,((double)d->Anz/d->n)/d->m, d->EPS_ABS);
+	coneOS_printf("\nconeOS 1.0: %s method, EPS: %.2e\n",w->method, d->EPS_ABS);
 	for(i = 0; i < _lineLen_; ++i) {
 		coneOS_printf("-");
 	}

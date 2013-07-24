@@ -66,7 +66,7 @@ typedef struct WORK {
   /* workspace for eigenvector decompositions: */
   double * Xs, *Z, *e;
   int l;
-  char method[9];
+  char method[16];
 } Work;
 
 #include <string.h>    

@@ -209,6 +209,7 @@ if( ~isreal(At) || ~isreal(c) || ~isreal(b) )
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+fprintf('A matrix density: %4f\n',nnz(At)/(size(At,1)*size(At,2)));
 data.A = full(At);
 data.bnz = nnz(c);
 data.b = full(c);

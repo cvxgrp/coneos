@@ -18,7 +18,7 @@ void solveLinSys(Data *d, Work * w, double * b, const double * s){
 }
 
 void privateInitWork(Data * d, Work * w){ 
-  memcpy(w->method, "direct", 7);
+	memcpy(w->method, "sparse-direct", 14);
 	int n_plus_m = d->n + d->m;
 	w->p = coneOS_malloc(sizeof(Priv));
 	w->p->P = coneOS_malloc(sizeof(int)*n_plus_m);

@@ -12,7 +12,7 @@
 
 % WARNING: OPENMP WITH MATLAB CAN CAUSE ERRORS AND CRASH, USE WITH CAUTION:
 % openmp parallelizes the matrix multiply for the indirect solver (using CG):
-COMPILE_WITH_OPENMP = true;
+COMPILE_WITH_OPENMP = false;
 
 
 common_coneOS = '../cones.c ../cs.c ../util.c ../coneOS.c coneOS_mex.c';

@@ -9,7 +9,7 @@ static inline void transpose (Data * d, Work * w);
 
 
 void privateInitWork(Data * d, Work * w){
-  memcpy(w->method, "indirect", 9);	
+  memcpy(w->method, "sparse-indirect", 16);	
   w->p = coneOS_malloc(sizeof(Priv));
   w->p->p = coneOS_malloc((d->n)*sizeof(double));
   w->p->r = coneOS_malloc((d->n)*sizeof(double));

@@ -41,8 +41,6 @@ CG_TOL = 1e-8; % max CG quitting tolerance
 CG_VERBOSE = false; % CG prints summary
 % experimental:
 rho_x = 1;
-sig = 1;
-PDOS_NORM = false;
 %%
 if nargin==3
     if isfield(params,'GEN_PLOTS');GEN_PLOTS = params.GEN_PLOTS;end
@@ -54,11 +52,7 @@ if nargin==3
     
     % experimental
     if isfield(params,'RHOX');rho_x = params.RHOX;end
-    if isfield(params,'SIG');sig = params.SIG;end
     if isfield(params,'RELAX_X');RELAX_X = params.RELAX_X;end
-    if isfield(params,'PDOS_NORM');PDOS_NORM = params.PDOS_NORM;end
-    
-    
     % CG:
     if isfield(params,'USE_CG');USE_CG = params.USE_CG;end
     if isfield(params,'CG_MAX_ITERS');CG_MAX_ITERS = params.CG_MAX_ITERS;end
@@ -84,7 +78,7 @@ end
 
 %%
 
-if (NORMALIZE && ~PDOS_NORM)
+if (NORMALIZE)
     disp('ORIGINAL NORMALIZATION SCHEME')
     
     D = ones(m,1);
@@ -127,94 +121,12 @@ if (NORMALIZE && ~PDOS_NORM)
     sc_a = 1;
     data.A = sc_a*data.A;
     
-    
-    %rr = max(4*sqrt(n/m),1e-2)
     rr = 4;
     data.A=rr*data.A;
     data.c=rr*data.c;
     data.b=rr*data.b;
 end
-pdos_normalize = 0;
 
-%{
-%%% PDOS NORMALIZATION SCHEME:
-if (NORMALIZE && PDOS_NORM)
-    disp('PDOS NORMALIZATION SCHEME')
-    N = 10;
-    k_soc = length(K.q);
-    
-    p = K.f + K.l + length(K.q);
-    
-    d1 = ones(p+1,1);
-    e1 = ones(n+1,1);
-    e = e1;
-    % we implement the following lines of code using sparse matrix manipulation
-    % in what follows. when finished, As = Atilde
-    Atilde = sparse(p+1,n+1);
-    Atilde(1:K.f+K.l,end) = sparse(data.b(1:K.f+K.l));
-    Atilde(end,1:end-1) = sparse(data.c');
-    Atilde(1:K.f+K.l,1:end-1) = data.A(1:K.f+K.l,:);
-    
-    ind = K.f + K.l;
-    nm = inf;
-    for j = 1:k_soc,
-        soc_sz = K.q(j);
-        Atilde(K.f+K.l+j,:) = [norms(data.A(ind+1:ind+soc_sz,:),nm) norm(data.b(ind+1:ind+soc_sz),nm)];
-        ind = ind + soc_sz;
-    end
-    H = Atilde;
-    for i = 1:N,
-        H = H*spdiags(e,0,n+1,n+1);
-        d = sqrt( 1./ norms(H',nm)' );
-        
-        H = spdiags(d,0,p+1,p+1)*H;
-        e = sqrt( 1./norms(H,nm)' ) ;
-        
-        d1 = d1.*d;
-        e1 = e1.*e;
-    end
-    
-    % extend the blocks
-    dd = zeros(n,1);
-    dd(1:K.f+K.l) = d1(1:K.f+K.l);
-    ind = K.f + K.l;
-    for j = 1:length(K.q),
-        soc_sz = K.q(j);
-        dd(ind+1:ind+soc_sz,1) = d1(K.f+K.l+j);
-        ind = ind + soc_sz;
-    end
-    
-    D = dd;
-    E = e1(1:end-1);
-    
-    
-    data.b = D.*data.b;
-    data.c = E.*data.c;
-    
-    sc_b = e1(end);
-    %sc_b = e1(end)/norm(data.b);
-    sc_c = d1(end);
-    %sc_c = d1(end)/norm(data.c);
-    %lambda = norm(data.b)/norm(data.c)
-    
-    data.b = data.b*sc_b;
-    data.c = data.c*sc_c;
-    
-    %E = E * ratio;    % assumes mu chosen so mu/lambda = 1e-6 (so that it scales with mu)
-    %data.c = data.c * ratio;
-    data.A = spdiags(D,0,m,m)*data.A*spdiags(E,0,n,n);
-    
-    pdos_normalize = 1;
-    
-    sc_a = 5;
-    data.A = sc_a*data.A;
-    
-    rr = 1;
-    data.A=rr*data.A;
-    data.c=rr*data.c;
-    data.b=rr*data.b;
-end
-%}
 %%
 work = struct('USE_CG', USE_CG);
 if ~USE_CG
@@ -275,15 +187,12 @@ for i=1:MAX_ITERS
     u(l) = pos(u(l));
     
     % dual update:
-    v = v + sig*(u - rel_ut);
+    v = v + (u - rel_ut);
     vt = v + u - u_old;
     
     %% convergence checking:
     tau = ut(l);%0.5*abs(u(l)+ut(l));
     kap = abs(v(end));
-    %if (i>10 && kap<1e-6)
-    %   1+1;
-    %end
     
     nm = 2;
     err_pri = norm(u-ut,nm);%/(tau+kap);
@@ -296,11 +205,11 @@ for i=1:MAX_ITERS
         kap_i(i) = v(end);
         pobj(i) = data.c'*ut(1:n)/tau;
         dobj(i) = -data.b'*ut(n+1:n+m)/tau;
-        utv(i) = abs(ut'*v/(tau+kap)); 
+        utv(i) = abs(ut'*v/(tau+kap));
         vtu(i) = abs(vt'*u/(tau+kap));
     end
     
-    if (min(tau,kap)/max(tau,kap) < 1e-6 && max(err_pri,err_dual) < EPS_ABS*(tau+kap))
+    if (i>50 && min(tau,kap)/max(tau,kap) < 1e-6 && max(err_pri,err_dual) < EPS_ABS*(tau+kap))
         break
     end
     
@@ -340,15 +249,8 @@ info.status = status;
 info.iter = i;
 
 if (NORMALIZE)
-    
-    if (pdos_normalize)
-        x = sc_a*E.*x/sc_b;
-        z = sc_a*D .* z/sc_c;
-    else
-        z = sc_a*z./(D*sc_c);
-        x = sc_a*x./(E*sc_b);
-    end
-    
+    z = sc_a*z./(D*sc_c);
+    x = sc_a*x./(E*sc_b);
 end
 
 %%
@@ -358,7 +260,8 @@ if GEN_PLOTS
     figure();plot(tau_i);hold on; plot(kap_i,'r');
     legend('tau','kappa')
     figure();plot(pobj);hold on;plot(dobj,'r');
-    figure(); semilogy(utv);hold on;semilogy(vtu,'r');
+    legend('primal obj','dual obj')
+    %figure(); semilogy(utv);hold on;semilogy(vtu,'r');
     if USE_CG;
         figure();plot(cg_its);xlabel('k');ylabel('Conjugate Gradient Iterations');
         figure();semilogy(cumsum(mults),nms(:,1));hold on;semilogy(cumsum(mults),nms(:,2),'r');
