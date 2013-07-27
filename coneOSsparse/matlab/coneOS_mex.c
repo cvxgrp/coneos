@@ -55,7 +55,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   else d->MAX_ITERS = (int)*mxGetPr(MAX_ITERS_mex);
 
   const mxArray *EPS_ABS_mex = mxGetField(params,0,"EPS_ABS");
-  if (EPS_ABS_mex == NULL) d->EPS_ABS = 1e-4;
+  if (EPS_ABS_mex == NULL) d->EPS_ABS = 5e-4;
   else d->EPS_ABS = (double)*mxGetPr(EPS_ABS_mex);
 
   const mxArray *UNDET_TOL_mex = mxGetField(params,0,"UNDET_TOL");

@@ -79,19 +79,19 @@ void normalize(Data * d, Work * w, Cone * k){
 		meanNormRowA += sqrt(nms[i])/d->m;
 	}
 	w->sc_c = meanNormRowA/fmax(calcNorm(d->c,d->n),1e-6);
-	scaleArray(d->c, w->scale * w->sc_c, d->n);
+	scaleArray(d->c, w->sc_c, d->n);
 
 	w->D = D;
 	w->E = E;
 
 	coneOS_free(nms);
-/*
+	/*
 	coneOS_printf("norm D is %4f\n", calcNorm(D,d->m));
 	coneOS_printf("norm E is %4f\n", calcNorm(E,d->n));
     coneOS_printf("norm A is %4f\n", calcNorm(d->Ax,d->Anz));
     coneOS_printf("norm b is %4f\n", calcNorm(d->b,d->m));
     coneOS_printf("norm c is %4f\n", calcNorm(d->c,d->n));
-*/
+	*/
 }
 
 void unNormalize(Data *d, Work * w, Sol * sol){

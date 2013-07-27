@@ -28,19 +28,19 @@ function [x,z,info] = coneos_matlab(data,K,params)
 % (here set to default settings):
 GEN_PLOTS = false;% generate convergence plots
 MAX_ITERS = 2000; % maximum num iterations for admm
-EPS_ABS   = 1e-3; % quitting tolerances
-UNDET_TOL = 1e-4; % tol for undetermined solution (tau = kappa = 0)
+EPS_ABS   = 5e-4; % quitting tolerances
+UNDET_TOL = 1e-9; % tol for undetermined solution (tau = kappa = 0)
 alpha=1.8;        % relaxation parameter (alpha = 1 is unrelaxed)
 NORMALIZE = 1;
 RELAX_X = false;
 
 % conjugate gradient (CG) settings:
 USE_CG = false; % use conjugate gradient rather than direct method
-CG_MAX_ITERS = 15; % max iterations for CG
-CG_TOL = 1e-8; % max CG quitting tolerance
+CG_MAX_ITS = 30; % max iterations for CG
+CG_TOL = 1e-9; % max CG quitting tolerance
 CG_VERBOSE = false; % CG prints summary
 % experimental:
-rho_x = 1;
+rho_x = 1e-3;
 %%
 if nargin==3
     if isfield(params,'GEN_PLOTS');GEN_PLOTS = params.GEN_PLOTS;end
@@ -49,19 +49,17 @@ if nargin==3
     if isfield(params,'UNDET_TOL');UNDET_TOL = params.UNDET_TOL;end
     if isfield(params,'ALPHA');alpha = params.ALPHA;end
     if isfield(params,'NORMALIZE');NORMALIZE = params.NORMALIZE;end
-    
     % experimental
     if isfield(params,'RHOX');rho_x = params.RHOX;end
     if isfield(params,'RELAX_X');RELAX_X = params.RELAX_X;end
     % CG:
     if isfield(params,'USE_CG');USE_CG = params.USE_CG;end
-    if isfield(params,'CG_MAX_ITERS');CG_MAX_ITERS = params.CG_MAX_ITERS;end
+    if isfield(params,'CG_MAX_ITS');CG_MAX_ITS = params.CG_MAX_ITS;end
     if isfield(params,'CG_TOL');CG_TOL = params.CG_TOL;end
     if isfield(params,'CG_VERBOSE');CG_VERBOSE = params.CG_VERBOSE;end
 end
 
 %%
-
 
 n = length(data.c);
 m = length(data.b);
@@ -72,8 +70,8 @@ Q=sparse([zeros(n) data.A' data.c;
     -data.A zeros(m,m) data.b;
    -data.c' -data.b' 0]);
 %}
-if (CG_MAX_ITERS > l)
-    CG_MAX_ITERS = l;
+if (CG_MAX_ITS > l)
+    CG_MAX_ITS = l;
 end
 
 %%
@@ -107,24 +105,27 @@ if (NORMALIZE)
         E = E.*Et;
         data.A = data.A*sparse(diag(1./Et));
     end
-    nmcolA = mean(norms(data.A));
     nmrowA = mean(norms(data.A'));
     
     data.b = data.b./D;
-    sc_b = nmcolA/max(norm(data.b),1e-4);
+    sc_b = 1/max(norm(data.b),1e-4);
     data.b = full(data.b*sc_b);
     
     data.c = data.c./E;
     sc_c = nmrowA/max(norm(data.c),1e-4);
     data.c = data.c*sc_c;
-    
-    sc_a = 1;
-    data.A = sc_a*data.A;
-    
+
     rr = 4;
     data.A=rr*data.A;
     data.c=rr*data.c;
     data.b=rr*data.b;
+    %{
+    norm(D)
+    norm(E)
+    norm(norms(data.A))
+    norm(data.b)
+    norm(data.c)
+    %}
 end
 
 %%
@@ -145,7 +146,7 @@ else
 end
 
 h = [data.c;data.b];
-[g,itn] = solveLinSystem(work,data,h,n,m,CG_MAX_ITERS*100,CG_TOL/100,zeros(n+m,1),rho_x);
+[g,itn] = solveLinSystem(work,data,h,n,m,CG_MAX_ITS*100,CG_TOL/100,zeros(n+m,1),rho_x);
 g(n+1:end) = -g(n+1:end);
 gTh = g'*h;
 
@@ -165,7 +166,7 @@ end
 %G = eye(n) + data.A'*data.A;
 
 for i=1:MAX_ITERS
-    u_old = u;
+    u_prev = u;
     % solve linear system
     ut = u+v;
     ut(1:n) = rho_x*ut(1:n);
@@ -174,7 +175,7 @@ for i=1:MAX_ITERS
     warm_start = u(1:n+m);
     ut(n+1:end-1) = -ut(n+1:end-1);
     %%
-    [ut(1:n+m),itn] = solveLinSystem(work,data,ut(1:n+m),n,m,CG_MAX_ITERS,CG_TOL,warm_start,rho_x);
+    [ut(1:n+m),itn] = solveLinSystem(work,data,ut(1:n+m),n,m,CG_MAX_ITS,CG_TOL,warm_start,rho_x);
     ut(end) = (ut(end) + h'*ut(1:n+m));
     
     % K proj:
@@ -188,15 +189,15 @@ for i=1:MAX_ITERS
     
     % dual update:
     v = v + (u - rel_ut);
-    vt = v + u - u_old;
+    %vt = v + u - u_old;
     
     %% convergence checking:
-    tau = ut(l);%0.5*abs(u(l)+ut(l));
+    tau = 0.5*abs(u(l)+ut(l));%ut(l);
     kap = abs(v(end));
     
     nm = 2;
     err_pri = norm(u-ut,nm);%/(tau+kap);
-    err_dual = norm(u-u_old,nm);%/(tau+kap);
+    err_dual = norm(u-u_prev,nm);%/(tau+kap);
     if GEN_PLOTS
         if USE_CG; cg_its(i) = itn; mults(i) = 2+2*itn;end
         nms(i,1) = err_pri;
@@ -205,19 +206,19 @@ for i=1:MAX_ITERS
         kap_i(i) = v(end);
         pobj(i) = data.c'*ut(1:n)/tau;
         dobj(i) = -data.b'*ut(n+1:n+m)/tau;
-        utv(i) = abs(ut'*v/(tau+kap));
-        vtu(i) = abs(vt'*u/(tau+kap));
+        %utv(i) = abs(ut'*v/(tau+kap));
+        %vtu(i) = abs(vt'*u/(tau+kap));
     end
     
-    if (i>50 && min(tau,kap)/max(tau,kap) < 1e-6 && max(err_pri,err_dual) < EPS_ABS*(tau+kap))
+    if (min(tau,kap)/max(tau,kap) < 1e-6 && max(err_pri,err_dual) < EPS_ABS*(tau+kap))
         break
     end
     
     if mod(i-1,100)==0
-        fprintf('Iteration %i, primal residual %4e, dual residual %4e\n',i-1,err_pri,err_dual);
+        fprintf('Iteration %i, primal residual %4e, dual residual %4e, kap/tau %4e\n',i-1,err_pri/(tau+kap),err_dual/(tau+kap),kap/tau);
     end
 end
-fprintf('Iteration %i, primal residual %4e, dual residual %4e\n',i-1,err_pri,err_dual);
+fprintf('Iteration %i, primal residual %4e, dual residual %4e, kap/tau %4e\n',i-1,err_pri/(tau+kap),err_dual/(tau+kap),kap/tau);
 
 %%
 tau = 0.5*(u(l)+ut(l));
@@ -249,8 +250,8 @@ info.status = status;
 info.iter = i;
 
 if (NORMALIZE)
-    z = sc_a*z./(D*sc_c);
-    x = sc_a*x./(E*sc_b);
+    z = z./(D*sc_c);
+    x = x./(E*sc_b);
 end
 
 %%

@@ -7,7 +7,7 @@ randn('seed',0);rand('seed',0)
 ns = [3000,10000,30000];
 ms = ceil(ns/5);
 
-for i = 1:length(ns)
+for i = 1:1%length(ns)
     
     n=ns(i);
     m=ms(i);
@@ -21,17 +21,9 @@ for i = 1:length(ns)
     
     %%
     
-%     cvx_begin
-%     cvx_solver coneos_matlab
-%     cvx_solver_settings('GEN_PLOTS',1,'USE_INDIRECT',0,'CG_MAX_ITERS',1,'EPS',5e-4,'MAX_ITERS',2000)
-%     variable x_m(n)
-%     minimize(0.5*sum_square(A*x_m - b) + mu*norm(x_m,1))
-%     cvx_end
-    
-    %%
-    
     tic
     cvx_begin
+    cvx_solver_settings('GEN_PLOTS',1) % only works for 'cvx_solver coneos_matlab'
     cvx_solver coneos
     variable x_c(n)
     minimize(0.5*sum_square(A*x_c - b) + mu*norm(x_c,1))
@@ -45,7 +37,8 @@ for i = 1:length(ns)
     
     tic
     cvx_begin
-    cvx_solver_settings('USE_INDIRECT',1,'CG_MAX_ITS',5)
+    cvx_solver_settings('USE_INDIRECT',1,'CG_MAX_ITS',1)
+    cvx_solver_settings('GEN_PLOTS',1) % only works if 'cvx_solver coneos_matlab'
     cvx_solver coneos
     variable x_c(n)
     minimize(0.5*sum_square(A*x_c - b) + mu*norm(x_c,1))
@@ -55,8 +48,8 @@ for i = 1:length(ns)
     xci{i} = x_c;
     objci(i) = 0.5*sum_square(A*x_c - b) + mu*norm(x_c,1);
 
-    
     %%
+    
     tic
     cvx_begin
     variable x_s(n)

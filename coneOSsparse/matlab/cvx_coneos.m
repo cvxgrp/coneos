@@ -227,36 +227,25 @@ end
 
 if (isfield(settings,'UNDET_TOL'))
     pars.UNDET_TOL = settings.UNDET_TOL;
-else
-    pars.UNDET_TOL = 1e-6;
 end
 if prec(1)==0
     % just run until MAX_ITERS
     pars.EPS_ABS = 0;
-else
-    % ignores cvx_precision command
-    % use cvx_solver_settings('EPS', xx) instead
-    pars.EPS_ABS = 5e-4;
 end
 if (isfield(settings,'EPS'))
     pars.EPS_ABS = settings.EPS;
 end
 if (isfield(settings,'MAX_ITERS'))
     pars.MAX_ITERS = settings.MAX_ITERS;
-else
-    pars.MAX_ITERS = 5000;
 end
 if ~quiet
     pars.VERBOSE = 1;
 end
-pars.USE_INDIRECT = false;
-if (isfield(settings,'USE_INDIRECT') && settings.USE_INDIRECT)
-    pars.USE_INDIRECT = true;
+if (isfield(settings,'USE_INDIRECT'))
+    pars.USE_INDIRECT = settings.USE_INDIRECT;
 end
-% normalization doesn't really work yet
-pars.NORMALIZE = 1;
-if (isfield(settings,'NORMALIZE') && ~settings.NORMALIZE)
-    pars.NORMALIZE = 0;
+if (isfield(settings,'NORMALIZE'))
+    pars.NORMALIZE = settings.NORMALIZE;
 end
 if (isfield(settings,'CG_TOL'))
     pars.CG_TOL = settings.CG_TOL;
