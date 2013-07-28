@@ -47,14 +47,14 @@ void normalize(Data * d, Work * w, Cone * k){
 	// calculate and scale by col norms, E
 	for (i = 0; i < d->n; ++i){
 		E[i] = fmax(cblas_dnrm2(d->m,&(d->Ax[i*d->m]),1),1e-6);
-		cblas_dscal(d->m,w->scale/E[i],&(d->Ax[i*d->m]),1);	
+		cblas_dscal(d->m,1.0/E[i],&(d->Ax[i*d->m]),1);	
 	}
 	// scale b
 	for (i = 0; i < d->m; ++i){
 		d->b[i] /= D[i];
 	}
 	w->sc_b = 1/fmax(calcNorm(d->b,d->m),1e-6);
-	scaleArray(d->b, w->scale * w->sc_b, d->m);
+	scaleArray(d->b, w->sc_b, d->m);
 	// scale c
 	for (i = 0; i < d->n; ++i){
 		d->c[i] /= E[i];
@@ -69,6 +69,12 @@ void normalize(Data * d, Work * w, Cone * k){
 
 	w->D = D;
 	w->E = E;
+
+	// heuristic scaling factor
+	scaleArray(d->Ax,w->scale,d->Anz);
+	scaleArray(d->b,w->scale,d->m);
+	scaleArray(d->c,w->scale,d->n);
+
 	/*
 	coneOS_printf("norm D is %4f\n", calcNorm(D,d->m));
 	coneOS_printf("norm E is %4f\n", calcNorm(E,d->n));
@@ -100,4 +106,5 @@ void unNormalize(Data *d, Work * w, Sol * sol){
 	for(i = 0; i < d->m; ++i){
 		cblas_dscal(d->n,D[i],&(d->Ax[i]),d->m);
 	}
+	scaleArray(d->Ax,1.0/w->scale,d->Anz);
 }

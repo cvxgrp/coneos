@@ -35,7 +35,7 @@ NORMALIZE = 1;
 RELAX_X = false;
 
 % conjugate gradient (CG) settings:
-USE_CG = false; % use conjugate gradient rather than direct method
+USE_INDIRECT = false; % use conjugate gradient rather than direct method
 CG_MAX_ITS = 30; % max iterations for CG
 CG_TOL = 1e-9; % max CG quitting tolerance
 CG_VERBOSE = false; % CG prints summary
@@ -50,10 +50,10 @@ if nargin==3
     if isfield(params,'ALPHA');alpha = params.ALPHA;end
     if isfield(params,'NORMALIZE');NORMALIZE = params.NORMALIZE;end
     % experimental
-    if isfield(params,'RHOX');rho_x = params.RHOX;end
+    if isfield(params,'RHO_X');rho_x = params.RHO_X;end
     if isfield(params,'RELAX_X');RELAX_X = params.RELAX_X;end
     % CG:
-    if isfield(params,'USE_CG');USE_CG = params.USE_CG;end
+    if isfield(params,'USE_INDIRECT');USE_INDIRECT = params.USE_INDIRECT;end
     if isfield(params,'CG_MAX_ITS');CG_MAX_ITS = params.CG_MAX_ITS;end
     if isfield(params,'CG_TOL');CG_TOL = params.CG_TOL;end
     if isfield(params,'CG_VERBOSE');CG_VERBOSE = params.CG_VERBOSE;end
@@ -129,8 +129,8 @@ if (NORMALIZE)
 end
 
 %%
-work = struct('USE_CG', USE_CG);
-if ~USE_CG
+work = struct('USE_INDIRECT', USE_INDIRECT);
+if ~USE_INDIRECT
     W=sparse([rho_x*speye(n) data.A';data.A -speye(m)]);
     disp('Factorization')
     try
@@ -199,7 +199,7 @@ for i=1:MAX_ITERS
     err_pri = norm(u-ut,nm);%/(tau+kap);
     err_dual = norm(u-u_prev,nm);%/(tau+kap);
     if GEN_PLOTS
-        if USE_CG; cg_its(i) = itn; mults(i) = 2+2*itn;end
+        if USE_INDIRECT; cg_its(i) = itn; mults(i) = 2+2*itn;end
         nms(i,1) = err_pri;
         nms(i,2) = err_dual;
         tau_i(i) = ut(end);
@@ -263,7 +263,7 @@ if GEN_PLOTS
     figure();plot(pobj);hold on;plot(dobj,'r');
     legend('primal obj','dual obj')
     %figure(); semilogy(utv);hold on;semilogy(vtu,'r');
-    if USE_CG;
+    if USE_INDIRECT;
         figure();plot(cg_its);xlabel('k');ylabel('Conjugate Gradient Iterations');
         figure();semilogy(cumsum(mults),nms(:,1));hold on;semilogy(cumsum(mults),nms(:,2),'r');
         xlabel('A multiplies');ylabel('norm error');
@@ -316,7 +316,7 @@ end
 
 function [y,itn] = solveLinSystem(w,data,rhs,n,m,CG_MAX_ITERS,CG_TOL,warm_start,rho_x)
 % assumes matrix [I A';A -I]
-if w.USE_CG
+if w.USE_INDIRECT
     y=zeros(n+m,1);
     [y(1:n), itn] = pcg_A(data.A,rhs(1:n)+data.A'*rhs(n+1:n+m),warm_start(1:n),rho_x,CG_MAX_ITERS,CG_TOL,w.CG_VERBOSE);
     y(n+1:n+m) = -rhs(n+1:n+m) + data.A*y(1:n);

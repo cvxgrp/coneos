@@ -224,54 +224,31 @@ end
 
 if (isfield(settings,'UNDET_TOL'))
     pars.UNDET_TOL = settings.UNDET_TOL;
-else
-    pars.UNDET_TOL = 1e-6;
 end
 if prec(1)==0
     % just run until MAX_ITERS
     pars.EPS_ABS = 0;
-else
-    % ignores cvx_precision command
-    % use cvx_solver_settings('EPS', xx) instead
-    pars.EPS_ABS = 5e-4;
 end
 if (isfield(settings,'EPS'))
     pars.EPS_ABS = settings.EPS;
 end
-if (isfield(settings,'RHOX'))
-    pars.RHOX = settings.RHOX;
-end
-if (isfield(settings,'SIG'))
-    pars.SIG = settings.SIG;
-end
-if (isfield(settings,'RELAX_X'))
-    pars.RELAX_X = settings.RELAX_X;
-end
-if (isfield(settings,'GEN_PLOTS'))
-    pars.GEN_PLOTS = settings.GEN_PLOTS;
-end
-
 if (isfield(settings,'MAX_ITERS'))
     pars.MAX_ITERS = settings.MAX_ITERS;
-else
-    pars.MAX_ITERS = 5000;
 end
 if ~quiet
     pars.VERBOSE = 1;
 end
-pars.USE_INDIRECT = false;
-if (isfield(settings,'USE_INDIRECT') && settings.USE_INDIRECT)
-    pars.USE_CG = true;
+if (isfield(settings,'USE_INDIRECT'))
+    pars.USE_INDIRECT = settings.USE_INDIRECT;
 end
-pars.NORMALIZE = 1;
-if (isfield(settings,'NORMALIZE') && ~settings.NORMALIZE)
-    pars.NORMALIZE = 0;
+if (isfield(settings,'NORMALIZE'))
+    pars.NORMALIZE = settings.NORMALIZE;
 end
 if (isfield(settings,'CG_TOL'))
     pars.CG_TOL = settings.CG_TOL;
 end
-if (isfield(settings,'PDOS_NORM'))
-    pars.PDOS_NORM = settings.PDOS_NORM;
+if (isfield(settings,'RHO_X'))
+    pars.RHO_X = settings.RHO_X;
 end
 if (isfield(settings,'CG_MAX_ITS'))
     pars.CG_MAX_ITS = settings.CG_MAX_ITS;
@@ -279,6 +256,10 @@ end
 if (isfield(settings,'ALPHA'))
     pars.ALPHA = settings.ALPHA;
 end
+if (isfield(settings,'RHO_X'))
+    pars.RHO_X = settings.RHO_X;
+end
+
 
 [ yy, xx, info ] = cvx_run_solver( @coneos_matlab, data, K, pars, 'xx', 'yy', 'info', settings, 3);
 
