@@ -14,7 +14,7 @@ run_coneos = true;
 
 randn('seed',0);rand('seed',0)
 
-ns = [50,150,300];
+ns = [50,200,400];
 ms = ns; % square matrices, but doesn't have to be
 
 time_pat_coneos = 'Time taken: (?<total>[\d\.]+)';

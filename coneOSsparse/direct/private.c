@@ -126,6 +126,8 @@ int LDLFactor(cs * A, int P[], int Pinv[], cs **L , double **D)
 	(*L)->i =    (int *) coneOS_malloc((*L)->nzmax * sizeof(int));
 	*D  = (double *) coneOS_malloc(n * sizeof(double));
 	
+	if(!(*D) || !(*L)->i || !(*L)->x || !Y || !Pattern || !Flag || !Lnz || !Parent) return -1;
+	
 	int kk = ldl_numeric(n, A->p, A->i, A->x, (*L)->p, Parent, Lnz, (*L)->i, (*L)->x, *D, Y, Pattern, Flag, P, Pinv);
 
 	coneOS_free(Parent);
@@ -147,11 +149,12 @@ void LDLSolve(double *x, double b[], cs * L, double D[], int P[])
     ldl_dsolve(n, x, D); 
     ldl_ltsolve(n, x, L->p, L->i, L->x);
   } else {
-    double bp[n];
+    double * bp = coneOS_malloc(n * sizeof(double));
     ldl_perm(n, bp, b, P); 
     ldl_lsolve(n, bp, L->p, L->i, L->x);
     ldl_dsolve(n, bp, D); 
     ldl_ltsolve(n, bp, L->p, L->i, L->x);
     ldl_permt(n, x, bp, P); 
+	coneOS_free(bp);
   }   
 }
