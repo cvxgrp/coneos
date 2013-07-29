@@ -8,7 +8,7 @@ disp('------------------------------------------------------------')
 
 run ../coneOSdense/matlab/install_coneos_cvx.m
 
-save_results = false;
+save_results = true;
 run_cvx = false;
 run_coneos = true;
 
