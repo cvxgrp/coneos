@@ -10,6 +10,7 @@ struct PRIVATE_DATA {
 	cs * L; /* KKT, and factorization matrix L resp. */
 	double * D; /* diagonal matrix of factorization */
 	int * P; /* permutation of KKT matrix for factorization */
+	double * bp; /* workspace memory for solves */
 };
 
 // XXX: should be named LDL
