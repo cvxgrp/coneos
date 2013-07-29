@@ -1,10 +1,10 @@
 #include "private.h"
 
 // forward declare
-void LDLInit(cs * A, int P[], double **info);
-void LDLFactor(cs * A, int P[], int Pinv[], cs ** L, double **D);
+int LDLInit(cs * A, int P[], double **info);
+int LDLFactor(cs * A, int P[], int Pinv[], cs ** L, double **D);
 void LDLSolve(double *x, double b[], cs * L, double D[], int P[]);
-void factorize(Data * d,Work * w);
+int factorize(Data * d,Work * w);
 
 void freePriv(Work * w){
 	cs_spfree(w->p->L);coneOS_free(w->p->P);coneOS_free(w->p->D);
@@ -17,7 +17,7 @@ void solveLinSys(Data *d, Work * w, double * b, const double * s){
   LDLSolve(b, b, w->p->L, w->p->D, w->p->P);
 }
 
-void privateInitWork(Data * d, Work * w){ 
+int privateInitWork(Data * d, Work * w){ 
 	memcpy(w->method, "sparse-direct", 14);
 	int n_plus_m = d->n + d->m;
 	w->p = coneOS_malloc(sizeof(Priv));
@@ -26,7 +26,7 @@ void privateInitWork(Data * d, Work * w){
 	w->p->L->m = n_plus_m;
 	w->p->L->n = n_plus_m;
 	w->p->L->nz = -1; 
-	factorize(d,w);
+	return(factorize(d,w));
 }
 
 cs * formKKT(Data * d, Work * w){
@@ -72,12 +72,13 @@ cs * formKKT(Data * d, Work * w){
 }
 
 
-void factorize(Data * d,Work * w){
+int factorize(Data * d,Work * w){
 	//tic();
 	cs * K = formKKT(d,w);
 	//if(d->VERBOSE) coneOS_printf("KKT matrix factorization info:\n");
 	double *info;
-	LDLInit(K, w->p->P, &info);
+	int amd_status = LDLInit(K, w->p->P, &info);
+	if (amd_status < 0) return(amd_status);
 	/*
   if(d->VERBOSE) {
 #ifdef DLONG
@@ -89,26 +90,34 @@ void factorize(Data * d,Work * w){
   */
 	int * Pinv = cs_pinv(w->p->P, w->l-1);
 	cs * C = cs_symperm(K, Pinv, 1); 
-	LDLFactor(C, NULL, NULL, &w->p->L, &w->p->D);
+	int ldl_status = LDLFactor(C, NULL, NULL, &w->p->L, &w->p->D);
 	//if(d->VERBOSE) coneOS_printf("KKT matrix factorization took %4.8f ms\n",tocq());
 	cs_spfree(C);cs_spfree(K);coneOS_free(Pinv);coneOS_free(info);
+	return(ldl_status);
 }
 
-void LDLInit(cs * A, int P[], double **info) {
+int LDLInit(cs * A, int P[], double **info) {
 	*info  = (double *) coneOS_malloc(AMD_INFO * sizeof(double));
 #ifdef DLONG
-	amd_l_order(A->n, A->p, A->i, P, (double *) NULL, *info);
+	return(amd_l_order(A->n, A->p, A->i, P, (double *) NULL, *info));
 #else
-	amd_order(A->n, A->p, A->i, P, (double *) NULL, *info);
+	return(amd_order(A->n, A->p, A->i, P, (double *) NULL, *info));
 #endif
 }
 
-void LDLFactor(cs * A, int P[], int Pinv[], cs **L , double **D) 
+int LDLFactor(cs * A, int P[], int Pinv[], cs **L , double **D) 
 {
 	int n = A->n;
 	(*L)->p = (int *) coneOS_malloc((1 + n) * sizeof(int));
-	int Parent[n], Lnz[n], Flag[n], Pattern[n];
-	double Y[n];
+	
+	//int Parent[n], Lnz[n], Flag[n], Pattern[n];
+	//double Y[n];
+
+	int * Parent = coneOS_malloc(n*sizeof(int));
+	int * Lnz = coneOS_malloc(n*sizeof(int));
+	int * Flag = coneOS_malloc(n*sizeof(int));
+	int * Pattern = coneOS_malloc(n*sizeof(int));
+	double * Y = coneOS_malloc(n*sizeof(double));
 
 	ldl_symbolic(n, A->p, A->i, (*L)->p, Parent, Lnz, Flag, P, Pinv);
 
@@ -116,8 +125,15 @@ void LDLFactor(cs * A, int P[], int Pinv[], cs **L , double **D)
 	(*L)->x = (double *) coneOS_malloc((*L)->nzmax * sizeof(double));
 	(*L)->i =    (int *) coneOS_malloc((*L)->nzmax * sizeof(int));
 	*D  = (double *) coneOS_malloc(n * sizeof(double));
+	
+	int kk = ldl_numeric(n, A->p, A->i, A->x, (*L)->p, Parent, Lnz, (*L)->i, (*L)->x, *D, Y, Pattern, Flag, P, Pinv);
 
-	ldl_numeric(n, A->p, A->i, A->x, (*L)->p, Parent, Lnz, (*L)->i, (*L)->x, *D, Y, Pattern, Flag, P, Pinv);
+	coneOS_free(Parent);
+	coneOS_free(Lnz);
+	coneOS_free(Flag);
+	coneOS_free(Pattern);
+	coneOS_free(Y);
+	return(n - kk);
 }
 
 void LDLSolve(double *x, double b[], cs * L, double D[], int P[])

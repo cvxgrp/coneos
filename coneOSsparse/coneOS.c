@@ -161,7 +161,11 @@ static inline Work * initWork(Data *d, Cone * k) {
 	}
 
 	/* initialize the private data: */
-	privateInitWork(d, w);
+	int status = privateInitWork(d, w);
+	if (status < 0){
+		coneOS_printf("privateInitWork failure: %i\n",status);
+		exit(-1);
+	} //else coneOS_printf("privateInitWork success: %i\n",status);
 	d->CG_MAX_ITS = d->CG_MAX_ITS*100;
 	d->CG_TOL = d->CG_TOL/100;
 	solveLinSys(d,w,w->g, NULL); 

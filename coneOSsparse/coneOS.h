@@ -80,7 +80,7 @@ typedef struct WORK {
 int coneOS(Data * d, Cone * k, Sol * sol, Info * info);
 
 // these are pulled in from private.o
-void privateInitWork(Data * d, Work * w);
+int privateInitWork(Data * d, Work * w);
 // solves [I A';A -I] x = b, stores result in b, s contains warm-start
 void solveLinSys(Data * d, Work * w, double * b, const double * s);
 void freePriv(Work * w);

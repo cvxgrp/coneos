@@ -43,11 +43,11 @@ lib/libconeOSindir.a: $(OBJECTS) indirect/private.o
 
 bin/demo_direct: run_coneOS.c lib/libconeOSdir.a
 	mkdir -p bin
-	$(CC) $(CFLAGS) -DDEMO_PATH="\"$(CURDIR)/data_coneOS\"" -o $@ $^ $(LDFLAGS) 
+	$(CC) $(CFLAGS) -DDEMO_PATH="\"$(CURDIR)/data_sparse\"" -o $@ $^ $(LDFLAGS) 
 
 bin/demo_indirect: run_coneOS.c lib/libconeOSindir.a
 	mkdir -p bin
-	$(CC) $(CFLAGS) -DDEMO_PATH="\"$(CURDIR)/data_coneOS\"" -o $@ $^ $(LDFLAGS) 
+	$(CC) $(CFLAGS) -DDEMO_PATH="\"$(CURDIR)/data_sparse\"" -o $@ $^ $(LDFLAGS) 
 
 .PHONY: clean purge
 clean:

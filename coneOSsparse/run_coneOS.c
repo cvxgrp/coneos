@@ -2,7 +2,7 @@
 #include "run_coneOS.h"
 
 #ifndef DEMO_PATH
-#define DEMO_PATH "../data_coneOS"
+#define DEMO_PATH "../data_sparse"
 #endif 
 
 #define NUM_TRIALS 1 

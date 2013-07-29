@@ -1,6 +1,6 @@
 #include "private.h"
 
-void privateInitWork(Data * d, Work * w){
+int privateInitWork(Data * d, Work * w){
   memcpy(w->method, "dense-indirect", 15);	
   int j;
   w->p = coneOS_malloc(sizeof(Priv));
@@ -27,6 +27,7 @@ void privateInitWork(Data * d, Work * w){
 		//w->p->G[j*d->n + j] += 1;
 		w->p->G[j*d->n + j] += d->RHO_X;
 	}
+	return(0);
 }
 
 void freePriv(Work * w){

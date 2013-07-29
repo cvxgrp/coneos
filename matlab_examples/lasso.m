@@ -6,9 +6,10 @@ disp('It may also crash/run out of memory.')
 disp('Set run_cvx = false if you just want to use coneOS.')
 disp('------------------------------------------------------------')
 
-run ../coneOSsparse/matlab/install_coneos_cvx.m
+run ../coneOSdense/matlab/install_coneos_cvx.m
 
-run_cvx = 0;
+save_results = false;
+run_cvx = false;
 run_coneos = true;
 
 randn('seed',0);rand('seed',0)
@@ -20,7 +21,7 @@ time_pat_coneos = 'Time taken: (?<total>[\d\.]+)';
 time_pat_cvx = 'Total CPU time \(secs\)\s*=\s*(?<total>[\d\.]+)';
 iter_pat_coneos = {'(?<iter>[\d]+)\|'};
 
-for i = 1:1%length(ns)
+for i = 1:length(ns)
     
     n=ns(i);
     m=ms(i);
@@ -52,7 +53,7 @@ for i = 1:1%length(ns)
         coneos_direct.output{i} = output;
 
 
-        save('lasso_coneos_direct', 'coneos_direct')
+        if (save_results); save('data/lasso_coneos_direct', 'coneos_direct'); end
 
         %%
         
@@ -74,7 +75,7 @@ for i = 1:1%length(ns)
         coneos_indirect.iters{i} = str2num(tmp{1}(end).iter) + 1;
         coneos_indirect.output{i} = output;
         
-        save('lasso_coneos_indirect', 'coneos_indirect')
+        if (save_results); save('data/lasso_coneos_indirect', 'coneos_indirect'); end
 
     end
     %%
@@ -92,6 +93,6 @@ for i = 1:1%length(ns)
         cvx.time{i} = str2num(timing.total);
         cvx.output{i} = output;
         
-        save('lasso_cvx', 'cvx')
+        if (save_results); save('data/lasso_cvx', 'cvx'); end;
     end
 end

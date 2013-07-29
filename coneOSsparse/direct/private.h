@@ -17,7 +17,7 @@ struct PRIVATE_DATA {
 //void LDLInit(cs * A, int P[], double **info);
 //void LDLFactor(cs * A, int P[], int Pinv[], cs ** L, double **D);
 //void LDLSolve(double *x, double b[], cs * L, double D[], int P[]);
-//void privateInitWork(Data * d, Work * w);
+//int privateInitWork(Data * d, Work * w);
 //void solveLinSys(Data * d, Work * w, double * b, double * w);
 //void freePriv(Work * w);
 //cs * formKKT(Data * d, Work * w);

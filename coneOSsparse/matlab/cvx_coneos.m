@@ -260,6 +260,7 @@ if (isfield(settings,'ALPHA'))
     pars.ALPHA = settings.ALPHA;
 end
 
+% write_coneOS_data_sparse(data,K,coneOS_set_default_params())
 [ yy, xx, info ] = cvx_run_solver( @coneos, data, K, pars, 'xx', 'yy', 'info', settings, 5 );
 
 if add_row,

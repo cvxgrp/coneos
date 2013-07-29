@@ -1,6 +1,6 @@
 #include "private.h"
 
-void privateInitWork(Data * d, Work * w){
+int privateInitWork(Data * d, Work * w){
   memcpy(w->method, "dense-direct", 13);
   int k,j, n=d->n, m=d->m;
 	w->p = coneOS_malloc(sizeof(Priv));
@@ -22,13 +22,14 @@ void privateInitWork(Data * d, Work * w){
 		//w->p->L[j*n + j] += 1;
 		w->p->L[j*n + j] += d->RHO_X;
 	}  
-	LAPACKE_dpotrf(LAPACK_COL_MAJOR,'L',d->n,w->p->L,d->n);
+	int status = LAPACKE_dpotrf(LAPACK_COL_MAJOR,'L',d->n,w->p->L,d->n);
 	// copy L into top half for faster solve steps
 	for (k = 0; k < n; ++k){   
 		for (j = k+1; j < n; ++j){   
 			w->p->L[k + j*n] = w->p->L[j + k*n];		
 		}   
 	}   
+	return(status);
 	//coneOS_printf("Factorization time is %4.8f ms\n", tocq());
 }
 

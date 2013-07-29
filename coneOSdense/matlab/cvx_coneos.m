@@ -211,9 +211,7 @@ end
 
 fprintf('A matrix density: %4f\n',nnz(At)/(size(At,1)*size(At,2)));
 data.A = full(At);
-data.bnz = nnz(c);
 data.b = full(c);
-data.cnz = nnz(b);
 data.c = -full(b);
 
 [m1,n1] = size(K.q);
@@ -260,6 +258,7 @@ if (isfield(settings,'ALPHA'))
     pars.ALPHA = settings.ALPHA;
 end
 
+% write_coneOS_data_dense(data,K,coneOS_set_default_params())
 [ yy, xx, info ] = cvx_run_solver( @coneos, data, K, pars, 'xx', 'yy', 'info', settings, 5 );
 
 if add_row,

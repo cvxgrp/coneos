@@ -122,4 +122,4 @@ for i = 1:numel(t_names)
     end
 end
 
-save dimacs_run_data
+save data/dimacs_run_data
