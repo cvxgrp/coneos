@@ -8,40 +8,37 @@ disp('------------------------------------------------------------')
 
 run ../coneOSsparse/matlab/install_coneos_cvx.m
 
-save_results = false;
+save_results = true;
 run_cvx = false;
 run_coneos = true;
 
-ns = [100,500,1000];
-ms = ns; % square matrices, but doesn't have to be
+ns = [5000, 50000, 100000];
+ms = [50, 500, 1000];
 
 time_pat_coneos = 'Time taken: (?<total>[\d\.]+)';
 time_pat_cvx = 'Total CPU time \(secs\)\s*=\s*(?<total>[\d\.]+)';
 iter_pat_coneos = {'(?<iter>[\d]+)\|'};
 
-for i = 1:length(ns)
-    seedstr = sprintf('coneos_lasso_ex_%i',i);
+for i = 3:length(ns)
+    seedstr = sprintf('coneos_portfolio_ex_%i',i);
     randn('seed',sum(seedstr));rand('seed',sum(seedstr))
-
+    
     n = ns(i);
     m = ms(i);
-    r = 10; % rank
     
-    L1 = randn(m,r);
-    L2 = randn(r,n);
-    L = L1*L2;
-    S = sprandn(m,n,0.05);
-    M = L + S;
-    kap = sum(norms(S,1));
+    mu = exp(randn(n,1));
+    D = sqrt(2*rand(n,1));
+    F = randn(n,m);
+    gamma = 10;
     
-    rpca_prob.L{i} = L;
-    rpca_prob.S{i} = S;
-    rpca_prob.M{i} = M;
-    rpca_prob.kap{i} = kap;
-    rpca_prob.r{i} = r;
-    rpca_prob.n{i} = n;
-    rpca_prob.m{i} = m;
-    if (save_results); save('data/rpca_prob', 'rpca_prob','-v7.3'); end
+    portfolio_prob.F{i} = F;
+    portfolio_prob.D{i} = D;
+    portfolio_prob.mu{i} = mu;
+    portfolio_prob.n{i} = n;
+    portfolio_prob.m{i} = m;
+    portfolio_prob.gamma{i} = gamma;
+
+    if (save_results); save('data/portfolio_prob', 'portfolio_prob','-v7.3'); end
     
     %%
     if run_coneos
@@ -50,24 +47,24 @@ for i = 1:length(ns)
         cvx_begin
         cvx_solver coneos
         cvx_solver_settings('GEN_PLOTS',1) % only works if 'cvx_solver coneos_matlab'
-        variables Lc(m,n) Sc(m,n)
-        dual variable Yc
-        minimize(norm_nuc(Lc))
-        sum(norms(Sc,1)) <= kap
-        Yc:Lc + Sc == M;
+        variable x(n)
+        maximize (mu'*x - gamma*(sum_square(F'*x) + sum_square(D.*x)))
+        sum(x) == 1
+        x >= 0
         output = evalc('cvx_end')
         toc
         
-        coneos_direct.L{i} = Lc;
-        coneos_direct.obj(i) = norm_nuc(Lc);
+        coneos_direct.x{i} = x;
+        coneos_direct.x_viol{i} = min(x);
+        coneos_direct.budget_viol{i} = abs(1-sum(x));
+        coneos_direct.obj(i) = (mu'*x - gamma*(sum_square(F'*x) + sum_square(D.*x)));
         timing = regexp(output, time_pat_coneos, 'names');
         coneos_direct.time{i} = str2num(timing.total);
         tmp = regexp(output, iter_pat_coneos, 'names');
         coneos_direct.iters{i} = str2num(tmp{1}(end).iter) + 1;
         coneos_direct.output{i} = output;
         
-        
-        if (save_results); save('data/rpca_coneos_direct', 'coneos_direct'); end
+        if (save_results); save('data/portfolio_coneos_direct', 'coneos_direct'); end
         
         %%
         
@@ -76,23 +73,25 @@ for i = 1:length(ns)
         cvx_solver coneos
         cvx_solver_settings('USE_INDIRECT',1,'CG_MAX_ITS',2)
         cvx_solver_settings('GEN_PLOTS',1) % only works if 'cvx_solver coneos_matlab'
-        variables Lc(m,n) Sc(m,n)
-        dual variable Yc
-        minimize(norm_nuc(Lc))
-        sum(norms(Sc,1)) <= kap
-        Yc:Lc + Sc == M;
+        variable x(n)
+        maximize (mu'*x - gamma*(sum_square(F'*x) + sum_square(D.*x)))
+        sum(x) == 1
+        x >= 0
         output = evalc('cvx_end')
         toc
         
-        coneos_indirect.L{i} = Lc;
-        coneos_indirect.obj(i) = norm_nuc(Lc);
+        coneos_indirect.x{i} = x;
+        coneos_indirect.x_viol{i} = min(x);
+        coneos_indirect.budget_viol{i} = abs(1-sum(x));
+        coneos_indirect.obj(i) = (mu'*x - gamma*(sum_square(F'*x) + sum_square(D.*x)));
         timing = regexp(output, time_pat_coneos, 'names');
         coneos_indirect.time{i} = str2num(timing.total);
         tmp = regexp(output, iter_pat_coneos, 'names');
         coneos_indirect.iters{i} = str2num(tmp{1}(end).iter) + 1;
         coneos_indirect.output{i} = output;
         
-        if (save_results); save('data/rpca_coneos_indirect', 'coneos_indirect'); end
+        
+        if (save_results); save('data/portfolio_coneos_indirect', 'coneos_indirect'); end
         
     end
     %%
@@ -101,16 +100,17 @@ for i = 1:length(ns)
             tic
             cvx_begin
             cvx_solver sdpt3
-            variables Lt(m,n) St(m,n)
-            dual variable Yt
-            minimize(norm_nuc(Lt))
-            sum(norms(St,1)) <= kap
-            Yt:Lt + St == M;
+            variable x(n)
+            maximize (mu'*x - gamma*(sum_square(F'*x) + sum_square(D.*x)))
+            sum(x) == 1
+            x >= 0
             output = evalc('cvx_end')
             toc
             
-            cvx.L{i} = Lt;
-            cvx.obj(i) = norm_nuc(Lt);
+            cvx.x{i} = x;
+            cvx.x_viol{i} = min(x);
+            cvx.budget_viol{i} = abs(1-sum(x));
+            cvx.obj(i) = (mu'*x - gamma*(sum_square(F'*x) + sum_square(D.*x)));
             timing = regexp(output, time_pat_cvx, 'names');
             cvx.time{i} = str2num(timing.total);
             cvx.output{i} = output;
@@ -121,7 +121,7 @@ for i = 1:length(ns)
             cvx.err{i} = err;
         end
         
-        if (save_results); save('data/rpca_cvx', 'cvx'); end
+        if (save_results); save('data/portfolio_cvx', 'cvx'); end
         
     end
 end

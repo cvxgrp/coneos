@@ -7,7 +7,6 @@ static inline void CGaccumByA(Data * d, Work * w, const double *x, double *y);
 static inline void CGaccumByAtrans(Data *d, Work * w, const double *x, double *y);
 static inline void transpose (Data * d, Work * w);
 
-
 int privateInitWork(Data * d, Work * w){
   memcpy(w->method, "sparse-indirect", 16);	
   w->p = coneOS_malloc(sizeof(Priv));
