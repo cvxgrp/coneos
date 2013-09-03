@@ -3,13 +3,13 @@ clear all
 disp('------------------------------------------------------------')
 disp('WARNING: this can take a very long time to run.')
 disp('It may also crash/run out of memory.')
-disp('Set run_cvx = false if you just want to run coneOS.')
+disp('Set run_sdpt3 = false if you just want to run coneOS.')
 disp('------------------------------------------------------------')
 
 run ../coneOSdense/matlab/install_coneos_cvx.m
 
 save_results = false;
-run_cvx = false;
+run_sdpt3 = false;
 run_coneos = true;
 
 ns = [3000,10000,30000];
@@ -89,7 +89,7 @@ for i = 1:length(ns)
         
     end
     %%
-    if run_cvx
+    if run_sdpt3
         try
             tic
             cvx_begin

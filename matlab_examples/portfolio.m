@@ -3,13 +3,13 @@ clear all
 disp('------------------------------------------------------------')
 disp('WARNING: this can take a very long time to run.')
 disp('It may also crash/run out of memory.')
-disp('Set run_cvx = false if you just want to run coneOS.')
+disp('Set run_sdpt3 = false if you just want to run coneOS.')
 disp('------------------------------------------------------------')
 
 run ../coneOSsparse/matlab/install_coneos_cvx.m
 
-save_results = true;
-run_cvx = false;
+save_results = false;
+run_sdpt3 = false;
 run_coneos = true;
 
 ns = [5000, 50000, 100000];
@@ -19,7 +19,7 @@ time_pat_coneos = 'Time taken: (?<total>[\d\.]+)';
 time_pat_cvx = 'Total CPU time \(secs\)\s*=\s*(?<total>[\d\.]+)';
 iter_pat_coneos = {'(?<iter>[\d]+)\|'};
 
-for i = 3:length(ns)
+for i = 1:length(ns)
     seedstr = sprintf('coneos_portfolio_ex_%i',i);
     randn('seed',sum(seedstr));rand('seed',sum(seedstr))
     
@@ -37,7 +37,7 @@ for i = 3:length(ns)
     portfolio_prob.n{i} = n;
     portfolio_prob.m{i} = m;
     portfolio_prob.gamma{i} = gamma;
-
+    
     if (save_results); save('data/portfolio_prob', 'portfolio_prob','-v7.3'); end
     
     %%
@@ -95,7 +95,7 @@ for i = 3:length(ns)
         
     end
     %%
-    if run_cvx
+    if run_sdpt3
         try
             tic
             cvx_begin
