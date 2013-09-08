@@ -1,6 +1,6 @@
 Primal Dual Operator Splitting Method for Conic Optimization
-============================================================ Brendan
-O'Donoghue, Eric Chu, and Stephen Boyd
+============================================================ 
+Brendan O'Donoghue, Eric Chu, and Stephen Boyd
 ----------------------------------------------
 
 This code provides a solver for second-order cone problems. It is an
