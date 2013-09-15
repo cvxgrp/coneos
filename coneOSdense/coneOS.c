@@ -324,12 +324,11 @@ static inline void sety(Data * d,Work * w, Sol * sol){
 	sol->y = coneOS_malloc(sizeof(double)*d->m);
 	int i;
 	for(i = 0; i < d->m; ++i) {
-		/* XXX: (see also converged function) 
-		   not taking average has desirable properties, like returning sparse
+		/* not taking average has desirable properties, like returning sparse
 		   solutions if l1 penalty used (for example), but will have worse accuracy
 		   and worse dual equality constraint residual */
-		sol->y[i] = 0.5 * (w->u[i + d->n]+w->u_t[i + d->n]);
-		//sol->y[i] = w->u[i + d->n];
+		   //sol->y[i] = 0.5 * (w->u[i + d->n]+w->u_t[i + d->n]);
+		   sol->y[i] = w->u[i + d->n];
 	}
 }
 
@@ -386,6 +385,9 @@ static inline void printHeader(Data * d, Work * w, Cone * k) {
 }
 
 static inline void printFooter(Data * d, Info * info) {
+    double b_inf = calcNormInf(d->b, d->m);
+    double c_inf = calcNormInf(d->c, d->n);
+    double gap_rel = 1 + fabs(info->pobj) + fabs(info->dobj);
 	int i;  
 	for(i = 0; i < _lineLen_; ++i) {
 		coneOS_printf("-");
@@ -402,8 +404,15 @@ static inline void printFooter(Data * d, Info * info) {
 		coneOS_printf("-");
 	}
     coneOS_printf("\n");
-    coneOS_printf("||Ax + s - b|| = %2e\n||A'y + c|| = %2e\n",info->presid, info->dresid);
-    coneOS_printf("gap : c'x + b'y = %2e\nc'x = %4f, -b'y = %4f\n",info->gap, info->pobj, info->dobj); 
+    coneOS_printf("DIMACs error measures:\n");
+    coneOS_printf("|Ax+s-b|_2/(1+|b|_inf) = %2e\n|A'y+c|_2/(1+|c|_inf) = %2e\n",info->presid/(1+b_inf), info->dresid/(1+c_inf));
+    coneOS_printf("(c'x+b'y)/(1+|c'x|+|b'y|) = %2e\n", info->gap/gap_rel); 
+    coneOS_printf("dist(s,K) = 0, dist(y,K*) = 0 \n");
+    for(i = 0; i < _lineLen_; ++i) {
+		coneOS_printf("-");
+	}
+    coneOS_printf("\n");
+    coneOS_printf("c'x = %4f, -b'y = %4f\n",info->pobj, info->dobj); 
     for(i = 0; i < _lineLen_; ++i) {
 		coneOS_printf("=");
 	}
