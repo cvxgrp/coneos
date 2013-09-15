@@ -8,7 +8,7 @@ cvx_on = false;
 coneos_on = true;
 save_data = true;
 tests = dir('*.mat');
-params = struct('VERBOSE', 1);
+params = struct('VERBOSE', 1, 'EPS_ABS', 1e-5, 'MAX_ITERS', 5000);
 for i=1:length(tests)
     szes(i) = tests(i).bytes;
 end
@@ -62,7 +62,6 @@ for ii = 1:N
     if (K.s == 0)
         K.s = [];
     end
-    
     
     cone = struct('f', 0, 'l', K.l, 'q', K.q', 's', K.s');
     
