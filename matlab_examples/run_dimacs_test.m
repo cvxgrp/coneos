@@ -4,9 +4,10 @@ run ../coneOSsparse/matlab/install_coneos_cvx.m
 copyfile('../coneOSsparse/matlab/coneos_direct.m*','.');
 copyfile('coneos_matlab/coneos_matlab.m','.');
 
-cvx_on = true;
+cvx_on = false;
+coneos_on = true;
+save_data = true;
 tests = dir('DIMACS/*.mat');
-%params = struct('ALPHA',1.8, 'MAX_ITERS', 2000, 'VERBOSE', 1, 'NORMALIZE', 1, 'GEN_PLOTS',1);
 params = struct('VERBOSE', 1);
 
 time_pat_coneos = 'Time taken: (?<total>[\d\.]+)';
@@ -15,11 +16,7 @@ iter_pat_coneos = {'(?<iter>[\d]+)\|'};
 
 %%
 
-for i = 1:10%length(tests),
-    
-    %%%%%%%%%
-    % NB: coneos solves the dual of these problems
-    %%%%%%%%%
+for i = 1:length(tests),
     
     clear A At b c K
     test_name = tests(i).name;
@@ -47,6 +44,19 @@ for i = 1:10%length(tests),
             K.(ccones{j}) = [];
         end
     end
+    if isempty(K.f)
+        K.f = 0;
+    end
+    if isempty(K.l)
+        K.l = 0;
+    end
+    if (K.q == 0)
+        K.q = [];
+    end
+    if (K.s == 0)
+        K.s = [];
+    end
+    
     
     cone = struct('f', 0, 'l', K.l, 'q', K.q', 's', K.s');
     
@@ -58,19 +68,24 @@ for i = 1:10%length(tests),
     if m1 == 1,
         cone.s = cone.s';
     end
+    if (data.b == 0); data.b = zeros(size(data.A,1),1); end
+    if (data.c == 0); data.c = zeros(size(data.A,2),1); end
+    
     
     if cvx_on
         % CVX:
         [m,n] = size(data.A);
         
         cvx_begin %quiet
-        %cvx_solver coneos%_matlab
+        cvx_solver coneos%_matlab
         variables xcvx(n) scvx(m)
+        dual variable zcvx
         minimize(data.c'*xcvx)
-        data.A*xcvx + scvx == data.b
+        zcvx: data.A*xcvx + scvx == data.b
         scvx(1:cone.f) == 0
         scvx(cone.f+1:cone.f+cone.l) >= 0
         idx=cone.f+cone.l;
+        if isempty(idx) idx = 0; end
         for kk =1:length(cone.q)
             norm(scvx(idx + 2: idx + cone.q(kk))) <= scvx(idx + 1)
             idx = idx + cone.q(kk);
@@ -84,19 +99,32 @@ for i = 1:10%length(tests),
         cvx_objval.(test_name) =  cvx_optval;
     end
     
-    tic
-    [output, x_m, z_m] = evalc('coneos_matlab(data,cone,params);');
-    output
-    toc
+    if coneos_on
+        if (isfield(K,'r') && K.r ~= 0)
+            coneos_error(test_name) = 'rotated lorentz cones not currently supported';
+            coneos_x = nan;
+            coneos_objval = nan;
+        else
+            
+            tic
+            [output, x_m, z_m] = evalc('coneos_direct(data,cone,params);');
+            output
+            data.b'*z_m %% because coneos targets dual of DIMACs formulations
+            toc
+            
+            coneos_NNZA.(test_name) = nnz(data.A);
+            coneos_x.(test_name) = x_m;
+            coneos_z.(test_name) = z_m;
+            timing = regexp(output, time_pat_coneos, 'names');
+            coneos_times.(test_name) = str2num(timing.total);
+            tmp = regexp(output,iter_pat_coneos, 'names');
+            coneos_iters.(test_name) = str2num(tmp{1}(end).iter) + 1;
+            coneos_dobjval.(test_name) = data.b'*z_m;
+            coneos_pobjval.(test_name) = data.c'*x_m;
+            coneos_output.(test_name) = output;
+        end
+    end
     
-    coneos_NNZA.(test_name) = nnz(data.A);
-    coneos_x.(test_name) = x_m;
-    timing = regexp(output, time_pat_coneos, 'names');
-    coneos_times.(test_name) = str2num(timing.total);
-    tmp = regexp(output,iter_pat_coneos, 'names');
-    coneos_iters.(test_name) = str2num(tmp{1}(end).iter) + 1;
-    coneos_objval.(test_name) = data.c'*x_m;
-    coneos_output.(test_name) = output;
-    save data/dimacs_run_data
+    if save_data; save data/dimacs_run_data; end
     
 end

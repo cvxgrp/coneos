@@ -23,6 +23,9 @@ where `K` is a product cone of free cones, linear cones `{ x | x >= 0 }`,
 second-order cones `{ (t,x) | ||x||_2 <= t }`, and semi-definite cones `{ X | X psd }`
 `K^*` is its dual cone.
 
+Sparse and dense version
+---------- 
+
 Installing 
 ---------- 
 Typing `make` at the command line should do the trick. It
