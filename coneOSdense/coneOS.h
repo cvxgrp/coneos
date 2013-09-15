@@ -40,7 +40,7 @@ typedef struct PROBLEM_DATA {
 
 /* contains primal-dual solution vectors */
 typedef struct SOL_VARS {
-  double * x, * y;
+  double * x, * y, * s;
 } Sol;
 
 /* contains terminating information */

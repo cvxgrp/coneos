@@ -78,7 +78,9 @@ end
 
 if (NORMALIZE)
     disp('ORIGINAL NORMALIZATION SCHEME')
-    
+    A_o = data.A;
+    b_o = data.b;
+    c_o = data.c;
     D = ones(m,1);
     E = ones(n,1);
     NN = 1; % NN = 1, other choices bad
@@ -215,23 +217,24 @@ for i=1:MAX_ITERS
     end
     
     if mod(i-1,100)==0
-        fprintf('Iteration %i, primal residual %4e, dual residual %4e, kap/tau %4e\n',i-1,err_pri,err_dual,kap/tau);
+        fprintf('Iteration %i, primal residual %4e, dual residual %4e, kap/tau %4e\n',i-1,err_pri/(tau+kap),err_dual/(tau+kap),kap/tau);
     end
 end
-fprintf('Iteration %i, primal residual %4e, dual residual %4e, kap/tau %4e\n',i-1,err_pri,err_dual,kap/tau);
+fprintf('Iteration %i, primal residual %4e, dual residual %4e, kap/tau %4e\n',i-1,err_pri/(tau+kap),err_dual/(tau+kap),kap/tau);
 
 %%
 tau = 0.5*(u(l)+ut(l));
 kap = v(end);
 x_h = u(1:n);
 z_h = 0.5*(u(n+1:n+m) + ut(n+1:n+m));
-
+s_h = v(n+1:n+m);
 % tau, kap checking not exactly consistent w/ Lieven notes
 % since we allow small numerical errors in solution
 if (tau > UNDET_TOL && tau > kap) % this is different to Lieven
     status = 'Solved'
     x=x_h/tau;
     z=z_h/tau;
+    s=s_h/tau;
 else
     x = nan(n,1);
     z = nan(m,1);

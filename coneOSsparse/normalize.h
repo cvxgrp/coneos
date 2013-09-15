@@ -109,7 +109,10 @@ void unNormalize(Data *d, Work * w, Sol * sol){
 	for (i = 0; i < d->m; ++i){
 		sol->y[i] /= (D[i] * w->sc_c);
 	}
-	for (i = 0; i < d->n; ++i){
+	for (i = 0; i < d->m; ++i){
+		sol->s[i] *= D[i]/(w->sc_b * w->scale);
+	}
+    for (i = 0; i < d->n; ++i){
 		d->c[i] *= E[i]/(w->sc_c * w->scale);
 	}
 	for (i = 0; i < d->m; ++i){
