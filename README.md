@@ -23,12 +23,21 @@ where `K` is a product cone of free cones, linear cones `{ x | x >= 0 }`,
 second-order cones `{ (t,x) | ||x||_2 <= t }`, and semi-definite cones `{ X | X psd }`
 `K^*` is its dual cone.
 
-Sparse and dense version
+Sparse and dense versions
 ---------- 
+The sparse package uses the LDL and AMD packages written by Davis et. al.  
+The dense package uses BLAS and LAPACK libraries. To use the dense version
+you must point conOS.mk to the locaation of these installed libraries.
+
+Solving SDPs
+---------- 
+In order to solve SDPs you must have BLAS and LAPACK installed (even for the sparse
+version of the package). Point coneOS.mk to the location of these libraries. Without
+these you can still solve SOCPs and LPs, however.
 
 Installing 
 ---------- 
-Typing `make` at the command line should do the trick. It
+Typing `make` at the command line in either coneOSsparse or coneOSdense. It
 will produce two libaries, `libconeosdir.a` and `libconeosindir.a` found under the
 `lib` folder. As a byproduct, it will also produce two demo binaries under the
 `bin` folder called `demo_direct` and `demo_indirect`.
@@ -49,7 +58,10 @@ If `make_coneos` fails and complains about an incompatible architecture, edit th
 Remember to include the `matlab` directory in your Matlab path if you wish to
 use the mex file in your Matlab code. The calling sequence is
 
-	[x,y,status] = coneos_direct(A,b,c,cones,params)
+	[x,y,status] = coneos_direct(data,cones,params)
+
+where data contains A, b, c  
+cones contains f (free/zero cone size), l (linear cone size), q (array of SOCs), s (array of SDCs)
 
 Usage in C 
 ---------- 
@@ -61,11 +73,12 @@ needed).
 
 These libraries (and `coneos.h`) expose only three API functions:
 
-* Sol * coneos(Data \* d, Cone \* k)
+* Sol * coneos(Data \* d, Cone \* k, Info * info)
     
-	This solves the problem specified in the `Data` and `Cone` structures.  The
-	solution is returned in a `Sol` structure.
-    
+	This solves the problem specified in the `Data` and `Cone` structures,
+    and returns the solution in the Sol struct and various information about the run in
+    the Info struct.
+
 * void freeData(Data \* d, Cone \* k)
     
 	This frees the `Data` and `Cone` structures.
@@ -74,39 +87,49 @@ These libraries (and `coneos.h`) expose only three API functions:
 
 	This frees the `Sol` structure.
     
-The three relevant data structures are:
+The four relevant data structures are:
 
+    /* struct that containing standard problem data */
     typedef struct PROBLEM_DATA {
-      idxint n, m; /* problem dimensions */
+      int n, m; /* problem dimensions */
       /* problem data, A, b, c: */
       double * Ax; 
-      idxint * Ai, * Ap; 
+      int * Ai, * Ap; 
+      int Anz;
       double * b, * c;
-  
-      Params * p;
+      int MAX_ITERS, CG_MAX_ITS;
+      double EPS_ABS, ALPH, CG_TOL, UNDET_TOL, RHO_X;
+      int VERBOSE, NORMALIZE;  // boolean
     } Data;
-        
-    typedef struct PROBLEM_PARAMS {
-      idxint MAX_ITERS, CG_MAX_ITS;
-      double EPS_ABS, ALPHA, CG_TOL;
-      idxint VERBOSE, NORMALIZE;  // boolean
-    } Params;
 
-    typedef struct SOL_VARS {
-      idxint n, m; /* solution dimensions */
-      double *x, *s, *y; 
-      char status[16];
-    } Sol;
-
-    typedef struct CONE {
-        idxint f;          /* number of linear equality constraints */
-        idxint l;          /* length of LP cone */
-        idxint *q;             /* array of second-order cone constraints */
-        idxint qsize;      /* length of SOC array */
+    typedef struct Cone_t {
+        int f;          /* number of linear equality constraints */
+        int l;          /* length of LP cone */
+        int *q;         /* array of second-order cone constraints */
+        int qsize;      /* length of SOC array */
+        int *s;         /* array of SD constraints */
+        int ssize;      /* length of SD array */
     } Cone;
 
+    /* contains primal-dual solution vectors */
+    typedef struct SOL_VARS {
+        double * x, * y, *s; 
+    } Sol;
 
-The data matrix `A` is specified in column-compressed format and the vectors
+    /* contains terminating information */
+    typedef struct INFO {
+        int iter;
+        char status[16];
+        double pobj;
+        double dobj;
+        double presid;
+        double dresid;
+        double gap;
+        double time;
+    } Info;
+
+The data matrix `A` is specified in column-compressed format for coneOSsparse or dense
+column major order for coneOSdense, and the vectors
 `b` and `c` are specified as dense arrays. The solutions `x` (primal) and `y`
 (dual) are returned as dense arrays. Cones are specified in terms of their
 lengths; the only special one is the second-order cone, where the lengths are
