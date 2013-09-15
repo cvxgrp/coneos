@@ -1,46 +1,26 @@
 close all; clear all
 
+run ../coneOSsparse/matlab/install_coneos_cvx.m
+copyfile('../coneOSsparse/matlab/coneos_direct.m*','.');
+copyfile('coneos_matlab/coneos_matlab.m','.');
+
 cvx_on = true;
-
 tests = dir('DIMACS/*.mat');
+%params = struct('ALPHA',1.8, 'MAX_ITERS', 2000, 'VERBOSE', 1, 'NORMALIZE', 1, 'GEN_PLOTS',1);
+params = struct('VERBOSE', 1);
 
-params = struct('ALPHA',1.8,'EPS_ABS', 1e-32, 'EPS_REL', 1e-32, 'CG_MAX_ITS', 1, 'CG_TOL', 1e-8, 'MAX_ITERS',5000, 'VERBOSE', 1, 'NORMALIZE', 1, 'GEN_PLOTS',1);
+time_pat_coneos = 'Time taken: (?<total>[\d\.]+)';
+time_pat_cvx = 'Total CPU time \(secs\)\s*=\s*(?<total>[\d\.]+)';
+iter_pat_coneos = {'(?<iter>[\d]+)\|'};
 
-% for coneOS
-params.UNDET_TOL = 1e-8;
+%%
 
-% optvals taken from
-% http://dimacs.rutgers.edu/Challenges/Seventh/Instances/tablestat.html
-% http://people.orie.cornell.edu/miketodd/tttmpbc.pdf
-objval = struct(...
-    'nql30', -0.9460, ...
-    'nql60', -0.935423, ...
-    'nql180', 0, ... % n/a
-    'qssp30', -6.496675, ...
-    'qssp60', -6.562696, ...
-    'qssp180', 0, ... % n/a
-    'nb', -0.05070309, ...
-    'nb_L1', -13.01227, ...
-    'nb_L2', -1.628972, ...
-    'nb_L2_bessel', -0.102571, ...
-    'sched_50_50_orig', 26673.00, ...
-    'sched_100_50_orig', 181889.9, ...
-    'sched_100_100_orig', 717367, ...
-    'sched_200_100_orig', 141360.4464, ...
-    'sched_50_50_scaled',7.852038, ...
-    'sched_100_50_scaled', 67.166281, ...   % their table is wrong or something
-    'sched_100_100_scaled', 27.331457, ...
-    'sched_200_100_scaled', 51.812471 ...
-    );
-
-
-pat = {'Total solve time is (?<total>[\d\.]+)', 'KKT matrix factorization took (?<fact>[\d\.]+)'};
-pat_c = 'Time taken: (?<total>[\d\.]+)';
-
-iter_pat = {'(?<iter>[\d]+) \|'};
-iter_pat_c = {'(?<iter>[\d]+)\|'};
-
-for i = 1:length(tests),
+for i = 1:10%length(tests),
+    
+    %%%%%%%%%
+    % NB: coneos solves the dual of these problems
+    %%%%%%%%%
+    
     clear A At b c K
     test_name = tests(i).name;
     f = ['DIMACS/' test_name];
@@ -61,65 +41,62 @@ for i = 1:length(tests),
     else
         data = struct('A', sparse(At), 'b', full(c), 'c', -full(b));
     end
-    cone = struct('f', 0, 'q', K.q', 'l', K.l, 'k_soc', length(K.q),'s', []);
+    ccones = {'f','l','q','s'};
+    for j = 1:length(ccones)
+        if ~isfield(K,ccones{j})
+            K.(ccones{j}) = [];
+        end
+    end
+    
+    cone = struct('f', 0, 'l', K.l, 'q', K.q', 's', K.s');
+    
+    [m1,n1] = size(cone.q);
+    if m1 == 1,
+        cone.q = cone.q';
+    end
+    [m1,n1] = size(cone.s);
+    if m1 == 1,
+        cone.s = cone.s';
+    end
     
     if cvx_on
-        % CVX - sedumi:
+        % CVX:
         [m,n] = size(data.A);
-        ns_soc = cone.q;
-        idxs = [cone.f+cone.l; cone.f+cone.l + cumsum(ns_soc)];
-        cvx_begin quiet
-        cvx_solver sedumi
+        
+        cvx_begin %quiet
+        %cvx_solver coneos%_matlab
         variables xcvx(n) scvx(m)
-        minimize (data.c'*xcvx)
+        minimize(data.c'*xcvx)
         data.A*xcvx + scvx == data.b
         scvx(1:cone.f) == 0
         scvx(cone.f+1:cone.f+cone.l) >= 0
-        for kk =1:cone.k_soc
-            norm(scvx(idxs(kk) + 2: idxs(kk) + ns_soc(kk))) <= scvx(idxs(kk)+1)
+        idx=cone.f+cone.l;
+        for kk =1:length(cone.q)
+            norm(scvx(idx + 2: idx + cone.q(kk))) <= scvx(idx + 1)
+            idx = idx + cone.q(kk);
+        end
+        for kk =1:length(cone.s)
+            reshape(scvx(idx+1:idx + cone.s(kk)^2),cone.s(kk),cone.s(kk)) == semidefinite(cone.s(kk));
+            idx = idx + cone.s(kk)^2;
         end
         cvx_end
+        
         cvx_objval.(test_name) =  cvx_optval;
     end
     
-    [output,x_m,z_m,status_m] = evalc('coneos_direct(data,cone,params);');
+    tic
+    [output, x_m, z_m] = evalc('coneos_matlab(data,cone,params);');
+    output
+    toc
     
-    coneos_err.(test_name) = 100 * abs( data.c'*x_m + objval.(test_name) ) / abs(objval.(test_name) + eps);
-    
-    timing = regexp(output, pat_c, 'names');
+    coneos_NNZA.(test_name) = nnz(data.A);
+    coneos_x.(test_name) = x_m;
+    timing = regexp(output, time_pat_coneos, 'names');
     coneos_times.(test_name) = str2num(timing.total);
-    tmp = regexp(output,iter_pat_c, 'names');
+    tmp = regexp(output,iter_pat_coneos, 'names');
     coneos_iters.(test_name) = str2num(tmp{1}(end).iter) + 1;
     coneos_objval.(test_name) = data.c'*x_m;
-    if cvx_on
-        coneos_perr.(test_name) = norm(x_m - xcvx);
-        coneos_derr.(test_name) = norm(z_m - scvx);
-    end
-    [output,x_m,s_m,z_m,status_m] = evalc('pdos_direct(data,cone,params);');
-    
-    pdos_err.(test_name) = 100 * abs( data.c'*x_m + objval.(test_name) ) / abs(objval.(test_name) + eps);
-    
-    timing = regexp(output, pat, 'names');
-    pdos_times.(test_name) = str2num(timing{1}.total);
-    tmp = regexp(output,iter_pat, 'names');
-    pdos_iters.(test_name) = str2num(tmp{1}(end).iter) + 1;
-    pdos_objval.(test_name) = data.c'*x_m;
-    if cvx_on
-        pdos_perr.(test_name) = norm(x_m - xcvx);
-        pdos_derr.(test_name) = norm(z_m - scvx);
-    end
+    coneos_output.(test_name) = output;
+    save data/dimacs_run_data
     
 end
-
-t_names = fieldnames(coneos_times);
-for i = 1:numel(t_names)
-    tdiff(i,1) = 100*(coneos_times.(t_names{i}) - pdos_times.(t_names{i}))/min(coneos_times.(t_names{i}), pdos_times.(t_names{i}));
-    %objdiff(i,1) = 100*(coneos_objval.(t_names{i}) - pdos_objval.(t_names{i}))/min(coneos_objval.(t_names{i}),pdos_objval.(t_names{i}));
-    errdiff(i,1) = coneos_err.(t_names{i}) - pdos_err.(t_names{i});
-    if cvx_on
-        pdiff(i,1) = 100*(coneos_perr.(t_names{i}) - pdos_perr.(t_names{i}))/min(coneos_perr.(t_names{i}),pdos_perr.(t_names{i}));
-        ddiff(i,1) = 100*(coneos_derr.(t_names{i}) - pdos_derr.(t_names{i}))/min(coneos_derr.(t_names{i}),pdos_derr.(t_names{i}));
-    end
-end
-
-save data/dimacs_run_data

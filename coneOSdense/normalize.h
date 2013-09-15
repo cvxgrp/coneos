@@ -31,11 +31,11 @@ void normalize(Data * d, Work * w, Cone * k){
     for (i=0; i < k->ssize; ++i)
 	{
  		wrk = 0;
-		for (j = count; j < count + k->s[i]; ++j){
+		for (j = count; j < count + (k->s[i])*(k->s[i]); ++j){
         	wrk += D[j];
 		}
-		wrk /= k->s[i];
-		for (j = count; j < count + k->s[i]; ++j){
+		wrk /= (k->s[i])*(k->s[i]);
+		for (j = count; j < count + (k->s[i])*(k->s[i]); ++j){
         	D[j] = wrk;
 		}
 		count += (k->s[i])*(k->s[i]);

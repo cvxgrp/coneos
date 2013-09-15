@@ -36,11 +36,11 @@ void normalize(Data * d, Work * w, Cone * k){
     for (i=0; i < k->ssize; ++i)
 	{
  		wrk = 0;
-		for (j = count; j < count + k->s[i]; ++j){
+		for (j = count; j < count + (k->s[i])*(k->s[i]); ++j){
         	wrk += D[j];
 		}
-		wrk /= k->s[i];
-		for (j = count; j < count + k->s[i]; ++j){
+		wrk /= (k->s[i])*(k->s[i]);
+		for (j = count; j < count + (k->s[i])*(k->s[i]); ++j){
         	D[j] = wrk;
 		}
 		count += (k->s[i])*(k->s[i]);
@@ -90,14 +90,13 @@ void normalize(Data * d, Work * w, Cone * k){
 	scaleArray(d->Ax,w->scale,d->Anz);
 	scaleArray(d->b,w->scale,d->m);
 	scaleArray(d->c,w->scale,d->n);
-
-	/*
+/*
 	coneOS_printf("norm D is %4f\n", calcNorm(D,d->m));
 	coneOS_printf("norm E is %4f\n", calcNorm(E,d->n));
     coneOS_printf("norm A is %4f\n", calcNorm(d->Ax,d->Anz));
     coneOS_printf("norm b is %4f\n", calcNorm(d->b,d->m));
     coneOS_printf("norm c is %4f\n", calcNorm(d->c,d->n));
-	*/
+*/
 }
 
 void unNormalize(Data *d, Work * w, Sol * sol){

@@ -1,9 +1,11 @@
-Primal Dual Operator Splitting Method for Conic Optimization
+coneos
 ============================================================ 
-Brendan O'Donoghue, Eric Chu, and Stephen Boyd
-----------------------------------------------
+A C package for solving large-scale convex cone problems.
 
-This code provides a solver for second-order cone problems. It is an
+based on "Operator Splitting for Conic Optimization" by  
+Brendan O’Donoghue, Eric Chu, Neal Parikh, and Stephen Boyd
+
+This code provides a solver for convex cone problems. It is an
 implementation of the algorithm described in [this
 paper](http://www.stanford.edu/~boyd/). It provides both a direct and an
 indirect solver in the form of a static library for inclusion in other
@@ -17,11 +19,14 @@ and its dual
 
 	maximize     -b'*y subject to   -A'*y == c y in K^* 
 
-where `K` is a product cone of free cones, linear cones `{ x | x >= 0 }`, and
-second-order cones `{ (t,x) | ||x||_2 <= t }`; `K^*` is its dual cone.
+where `K` is a product cone of free cones, linear cones `{ x | x >= 0 }`, 
+second-order cones `{ (t,x) | ||x||_2 <= t }`, and semi-definite cones `{ X | X psd }`
+`K^*` is its dual cone.
 
-Installing ---------- Typing `make` at the command line should do the trick. It
-will produce two libaries, `libconeOSdir.a` and `libconeOSindir.a` found under the
+Installing 
+---------- 
+Typing `make` at the command line should do the trick. It
+will produce two libaries, `libconeosdir.a` and `libconeosindir.a` found under the
 `lib` folder. As a byproduct, it will also produce two demo binaries under the
 `bin` folder called `demo_direct` and `demo_indirect`.
 
@@ -31,98 +36,72 @@ machine), you must `make purge` before `make` again.
 
 File an issue with us if the build process fails for you.
 
-### Compiling a Matlab mex file Running `make_coneOS` in Matlab under the
+### Compiling a Matlab mex file 
+Running `make_coneos` in Matlab under the
 `matlab` folder will produce two usable mex files
 
-If `make_coneOS` fails and complains about an incompatible architecture, edit the
-`make_coneOS` file according to the comments.
+If `make_coneos` fails and complains about an incompatible architecture, edit the
+`make_coneos` file according to the comments.
 
 Remember to include the `matlab` directory in your Matlab path if you wish to
 use the mex file in your Matlab code. The calling sequence is
 
-	[x,y,status] = coneOS_direct(A,b,c,cones,params)
+	[x,y,status] = coneos_direct(A,b,c,cones,params)
 
-### Compiling a Python extension If you have no trouble with `make`, then this
-should be straightforward as well. The relevant files are under the `python`
-directory. The command
-
-	python setup.py install
-
-should install the two extensions, `coneOS_direct` and `coneOS_indirect` into your
-Python directories. You can run python and `import coneOS_direct` or `import
-coneOS_indirect` to use the codes. These two modules expose only a single `solve`
-function.
-
-The `solve` function is called as follows:
-
-	sol = solve(Ax, Ai, Ap, b, c, f=free,l=linear,q=soc)
-
-The matrix "A" is a sparse matrix in column compressed storage. "Ax" are the
-values, "Ai" are the rows, and "Ap" are the column pointers.
-
-* `Ax` is a Numpy array of doubles `Ai` is a Numpy array of ints `Ap` is a
-* Numpy array of ints `b` is a (dense) Numpy array of doubles `c` is a (dense)
-* Numpy array of doubles `f` is an integer giving the number of free variables
-* `l` is an integer giving the number of nonnegative constraints `q` is a Numpy
-* array of integers giving the number of cone constraints
- 
-The code returns a Python dictionary with three keys, 'x', 'y', and 'status'.
-These report the primal and dual solution (as numpy arrays) and the solver
-status (as a string). There are also optional arguments (for both the direct
-and indirect solver):
-
-* `MAX_ITERS` is an integer. Sets the maximum number of ADMM iterations.
-* Defaults to 2000.  `EPS_ABS` is a double. Sets the quitting tolerance for
-* ADMM. Defaults to 1e-4.  `EPS_INFEAS` is a double. Sets the quitting
-* tolerance for infeasibility. Defaults to 5e-5.  `ALPHA` is a double in (0,2)
-* (non-inclusive). Sets the over-relaxation parameter. Defaults to 1.0.
-* `VERBOSE` is an integer (or Boolean) either 0 or 1. Sets the verbosity of the
-* solver. Defaults to 1 (or True).
-
-For the `solve` method in the `indirect_coneOS` module, we additionally have:
-
-* `CG_MAX_ITS` is an integer. Sets the maximum number of CG iterations.
-* Defaults to 20.  `CG_TOL` is a double. Sets the tolerance for CG. Defaults to
-* 1e-3.
-
-Usage in C ---------- If `make` completes successfully, it will produce two
-static library files, `libconeOSdir.a` and `libconeOSindir.a` under the `lib`
+Usage in C 
+---------- 
+If `make` completes successfully, it will produce two
+static library files, `libconeosdir.a` and `libconeosindir.a` under the `lib`
 folder. To include the libraries in your own source code, compile with the
-linker option with `-L(PATH_TO_coneOS)\lib` and `-lconeOSdir` or `-lconeOSindir` (as
+linker option with `-L(PATH_TO_coneos)\lib` and `-lconeosdir` or `-lconeosindir` (as
 needed).
 
-These libraries (and `coneOS.h`) expose only three API functions:
+These libraries (and `coneos.h`) expose only three API functions:
 
-* Sol *coneOS(Data * d, Cone * k)
+* Sol * coneos(Data \* d, Cone \* k)
     
 	This solves the problem specified in the `Data` and `Cone` structures.  The
 	solution is returned in a `Sol` structure.
     
-* void free_data(Data *d, Cone *k)
+* void freeData(Data \* d, Cone \* k)
     
 	This frees the `Data` and `Cone` structures.
     
-* void free_sol(Sol *sol)
+* void freeSol(Sol \* sol)
 
 	This frees the `Sol` structure.
     
 The three relevant data structures are:
 
-	typedef struct PROBLEM_DATA { int n, m; /* problem dimensions */
-	  /* problem data, A, b, c: */
-	  double * Ax; int * Ai, * Ap; double * b, * c;
-	  /* problem parameters */
-	  int MAX_ITERS, CG_MAX_ITS; double EPS_ABS, EPS_INFEAS, ALPH, CG_TOL; int
-	  VERBOSE; } Data;
+    typedef struct PROBLEM_DATA {
+      idxint n, m; /* problem dimensions */
+      /* problem data, A, b, c: */
+      double * Ax; 
+      idxint * Ai, * Ap; 
+      double * b, * c;
+  
+      Params * p;
+    } Data;
+        
+    typedef struct PROBLEM_PARAMS {
+      idxint MAX_ITERS, CG_MAX_ITS;
+      double EPS_ABS, ALPHA, CG_TOL;
+      idxint VERBOSE, NORMALIZE;  // boolean
+    } Params;
 
-	typedef struct SOL_VARS {
-	  /* primal solution x, dual solution y */
-	  double * x, * y; char * status; } Sol;
+    typedef struct SOL_VARS {
+      idxint n, m; /* solution dimensions */
+      double *x, *s, *y; 
+      char status[16];
+    } Sol;
 
-	typedef struct Cone_t { int f;          /* number of linear equality
-	constraints */ int l;          /* length of LP cone */ int *q;
-	/* array of second-order cone constraints */ int qsize;      /* length of
-	SOC array */ } Cone;
+    typedef struct CONE {
+        idxint f;          /* number of linear equality constraints */
+        idxint l;          /* length of LP cone */
+        idxint *q;             /* array of second-order cone constraints */
+        idxint qsize;      /* length of SOC array */
+    } Cone;
+
 
 The data matrix `A` is specified in column-compressed format and the vectors
 `b` and `c` are specified as dense arrays. The solutions `x` (primal) and `y`
@@ -132,27 +111,12 @@ provided as an array of second-order cone lengths (and a variable `qsize`
 giving its length).
 
 
-Scalability ----------- Note that this code is merely meant as an
+Scalability
+----------- 
+Note that this code is merely meant as an
 implementation of the ideas in our paper. The actual code does not use more
 than a single CPU. Nevertheless, for problems that fit in memory on a single
 computer, this code will (attempt to) solve them.
 
 To scale this solver, one must either provide a distributed solver for linear
 systems or a distributed matrix-vector multiplication.
-
-
-TODO List --------- Just a random list of items that we might do in the
-future....
-
-* CVX shim?  mex file interface?  compile with -DINDIRECT to get an indirect
-* solver multithreaded version?  (Python) need some way of indicating warm
-* start / saving state the Data struct isn't constant; meaning, we actually
-* modify A,b, and c if NORMALIZE is set to true
-
-Known Issues ------------
-* When using OSX's built-in version of Python, `setup.py` may attempt to build
-* Power PC versions of the Python extensions. If you upgraded to Xcode 4, then
-* support for Power PC has been removed. In that case, the build process may
-* complain about the Power PC architecture. Simply use the following instead:
-
-ARCHFLAGS='-arch i386 -arch x86_64' python setup.py install
