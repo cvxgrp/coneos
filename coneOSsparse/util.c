@@ -30,13 +30,11 @@ void printConeData(Cone * k){
 	for ( i=0;i<k->qsize;i++){
 		coneOS_printf("%i\n",k->q[i]);
 	}
-	/*
 	coneOS_printf("num SDCs = %i\n",k->ssize);
 	coneOS_printf("sdc array:\n");
 	for ( i=0;i<k->ssize;i++){
 		coneOS_printf("%i\n",k->s[i]);
 	}
-	*/
 }
 
 void printData(Data * d){

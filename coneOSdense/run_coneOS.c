@@ -11,12 +11,12 @@ int main(int argc, char **argv)
 {
 	FILE * fp;
 	if(open_file(argc, argv, 1, DEMO_PATH, &fp)==-1) return -1;
-	Cone * k = malloc(sizeof(Cone));
-	Data * d = malloc(sizeof(Data));
+	Cone * k = coneOS_malloc(sizeof(Cone));
+	Data * d = coneOS_malloc(sizeof(Data));
 	read_in_data(fp,d,k);
 	fclose(fp);
-	Sol * sol = malloc(sizeof(Sol));
-	Info * info = malloc(sizeof(Info));
+	Sol * sol = coneOS_malloc(sizeof(Sol));
+	Info * info = coneOS_malloc(sizeof(Info));
 	int i;
 	for (i=0;i<NUM_TRIALS;i++)
 	{
@@ -30,29 +30,31 @@ int main(int argc, char **argv)
 
 void read_in_data(FILE * fp,Data * d, Cone * k){
 	/* MATRIX IN DATA FILE MUST BE DENSE COLUMN MAJOR FORMAT */
-	fscanf(fp, "%i", &(d->n));
+	d->RHO_X = 1e-3;
+
+  fscanf(fp, "%i", &(d->n));
 	fscanf(fp, "%i", &(d->m));
 	fscanf(fp, "%i", &(k->f));
 	fscanf(fp, "%i", &(k->l));
 	fscanf(fp, "%i", &(k->qsize)); 
 	fscanf(fp, "%i", &(k->ssize)); 
 
-	k->q = malloc(sizeof(int)*k->qsize);
+	k->q = coneOS_malloc(sizeof(int)*k->qsize);
 	for(int i = 0; i < k->qsize; i++)
 	{ 
 		fscanf(fp, "%i", &k->q[i]);
 	}
-	k->s = malloc(sizeof(int)*k->ssize);
+	k->s = coneOS_malloc(sizeof(int)*k->ssize);
 	for(int i = 0; i < k->ssize; i++)
 	{ 
 		fscanf(fp, "%i", &k->s[i]);
 	}
-	d->b = malloc(sizeof(double)*d->m);
+	d->b = coneOS_malloc(sizeof(double)*d->m);
 	for(int i = 0; i < d->m; i++)
 	{ 
 		fscanf(fp, "%lf", &d->b[i]);
 	}
-	d->c = malloc(sizeof(double)*d->n);
+	d->c = coneOS_malloc(sizeof(double)*d->n);
 	for(int i = 0; i < d->n; i++)
 	{ 
 		fscanf(fp, "%lf", &d->c[i]);
@@ -68,7 +70,7 @@ void read_in_data(FILE * fp,Data * d, Cone * k){
 	fscanf(fp, "%i", &(d->NORMALIZE));
 	
 	d->Anz = d->n*d->m;
-	d->Ax = malloc(sizeof(double)*d->Anz);
+	d->Ax = coneOS_malloc(sizeof(double)*d->Anz);
 	for(int i = 0; i < d->Anz; i++)
 	{
 		fscanf(fp, "%lf", &d->Ax[i]);
@@ -77,17 +79,17 @@ void read_in_data(FILE * fp,Data * d, Cone * k){
 	d->Ap = NULL;
 
 	//		fscanf(fp, "%zu", &NNZ);
-	//		int *Kr = malloc(sizeof(int)*NNZ);
+	//		int *Kr = coneOS_malloc(sizeof(int)*NNZ);
 	//		for(int i = 0; i < NNZ; i++)
 	//		{
 	//		fscanf(fp, "%i", &Kr[i]);
 	//		}
-	//		int *Kp=malloc(sizeof(int)*(w->l+1));
+	//		int *Kp=coneOS_malloc(sizeof(int)*(w->l+1));
 	//		for(int i = 0; i < w->l+1; i++)
 	//		{
 	//		fscanf(fp, "%i", &Kp[i]);
 	//		}
-	//		double *Kx=malloc(sizeof(double)*NNZ);
+	//		double *Kx=coneOS_malloc(sizeof(double)*NNZ);
 	//		for(int i = 0; i < NNZ; i++)
 	//		{
 	//		fscanf(fp, "%lf", &Kx[i]);
@@ -137,7 +139,8 @@ void freeSol(Sol *sol){
 	if(sol) {
 		if(sol->x) coneOS_free(sol->x);
 		if(sol->y) coneOS_free(sol->y);
-		//if(sol->status) coneOS_free(sol->status);
+		if(sol->s) coneOS_free(sol->s);
+    //if(sol->status) coneOS_free(sol->status);
 		coneOS_free(sol);
 	}
 	sol = NULL;

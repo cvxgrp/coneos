@@ -50,7 +50,7 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
 	if(d == NULL || k == NULL) {
 		return -2;
 	}
-	tic();
+  tic();
 	int i;
 	struct residuals r = {-1, -1, -1};
     Work * w = initWork(d,k);
@@ -148,12 +148,12 @@ static inline Work * initWork(Data *d, Cone * k) {
 	w->u[w->l-1] = 1.0;
 	w->v = coneOS_calloc(w->l,sizeof(double));
 	//w->v[w->l-1] = 0.0;
-	w->u_t = coneOS_malloc(w->l*sizeof(double));
-	w->u_prev = coneOS_malloc(w->l*sizeof(double));
-	w->h = coneOS_malloc((w->l-1)*sizeof(double));
+	w->u_t = coneOS_calloc(w->l,sizeof(double));
+	w->u_prev = coneOS_calloc(w->l,sizeof(double));
+	w->h = coneOS_calloc((w->l-1),sizeof(double));
 	memcpy(w->h,d->c,d->n*sizeof(double));
 	memcpy(&(w->h[d->n]),d->b,d->m*sizeof(double));
-	w->g = coneOS_malloc((w->l-1)*sizeof(double));
+	w->g = coneOS_calloc((w->l-1),sizeof(double));
 	memcpy(w->g,w->h,(w->l-1)*sizeof(double));
 
 	if (k->s){
@@ -162,9 +162,9 @@ static inline Work * initWork(Data *d, Cone * k) {
 		for (i=0; i < k->ssize; ++i){
 			if (k->s[i] > nMax) nMax = k->s[i];
 		}
-		w->Xs = coneOS_malloc(nMax*nMax*sizeof(double));
-		w->Z = coneOS_malloc(nMax*nMax*sizeof(double));
-		w->e = coneOS_malloc(nMax*sizeof(double));
+		w->Xs = coneOS_calloc(nMax*nMax,sizeof(double));
+		w->Z = coneOS_calloc(nMax*nMax,sizeof(double));
+		w->e = coneOS_calloc(nMax,sizeof(double));
 	} else {
 		w->Xs = NULL;
 		w->Z = NULL;

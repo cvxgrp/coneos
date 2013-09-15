@@ -11,12 +11,12 @@ int main(int argc, char **argv)
 {
 	FILE * fp;
 	if(open_file(argc, argv, 1, DEMO_PATH, &fp)==-1) return -1;
-	Cone * k = malloc(sizeof(Cone));
-	Data * d = malloc(sizeof(Data));
+	Cone * k = coneOS_malloc(sizeof(Cone));
+	Data * d = coneOS_malloc(sizeof(Data));
 	read_in_data(fp,d,k);
 	fclose(fp);
-	Sol * sol = malloc(sizeof(Sol));
-	Info * info = malloc(sizeof(Info));
+	Sol * sol = coneOS_malloc(sizeof(Sol));
+	Info * info = coneOS_malloc(sizeof(Info));
 	int i;
 	for (i=0;i<NUM_TRIALS;i++)
 	{
@@ -30,7 +30,9 @@ int main(int argc, char **argv)
 
 void read_in_data(FILE * fp,Data * d, Cone * k){
 	/* MATRIX IN DATA FILE MUST BE IN COLUMN COMPRESSED FORMAT */
-	fscanf(fp, "%i", &(d->n));
+	d->RHO_X = 1e-3;
+
+  fscanf(fp, "%i", &(d->n));
 	fscanf(fp, "%i", &(d->m));
 	fscanf(fp, "%i", &(k->f));
 	fscanf(fp, "%i", &(k->l));
@@ -126,7 +128,8 @@ void freeSol(Sol *sol){
 	if(sol) {
 		if(sol->x) coneOS_free(sol->x);
 		if(sol->y) coneOS_free(sol->y);
-		coneOS_free(sol);
+		if(sol->s) coneOS_free(sol->s);
+    coneOS_free(sol);
 	}
 	sol = NULL;
 }
