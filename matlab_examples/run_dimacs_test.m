@@ -1,12 +1,13 @@
 close all; clear all
+cd 'DIMACS'
 
-run ../coneOSsparse/matlab/install_coneos_cvx.m
-copyfile('../coneOSsparse/matlab/coneos_direct.m*','.');
+run ../../coneOSsparse/matlab/install_coneos_cvx.m
+copyfile('../../coneOSsparse/matlab/coneos_direct.m*','.');
 
 cvx_on = false;
 coneos_on = true;
 save_data = true;
-tests = dir('DIMACS/*.mat');
+tests = dir('*.mat');
 params = struct('VERBOSE', 1);
 for i=1:length(tests)
     szes(i) = tests(i).bytes;
@@ -130,6 +131,8 @@ for ii = 1:N
         end
     end
     
-    if save_data; save data/dimacs_run_data; end
+    if save_data; save ../data/dimacs_run_data; end
     
 end
+delete 'coneos_direct.m*'
+cd ..

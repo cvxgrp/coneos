@@ -15,7 +15,7 @@
 COMPILE_WITH_OPENMP = false;
 
 
-common_coneOS = '../cones.c ../cs.c ../util.c ../coneOS.c coneOS_mex.c';
+common_coneOS = '../linAlg.c ../cones.c ../cs.c ../util.c ../coneOS.c coneOS_mex.c';
 if (~isempty (strfind (computer, '64')))
     d = '-fPIC';
     arr = '-largeArrayDims';
