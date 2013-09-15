@@ -2,15 +2,16 @@
 # change blas library in coneOS.mk
 include coneOS.mk
 
-OBJECTS = coneOS.o util.o cones.o
+OBJECTS = coneOS.o util.o cones.o linAlg.o
 TARGETS = bin/demo_direct bin/demo_indirect
 
 .PHONY: default 
 default: lib/libconeOSdensedir.a bin/demo_direct lib/libconeOSdenseindir.a bin/demo_indirect
 
-coneOS.o 	: coneOS.c coneOS.h normalize.h
-util.o		: util.c util.h
-cones.o		: cones.c cones.h
+coneOS   	: coneOS.c coneOS.h normalize.h
+util		: util.c util.h
+cones		: cones.c cones.h
+linAlg      : linAlg.c linAlg.h
 
 direct/private.o	: direct/private.c
 indirect/private.o	: indirect/private.c 	

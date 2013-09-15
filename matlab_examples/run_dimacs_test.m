@@ -2,27 +2,32 @@ close all; clear all
 
 run ../coneOSsparse/matlab/install_coneos_cvx.m
 copyfile('../coneOSsparse/matlab/coneos_direct.m*','.');
-copyfile('coneos_matlab/coneos_matlab.m','.');
 
 cvx_on = false;
 coneos_on = true;
 save_data = true;
 tests = dir('DIMACS/*.mat');
 params = struct('VERBOSE', 1);
+for i=1:length(tests)
+    szes(i) = tests(i).bytes;
+end
+[szes, solve_order] = sort(szes);
 
 time_pat_coneos = 'Time taken: (?<total>[\d\.]+)';
 time_pat_cvx = 'Total CPU time \(secs\)\s*=\s*(?<total>[\d\.]+)';
 iter_pat_coneos = {'(?<iter>[\d]+)\|'};
 
 %%
-
-for i = 1:length(tests),
+N = length(tests);
+for ii = 1:N
+    i = solve_order(ii); %% solve in increasing order of size
     
     clear A At b c K
     test_name = tests(i).name;
     f = ['DIMACS/' test_name];
     test_name = test_name(1:end-4); % strip .mat
-    disp(['solving ' f]);
+    fprintf('running test %i out of %i : %s\n', ii, N, test_name);
+
     load(f)
     
     [m1,n1] = size(b);

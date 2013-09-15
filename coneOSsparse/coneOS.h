@@ -73,8 +73,8 @@ typedef struct WORK {
 #include <sys/time.h>
 #include <math.h>
 #include "cones.h"
-#include "util.h"
 #include "linAlg.h"
+#include "util.h"
 
 // these are actually library "api"'s
 int coneOS(Data * d, Cone * k, Sol * sol, Info * info);
