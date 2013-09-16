@@ -17,17 +17,22 @@ void normalize(Data * d, Work * w, Cone * k){
 		}
 	}
 	for (i=0; i < d->m; ++i){
-		D[i] = fmax(sqrt(D[i]),1e-6); // just the norms
+		D[i] = sqrt(D[i]); // just the norms
 	}
     // mean of norms of rows across each cone 
     count = k->l+k->f;
 	for(i = 0; i < k->qsize; ++i)
     {
 		wrk = 0;
-		for (j = count; j < count + k->q[i]; ++j){
+	    /*
+        for (j = count; j < count + k->q[i]; ++j){
+        	wrk = fmax(wrk,D[j]);
+		}
+        */
+        for (j = count; j < count + k->q[i]; ++j){
         	wrk += D[j];
 		}
-		wrk /= k->q[i];
+        wrk /= k->q[i];
         for (j = count; j < count + k->q[i]; ++j){
         	D[j] = wrk;
 		}
@@ -36,15 +41,23 @@ void normalize(Data * d, Work * w, Cone * k){
     for (i=0; i < k->ssize; ++i)
 	{
  		wrk = 0;
+        /*
+        for (j = count; j < count + (k->s[i])*(k->s[i]); ++j){
+        	wrk = fmax(wrk,D[j]);
+		}
+        */
 		for (j = count; j < count + (k->s[i])*(k->s[i]); ++j){
         	wrk += D[j]*D[j];
 		}
         wrk = sqrt(wrk);
-        wrk /= (k->s[i]);
-       	for (j = count; j < count + (k->s[i])*(k->s[i]); ++j){
+        wrk /= k->s[i];
+        for (j = count; j < count + (k->s[i])*(k->s[i]); ++j){
         	D[j] = wrk;
 		}
 		count += (k->s[i])*(k->s[i]);
+    }
+    for (i=0; i<d->m; ++i){
+        if (D[i] < 1e-1) D[i] = 1;
     }
 	// scale the rows with D
 	for(i = 0; i < d->n; ++i){
@@ -54,7 +67,8 @@ void normalize(Data * d, Work * w, Cone * k){
 	}
 	// calculate and scale by col norms, E
 	for (i = 0; i < d->n; ++i){
-		E[i] = fmax(calcNorm(&(d->Ax[d->Ap[i]]),d->Ap[i+1] - d->Ap[i]),1e-6);
+		E[i] = calcNorm(&(d->Ax[d->Ap[i]]),d->Ap[i+1] - d->Ap[i]);
+        if (E[i] < 1e-1) E[i] = 1;
 		scaleArray(&(d->Ax[d->Ap[i]]), 1.0/E[i], d->Ap[i+1] - d->Ap[i]);
 	}
 	// scale b

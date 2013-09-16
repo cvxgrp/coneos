@@ -8,7 +8,7 @@ cvx_on = false;
 coneos_on = true;
 save_data = true;
 tests = dir('*.mat');
-params = struct('VERBOSE', 1, 'EPS_ABS', 1e-4, 'MAX_ITERS', 5000);
+params = struct('VERBOSE', 1, 'EPS_ABS', 1e-5, 'MAX_ITERS', 10000);
 for i=1:length(tests)
     szes(i) = tests(i).bytes;
 end

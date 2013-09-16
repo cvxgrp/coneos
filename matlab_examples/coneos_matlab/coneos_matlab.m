@@ -116,7 +116,7 @@ if (NORMALIZE)
     data.c = data.c./E;
     sc_c = nmrowA/max(norm(data.c),1e-4);
     data.c = data.c*sc_c;
-
+    
     rr = 4;
     data.A=rr*data.A;
     data.c=rr*data.c;
@@ -128,6 +128,71 @@ if (NORMALIZE)
     norm(data.b)
     norm(data.c)
     %}
+    
+    %{
+    disp('NEW NORMALIZATION SCHEME')
+    A_t = data.A(1:K.f+K.l,:);
+    b_t = data.b(1:K.l+K.f);
+    idx = K.f+K.l;
+    for i=1:length(K.q)
+        A_t = [A_t;norms(data.A(idx+1:idx+K.q(i),:),inf)];
+        b_t = [b_t;norm(data.b(idx+1:idx+K.q(i)),inf)];
+        idx = idx + K.q(i);
+    end
+    for i=1:length(K.s)
+        A_t = [A_t;norms(data.A(idx+1:idx+K.s(i)^2,:),inf)];
+        b_t = [b_t;norm(data.b(idx+1:idx+K.s(i)^2),inf)];
+        idx = idx + K.s(i)^2;
+    end
+    
+    H = abs([A_t b_t; data.c' 0]);
+    m_t = size(H,1);
+    D_t = ones(m_t,1);
+    E = ones(n+1,1);
+    
+    NN = 5;
+    for j=1:NN
+        D_t = sqrt(D_t./(norms((H*diag(E))',inf)'));
+        E = sqrt(E./(norms((diag(D_t)*H),inf)'));
+    end
+
+    D = zeros(m,1);
+    idx = K.f+K.l; cc = idx;
+    D(1:idx) = D_t(1:idx);
+    for i=1:length(K.q)
+        D(idx+1:idx + K.q(i)) = D_t(cc+1)*ones(K.q(i),1);
+        idx = idx + K.q(i);
+        cc = cc+1;
+    end
+    for i=1:length(K.s)
+        D(idx+1:idx + K.s(i)^2) = D_t(cc+1)*ones(K.s(i)^2,1);
+        idx = idx + K.s(i)^2;
+        cc = cc+1;
+    end
+    
+    data.A = diag(D)*data.A*diag(E(1:n));
+    
+    data.b = data.b./D;
+    sc_b = 1/max(norm(data.b),1e-4);
+    data.b = full(data.b*sc_b);
+    
+    data.c = data.c./E;
+    sc_c = nmrowA/max(norm(data.c),1e-4);
+    data.c = data.c*sc_c;
+    
+    rr = 4;
+    data.A=rr*data.A;
+    data.c=rr*data.c;
+    data.b=rr*data.b;
+    %}
+    %{
+    norm(D)
+    norm(E)
+    norm(norms(data.A))
+    norm(data.b)
+    norm(data.c)
+    %}
+    
 end
 
 %%

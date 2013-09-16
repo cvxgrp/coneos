@@ -11,35 +11,48 @@ void normalize(Data * d, Work * w, Cone * k){
 
     // calculate row norms
     for(i = 0; i < d->m; ++i){
-        wrk = cblas_dnrm2(d->n,&(d->Ax[i]),d->m);
-        D[i] = fmax(wrk,1e-6);
+        D[i] = cblas_dnrm2(d->n,&(d->Ax[i]),d->m);
     }
     // mean of norms of rows across each cone	
     count = k->l+k->f;
     for(i = 0; i < k->qsize; ++i)
     {
-		wrk = 0;
-		for (j = count; j < count + k->q[i]; ++j){
-        	wrk += D[j];
-		}
-		wrk /= k->q[i];
+        wrk = 0;
+        /*
         for (j = count; j < count + k->q[i]; ++j){
-        	D[j] = wrk;
-		}
-		count += k->q[i];
+            wrk = fmax(wrk, D[j]);
+        }   
+        */
+        wrk = 0;
+        for (j = count; j < count + k->q[i]; ++j){
+            wrk += D[j];
+        }
+        wrk /= k->q[i];
+        for (j = count; j < count + k->q[i]; ++j){
+            D[j] = wrk;
+        }
+        count += k->q[i];
     }
     for (i=0; i < k->ssize; ++i)
-	{
- 		wrk = 0;
-		for (j = count; j < count + (k->s[i])*(k->s[i]); ++j){
-        	wrk += D[j]*D[j];
-		}
-		wrk = sqrt(wrk);
-		wrk /= (k->s[i]);
+    {
+        wrk = 0;
+        /*
         for (j = count; j < count + (k->s[i])*(k->s[i]); ++j){
-        	D[j] = wrk;
-		}
-		count += (k->s[i])*(k->s[i]);
+            wrk = fmax(wrk, D[j]);
+        }
+        */
+        for (j = count; j < count + (k->s[i])*(k->s[i]); ++j){
+            wrk += D[j]*D[j];
+        }
+        wrk = sqrt(wrk);
+        wrk /= (k->s[i]);
+        for (j = count; j < count + (k->s[i])*(k->s[i]); ++j){
+            D[j] = wrk;
+        }
+        count += (k->s[i])*(k->s[i]);
+    }
+    for (i=0; i<d->m; ++i){
+        if (D[i] < 1e-1) D[i] = 1;
     }
 	// scale the rows with D
 	for(i = 0; i < d->m; ++i){
@@ -47,7 +60,8 @@ void normalize(Data * d, Work * w, Cone * k){
 	}
 	// calculate and scale by col norms, E
 	for (i = 0; i < d->n; ++i){
-		E[i] = fmax(cblas_dnrm2(d->m,&(d->Ax[i*d->m]),1),1e-6);
+		E[i] = cblas_dnrm2(d->m,&(d->Ax[i*d->m]),1);
+        if (E[i] < 1e-3) E[i] = 1;
 		cblas_dscal(d->m,1.0/E[i],&(d->Ax[i*d->m]),1);	
 	}
 	// scale b
