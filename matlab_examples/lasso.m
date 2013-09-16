@@ -19,7 +19,7 @@ time_pat_coneos = 'Time taken: (?<total>[\d\.]+)';
 time_pat_cvx = 'Total CPU time \(secs\)\s*=\s*(?<total>[\d\.]+)';
 iter_pat_coneos = {'(?<iter>[\d]+)\|'};
 
-for i = 1:length(ns)
+for i = 1:1%length(ns)
     seedstr = sprintf('coneos_lasso_ex_%i',i);
     randn('seed',sum(seedstr));rand('seed',sum(seedstr))
 

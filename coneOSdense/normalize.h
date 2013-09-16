@@ -1,7 +1,7 @@
 void normalize(Data * d, Work * w, Cone * k){
     
-	double * D = coneOS_malloc(d->m*sizeof(double));
-	double * E = coneOS_malloc(d->n*sizeof(double));
+	double * D = coneOS_calloc(d->m, sizeof(double));
+	double * E = coneOS_calloc(d->n, sizeof(double));
 	
 	int i, j, count;
 	double wrk;
@@ -9,21 +9,21 @@ void normalize(Data * d, Work * w, Cone * k){
 	// heuristic rescaling, seems to do well with a scaling of about 4
 	w->scale = 4.0;
 
-	// calculate row norms
-	for(i = 0; i < d->m; ++i){
-		D[i] = fmax(cblas_dnrm2(d->n,&(d->Ax[i]),d->m),1e-6);
-	}
-	
-	// mean of norms of rows across each cone	
+    // calculate row norms
+    for(i = 0; i < d->m; ++i){
+        wrk = cblas_dnrm2(d->n,&(d->Ax[i]),d->m);
+        D[i] = fmax(wrk,1e-6);
+    }
+    // mean of norms of rows across each cone	
     count = k->l+k->f;
-	for(i = 0; i < k->qsize; ++i)
+    for(i = 0; i < k->qsize; ++i)
     {
 		wrk = 0;
 		for (j = count; j < count + k->q[i]; ++j){
         	wrk += D[j];
 		}
 		wrk /= k->q[i];
-		for (j = count; j < count + k->q[i]; ++j){
+        for (j = count; j < count + k->q[i]; ++j){
         	D[j] = wrk;
 		}
 		count += k->q[i];
@@ -32,10 +32,11 @@ void normalize(Data * d, Work * w, Cone * k){
 	{
  		wrk = 0;
 		for (j = count; j < count + (k->s[i])*(k->s[i]); ++j){
-        	wrk += D[j];
+        	wrk += D[j]*D[j];
 		}
-		wrk /= (k->s[i])*(k->s[i]);
-		for (j = count; j < count + (k->s[i])*(k->s[i]); ++j){
+		wrk = sqrt(wrk);
+		wrk /= (k->s[i]);
+        for (j = count; j < count + (k->s[i])*(k->s[i]); ++j){
         	D[j] = wrk;
 		}
 		count += (k->s[i])*(k->s[i]);
