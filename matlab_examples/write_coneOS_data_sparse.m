@@ -1,4 +1,27 @@
-function write_coneOS_data_sparse(data,cone,params)
+function write_coneOS_data_sparse(data,cone,params,name)
+
+MAX_ITERS = 2000; % maximum num iterations for admm
+EPS_ABS   = 5e-4; % quitting tolerances
+UNDET_TOL = 1e-9; % tol for undetermined solution (tau = kappa = 0)
+alpha=1.8;        % relaxation parameter (alpha = 1 is unrelaxed)
+NORMALIZE = 1;
+
+% conjugate gradient (CG) settings:
+USE_INDIRECT = false; % use conjugate gradient rather than direct method
+CG_MAX_ITS = 30; % max iterations for CG
+CG_TOL = 1e-9; % max CG quitting tolerance
+CG_VERBOSE = false; % CG prints summary
+%%
+if ~isfield(params,'MAX_ITERS');params.MAX_ITERS = MAX_ITERS;end
+if ~isfield(params,'EPS_ABS');params.EPS_ABS = EPS_ABS;end
+if ~isfield(params,'UNDET_TOL');params.UNDET_TOL = UNDET_TOL;end
+if ~isfield(params,'ALPHA');params.ALPHA = alpha;end
+if ~isfield(params,'NORMALIZE');params.NORMALIZE = NORMALIZE;end
+% CG:
+if ~isfield(params,'USE_INDIRECT');params.USE_INDIRECT = USE_INDIRECT;end
+if ~isfield(params,'CG_MAX_ITS');params.CG_MAX_ITS = CG_MAX_ITS;end
+if ~isfield(params,'CG_TOL');params.CG_TOL = CG_TOL;end
+if ~isfield(params,'CG_VERBOSE');params.CG_VERBOSE = CG_VERBOSE;end
 
 n = length(data.c);
 m = size(data.A,1);
@@ -8,8 +31,8 @@ m = size(data.A,1);
 %    -data.c' -data.b' 0]);
 %W=sparse([speye(n+m+1) Q';Q -speye(n+m+1)]);
 
-delete data_sparse;
-fi = fopen('data_sparse','w');
+delete(name);
+fi = fopen(name,'w');
 fprintf(fi,'%u ',n);fprintf(fi,'%u ',m);
 fprintf(fi,'\n');
 fprintf(fi,'%u ',cone.f);fprintf(fi,'%u ',cone.l);fprintf(fi,'%u ',length(cone.q));fprintf(fi,'%u ',length(cone.s));
