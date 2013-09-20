@@ -9,9 +9,10 @@ static const char* HEADER[] = {
 	"nm(u - u_t)",
 	"nm(u - u_p)",
 	"  kap/tau  ",
+	"  time (s) ",
 };
 
-static const int HEADER_LEN = 4;
+static const int HEADER_LEN = 5;
 
 // to hold residual information
 struct residuals {
@@ -342,10 +343,11 @@ static inline void setx(Data * d,Work * w, Sol * sol){
 }
 
 static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
-	coneOS_printf("%*i|", (int)strlen(HEADER[0]), i);
+    coneOS_printf("%*i|", (int)strlen(HEADER[0]), i);
 	coneOS_printf("%*.2e ", (int)strlen(HEADER[1])-1, r->resPri/(r->tau+r->kap));
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[2])-1, r->resDual/(r->tau+r->kap));
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[3])-1, r->kap/r->tau);
+	coneOS_printf(" %*.2e ", (int)strlen(HEADER[4])-1, tocq()/1e3);
 	coneOS_printf("\n");
 #ifdef MATLAB_MEX_FILE
 	mexEvalString("drawnow;");
@@ -397,7 +399,7 @@ static inline void printFooter(Data * d, Info * info) {
 	//coneOS_printf("Primal objective value: %4f\n",info->pobj);
 	//coneOS_printf("Dual objective value: %4f\n",info->dobj);
 	//coneOS_printf("Duality gap: %e\n", info->gap);
-	coneOS_printf("Time taken: %4f seconds\n",info->time/1e3);
+	coneOS_printf("Time taken: %.4f seconds\n",info->time/1e3);
 
 	for(i = 0; i < _lineLen_; ++i) {
 		coneOS_printf("-");
@@ -411,7 +413,7 @@ static inline void printFooter(Data * d, Info * info) {
 		coneOS_printf("-");
 	}
     coneOS_printf("\n");
-    coneOS_printf("c'x = %4f, -b'y = %4f\n",info->pobj, info->dobj); 
+    coneOS_printf("c'x = %.4f, -b'y = %.4f\n",info->pobj, info->dobj); 
     for(i = 0; i < _lineLen_; ++i) {
 		coneOS_printf("=");
 	}

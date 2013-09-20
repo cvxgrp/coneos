@@ -73,7 +73,8 @@ void projectsdc(double *X, int n, Work * w)
   double EIG_TOL = 1e-8;
   double vupper = calcNorm(Xs,n*n);
   LAPACKE_dsyevr( LAPACK_COL_MAJOR, 'V', 'V', 'U', n, Xs, n, 0.0, vupper, -1, -1, EIG_TOL, &m, e, Z, n , NULL);
-
+  //printf("m is %i, n is %i\n", m ,n);
+  //printf("vupper is %f, max eig is %f\n",vupper, e[m>0 ? m-1:0]/2);
   memset(X, 0, n*n*sizeof(double));
   for (i = 0; i < m; ++i) {
     cblas_dsyr(CblasColMajor, CblasLower, n, e[i]/2, &(Z[i*n]), 1, X, n);

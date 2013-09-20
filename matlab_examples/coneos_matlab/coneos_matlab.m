@@ -100,21 +100,21 @@ if (NORMALIZE)
             Dt = [Dt;nmA*ones(K.s(i)^2,1)];
             idx = idx + K.s(i)^2;
         end
-        D = max(D.*Dt,1e-6);
+        D = max(D.*Dt,1e-1);
         data.A = sparse(diag(1./Dt))*data.A;
         % E Scale
-        Et = max(norms(data.A),1e-6)';
+        Et = max(norms(data.A),1e-1)';
         E = E.*Et;
         data.A = data.A*sparse(diag(1./Et));
     end
     nmrowA = mean(norms(data.A'));
     
     data.b = data.b./D;
-    sc_b = 1/max(norm(data.b),1e-4);
+    sc_b = 1/max(norm(data.b),1e-1);
     data.b = full(data.b*sc_b);
     
     data.c = data.c./E;
-    sc_c = nmrowA/max(norm(data.c),1e-4);
+    sc_c = nmrowA/max(norm(data.c),1e-1);
     data.c = data.c*sc_c;
     
     rr = 4;
