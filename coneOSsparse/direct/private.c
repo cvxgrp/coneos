@@ -42,7 +42,11 @@ cs * formKKT(Data * d, Work * w){
 	const int Anz = d->Ap[d->n];
 	const int Knzmax = d->n + d->m + Anz;
 	cs * K = cs_spalloc(d->m + d->n, d->m + d->n, Knzmax, 1, 1);
-	kk = 0;
+	if (!K)
+    {
+        return NULL;
+    }
+    kk = 0;
 	for (k = 0; k < d->n; k++){
 		K->i[kk] = k;
 		K->p[kk] = k;
@@ -76,7 +80,10 @@ cs * formKKT(Data * d, Work * w){
 int factorize(Data * d,Work * w){
 	//tic();
 	cs * K = formKKT(d,w);
-	//if(d->VERBOSE) coneOS_printf("KKT matrix factorization info:\n");
+	if (!K){
+        return -7; //arbitrary int
+    }
+    //if(d->VERBOSE) coneOS_printf("KKT matrix factorization info:\n");
 	double *info;
 	int amd_status = LDLInit(K, w->p->P, &info);
 	if (amd_status < 0) return(amd_status);
