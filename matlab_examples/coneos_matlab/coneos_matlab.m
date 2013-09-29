@@ -288,10 +288,11 @@ end
 fprintf('Iteration %i, primal residual %4e, dual residual %4e, kap/tau %4e\n',i-1,err_pri/(tau+kap),err_dual/(tau+kap),kap/tau);
 
 %%
-tau = 0.5*(u(l)+ut(l));
+tau = u(l);
 kap = v(end);
 x_h = u(1:n);
-z_h = 0.5*(u(n+1:n+m) + ut(n+1:n+m));
+z_h = u(n+1:n+m);
+%z_h = 0.5*(u(n+1:n+m) + ut(n+1:n+m));
 %s_h = v(n+1:n+m);
 % tau, kap checking not exactly consistent w/ Lieven notes
 % since we allow small numerical errors in solution

@@ -1,3 +1,6 @@
+#ifndef NORMAL_H_GUARD
+#define NORMAL_H_GUARD
+
 void normalize(Data * d, Work * w, Cone * k){
     
 	double * D = coneOS_calloc(d->m, sizeof(double));
@@ -68,7 +71,7 @@ void normalize(Data * d, Work * w, Cone * k){
 	for (i = 0; i < d->m; ++i){
 		d->b[i] /= D[i];
 	}
-	w->sc_b = 1/fmax(calcNorm(d->b,d->m),1e-6);
+	w->sc_b = 1/fmax(calcNorm(d->b,d->m),1e-1);
 	scaleArray(d->b, w->sc_b, d->m);
 	// scale c
 	for (i = 0; i < d->n; ++i){
@@ -79,7 +82,7 @@ void normalize(Data * d, Work * w, Cone * k){
 	for(i = 0; i < d->m; ++i){
 		meanNormRowA += cblas_dnrm2(d->n,&(d->Ax[i]),d->m)/d->m;
 	}
-	w->sc_c = meanNormRowA/fmax(calcNorm(d->c,d->n),1e-6);
+	w->sc_c = meanNormRowA/fmax(calcNorm(d->c,d->n),1e-1);
 	scaleArray(d->c, w->sc_c, d->n);
 
 	w->D = D;
@@ -126,3 +129,5 @@ void unNormalize(Data *d, Work * w, Sol * sol){
 	}
 	scaleArray(d->Ax,1.0/w->scale,d->Anz);
 }
+
+#endif
