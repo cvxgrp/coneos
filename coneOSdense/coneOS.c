@@ -406,10 +406,10 @@ static inline void printFooter(Data * d, Info * info) {
 		coneOS_printf("-");
 	}
     coneOS_printf("\n");
-    coneOS_printf("DIMACs error measures:\n");
+    coneOS_printf("DIMACS error metrics:\n");
     coneOS_printf("|Ax+s-b|_2/(1+|b|_inf) = %2e\n|A'y+c|_2/(1+|c|_inf) = %2e\n",info->presid/(1+b_inf), info->dresid/(1+c_inf));
-    coneOS_printf("(c'x+b'y)/(1+|c'x|+|b'y|) = %2e\n", info->gap/gap_rel); 
-    coneOS_printf("dist(s,K) = 0, dist(y,K*) = 0 \n");
+    coneOS_printf("|c'x+b'y|/(1+|c'x|+|b'y|) = %2e\n", fabs(info->gap/gap_rel)); 
+    coneOS_printf("dist(s,K) = 0, dist(y,K*) = 0, s'y = 0\n");
     for(i = 0; i < _lineLen_; ++i) {
 		coneOS_printf("-");
 	}
