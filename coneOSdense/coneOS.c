@@ -74,7 +74,7 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
 	if(d->VERBOSE) printSummary(d,w,i,&r);
 	int status = getSolution(d,w,sol,info);
 
-	if(d->NORMALIZE) unNormalize(d,w,sol);
+	if(d->NORMALIZE) unNormalize(d,w,sol,status);
 	
 	info->iter = i;
 	getInfo(d,w,sol,info,&r,status);

@@ -102,7 +102,7 @@ void normalize(Data * d, Work * w, Cone * k){
 	*/
 }
 
-void unNormalize(Data *d, Work * w, Sol * sol){
+void unNormalize(Data *d, Work * w, Sol * sol, int status){
 	int i;
 	double * D = w->D;
 	double * E = w->E;
@@ -128,6 +128,16 @@ void unNormalize(Data *d, Work * w, Sol * sol){
 		cblas_dscal(d->n,D[i],&(d->Ax[i]),d->m);
 	}
 	scaleArray(d->Ax,1.0/w->scale,d->Anz);
+
+    if (status == 1){ 
+        double ip_y = innerProd(d->b,sol->y,d->m);  
+        scaleArray(sol->y,-1/ip_y,d->m);
+    }   
+    else if (status == 2){ 
+        double ip_x = innerProd(d->c,sol->x,d->n);  
+        scaleArray(sol->x,-1/ip_x,d->n);
+        scaleArray(sol->s,-1/ip_x,d->m);
+    }   
 }
 
 #endif
