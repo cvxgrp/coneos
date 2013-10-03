@@ -155,7 +155,7 @@ static inline Work * initWork(Data *d, Cone * k) {
 
 	w->l = d->n+d->m+1;
 	w->u = coneOS_calloc(w->l,sizeof(double));
-	w->u[w->l-1] = 1.0;
+	w->u[w->l-1] = w->l;
 	w->v = coneOS_calloc(w->l,sizeof(double));
 	//w->v[w->l-1] = 0.0;
 	w->u_t = coneOS_calloc(w->l,sizeof(double));
