@@ -31,7 +31,7 @@ static inline int getSolution(Data * d, Work * w, Sol * sol, Info * info);
 static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct residuals * r, int status);
 static inline void printSummary(Data * d,Work * w,int i, struct residuals *r);
 static inline void printHeader(Data * d, Work * w, Cone * k);
-static inline void printFooter(Data * d, Info * info); 
+static inline void printFooter(Data * d, Info * info, int status); 
 static inline void printSol(Data * d, Sol * sol, Info * info);
 static inline void freeWork(Work * w);
 static inline void projectLinSys(Data * d,Work * w);
@@ -78,7 +78,7 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
 	
 	info->iter = i;
 	getInfo(d,w,sol,info,&r,status);
-	if(d->VERBOSE) printFooter(d, info);
+	if(d->VERBOSE) printFooter(d, info, status);
 	freeWork(w);
 	return status;
 }
@@ -97,36 +97,45 @@ static inline int converged(Data * d, Work * w, struct residuals * r){
 	return 0;
 }
 
-static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct residuals * r,int status){
+static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct residuals * r, int status){
 	info->time = tocq();
  	
 	double * dr = coneOS_calloc(d->n,sizeof(double));
 	double * pr = coneOS_calloc(d->m,sizeof(double));
 	double * x = sol->x, * y = sol->y, * s = sol->s;
 	
-	// slower primal resid calculation (mult by A)
-	accumByA(d,x,pr);
-	addScaledArray(pr,s,d->m,1.0);
-	addScaledArray(pr,d->b,d->m,-1.0);
-
-	info->presid = calcNorm(pr,d->m);
-
-	accumByAtrans(d,y,dr);
-	addScaledArray(dr,d->c,d->n,1.0);
-	info->dresid = calcNorm(dr,d->n);
+	accumByA(d,x,pr); // pr = Ax
+	addScaledArray(pr,s,d->m,1.0); // pr = Ax + s
 	
-	double cTx = innerProd(x,d->c,d->n);
+	accumByAtrans(d,y,dr); // dr = A'y
+	
+    double cTx = innerProd(x,d->c,d->n);
 	double bTy = innerProd(y,d->b,d->m);
-
-	info->pobj = cTx;
+    info->pobj = cTx;
 	info->dobj = -bTy;
-	coneOS_free(dr); coneOS_free(pr);
-    
-	if (status == 2)
-		info->pobj = NAN;
-	else if(status == 1)
-		info->dobj = NAN;
-	info->gap = info->pobj-info->dobj;
+
+    if (status == 2) // dual infeasible
+    {    
+        info->dobj = NAN;
+        info->gap = NAN;
+        info->presid = calcNorm(pr,d->m);
+        info->dresid = NAN;
+    }
+    else if (status == 1) // primal infeasible
+    {
+        info->pobj = NAN;
+        info->gap = NAN;
+        info->presid = NAN;
+        info->dresid = calcNorm(dr,d->n);
+    }
+    else {
+        addScaledArray(pr,d->b,d->m,-1.0); // pr = Ax + s - b
+        addScaledArray(dr,d->c,d->n,1.0); // dr = A'y + c
+        info->gap = info->pobj-info->dobj;
+        info->presid = calcNorm(pr,d->m);
+        info->dresid = calcNorm(dr,d->n);
+    }
+    coneOS_free(dr); coneOS_free(pr);
 }
 
 static inline Work * initWork(Data *d, Cone * k) {
@@ -304,16 +313,16 @@ static inline int getSolution(Data * d,Work * w,Sol * sol, Info * info){
 			double ip_x = innerProd(d->c,sol->x,d->n);  
 			if (ip_y < ip_x){
 				memcpy(info->status,"Infeasible", 12);
-				scaleArray(sol->y,-1/ip_y,d->m);
+				//scaleArray(sol->y,-1/ip_y,d->m);
 				scaleArray(sol->x,NAN,d->n);
 		        scaleArray(sol->s,NAN,d->m);
 				return 1;
 			}   
 			else{
 				memcpy(info->status,"Unbounded", 11);
-				scaleArray(sol->x,-1/ip_x,d->n);
+				//scaleArray(sol->x,-1/ip_x,d->n);
 				scaleArray(sol->y,NAN,d->m);
-                scaleArray(sol->s,0.0,d->m);
+                //scaleArray(sol->s,0.0,d->m);
 				return 2;
 			}
 		}
@@ -385,7 +394,7 @@ static inline void printHeader(Data * d, Work * w, Cone * k) {
 	coneOS_printf("\n");
 }
 
-static inline void printFooter(Data * d, Info * info) {
+static inline void printFooter(Data * d, Info * info, int status) {
     double b_inf = calcNormInf(d->b, d->m);
     double c_inf = calcNormInf(d->c, d->n);
     double gap_rel = 1 + fabs(info->pobj) + fabs(info->dobj);
@@ -405,17 +414,32 @@ static inline void printFooter(Data * d, Info * info) {
 		coneOS_printf("-");
 	}
     coneOS_printf("\n");
-    coneOS_printf("DIMACS error metrics:\n");
-    coneOS_printf("|Ax+s-b|_2/(1+|b|_inf) = %2e\n|A'y+c|_2/(1+|c|_inf) = %2e\n",info->presid/(1+b_inf), info->dresid/(1+c_inf));
-    coneOS_printf("|c'x+b'y|/(1+|c'x|+|b'y|) = %2e\n", fabs(info->gap/gap_rel)); 
-    coneOS_printf("dist(s,K) = 0, dist(y,K*) = 0, s'y = 0\n");
+
+    if (status == 1) {
+        coneOS_printf("Certificate of primal infeasibility:\n");
+        coneOS_printf("|A'y|_2/(1+|c|_inf) = %2e\n", info->dresid/(1+c_inf));
+        coneOS_printf("dist(y,K*) = 0\n");
+        coneOS_printf("b'y = %.4f\n", -info->dobj);
+    } 
+    else if (status == 2) {
+        coneOS_printf("Certificate of dual infeasibility:\n");
+        coneOS_printf("|Ax+s|_2/(1+|b|_inf) = %2e\n", info->presid/(1+b_inf));
+        coneOS_printf("dist(s,K) = 0\n");
+        coneOS_printf("c'x = %.4f\n", info->pobj);
+    }
+    else {
+        coneOS_printf("DIMACS error metrics:\n");
+        coneOS_printf("|Ax+s-b|_2/(1+|b|_inf) = %2e\n|A'y+c|_2/(1+|c|_inf) = %2e\n",info->presid/(1+b_inf), info->dresid/(1+c_inf));
+        coneOS_printf("|c'x+b'y|/(1+|c'x|+|b'y|) = %2e\n", fabs(info->gap/gap_rel)); 
+        coneOS_printf("dist(s,K) = 0, dist(y,K*) = 0, s'y = 0\n");
+        for(i = 0; i < _lineLen_; ++i) {
+            coneOS_printf("-");
+        }
+        coneOS_printf("\n");
+        coneOS_printf("c'x = %.4f, -b'y = %.4f\n",info->pobj, info->dobj);
+    }
     for(i = 0; i < _lineLen_; ++i) {
-		coneOS_printf("-");
-	}
+        coneOS_printf("=");
+    }
     coneOS_printf("\n");
-    coneOS_printf("c'x = %.4f, -b'y = %.4f\n",info->pobj, info->dobj); 
-    for(i = 0; i < _lineLen_; ++i) {
-		coneOS_printf("=");
-	}
-	coneOS_printf("\n");
 }
