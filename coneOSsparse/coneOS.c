@@ -37,6 +37,7 @@ static inline void freeWork(Work * w);
 static inline void projectLinSys(Data * d,Work * w);
 static inline Work * initWork(Data * d, Cone * k);
 static inline int converged(Data * d, Work * w, struct residuals * r);
+static inline void normalizeCertificate(Work * w, Data * d, Sol * sol, int status);
 
 /* coneOS returns the following integers:
    -2 failure
@@ -74,13 +75,29 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
 	if(d->VERBOSE) printSummary(d,w,i,&r);
 	int status = getSolution(d,w,sol,info);
 
-	if(d->NORMALIZE) unNormalize(d,w,sol,status);
-	
+	if(d->NORMALIZE) unNormalize(d,w,sol);
+    
+    if(status ==  1 || status == 2){
+        normalizeCertificate(w,d,sol,status);
+    }
+
 	info->iter = i;
 	getInfo(d,w,sol,info,&r,status);
 	if(d->VERBOSE) printFooter(d, info, status);
 	freeWork(w);
 	return status;
+}
+
+static inline void normalizeCertificate(Work * w, Data * d, Sol * sol, int status){ 
+    if (status == 1){
+        double ip_y = innerProd(d->b,sol->y,d->m);  
+        scaleArray(sol->y,-1/ip_y,d->m);
+    }   
+    else if (status == 2){
+        double ip_x = innerProd(d->c,sol->x,d->n);  
+        scaleArray(sol->x,-1/ip_x,d->n);
+        scaleArray(sol->s,-1/ip_x,d->m);
+    }
 }
 
 static inline int converged(Data * d, Work * w, struct residuals * r){
@@ -165,7 +182,14 @@ static inline Work * initWork(Data *d, Cone * k) {
 	memcpy(&(w->h[d->n]),d->b,d->m*sizeof(double));
 	w->g = coneOS_calloc((w->l-1),sizeof(double));
 	memcpy(w->g,w->h,(w->l-1)*sizeof(double));
-
+	/* initialize the private data: */
+	int status = privateInitWork(d, w);
+	if (status < 0){
+		coneOS_printf("privateInitWork failure: %i\n",status);
+		exit(-1);
+	} 
+    //else coneOS_printf("privateInitWork success: %i\n",status);
+	
 	if (k->s){
 		/* eigenvector decomp workspace */
 		int i, nMax = 0;
@@ -181,13 +205,7 @@ static inline Work * initWork(Data *d, Cone * k) {
 		w->e = NULL;
 	}
 
-	/* initialize the private data: */
-	int status = privateInitWork(d, w);
-	if (status < 0){
-		coneOS_printf("privateInitWork failure: %i\n",status);
-		exit(-1);
-	} //else coneOS_printf("privateInitWork success: %i\n",status);
-	d->CG_MAX_ITS = d->CG_MAX_ITS*100;
+    d->CG_MAX_ITS = d->CG_MAX_ITS*100;
 	d->CG_TOL = d->CG_TOL/100;
 	solveLinSys(d,w,w->g, NULL); 
 	d->CG_MAX_ITS = d->CG_MAX_ITS/100;
