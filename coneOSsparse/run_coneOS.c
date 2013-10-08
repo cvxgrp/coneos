@@ -6,6 +6,7 @@
 #endif 
 
 #define NUM_TRIALS 1 
+#define RHOX 1e-3
 
 int main(int argc, char **argv)
 {
@@ -13,7 +14,10 @@ int main(int argc, char **argv)
 	if(open_file(argc, argv, 1, DEMO_PATH, &fp)==-1) return -1;
 	Cone * k = coneOS_malloc(sizeof(Cone));
 	Data * d = coneOS_malloc(sizeof(Data));
-	read_in_data(fp,d,k);
+	if (read_in_data(fp,d,k) == -1){
+        printf("Error reading in data, aborting.\n");
+        return -1;
+    }
 	fclose(fp);
 	Sol * sol = coneOS_malloc(sizeof(Sol));
 	Info * info = coneOS_malloc(sizeof(Info));
@@ -28,66 +32,60 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-void read_in_data(FILE * fp,Data * d, Cone * k){
+int read_in_data(FILE * fp,Data * d, Cone * k){
 	/* MATRIX IN DATA FILE MUST BE IN COLUMN COMPRESSED FORMAT */
-	d->RHO_X = 1e-3;
-
-  fscanf(fp, "%i", &(d->n));
-	fscanf(fp, "%i", &(d->m));
-	fscanf(fp, "%i", &(k->f));
-	fscanf(fp, "%i", &(k->l));
-	fscanf(fp, "%i", &(k->qsize)); 
-	fscanf(fp, "%i", &(k->ssize));
+	d->RHO_X = RHOX;
+    if(fscanf(fp, "%i", &(d->n)) != 1) return -1;
+	if(fscanf(fp, "%i", &(d->m))!= 1) return -1;
+	if(fscanf(fp, "%i", &(k->f))!= 1) return -1;
+	if(fscanf(fp, "%i", &(k->l))!= 1) return -1;
+	if(fscanf(fp, "%i", &(k->qsize))!= 1) return -1;
+	if(fscanf(fp, "%i", &(k->ssize))!= 1) return -1;
+	if(fscanf(fp, "%i", &(d->MAX_ITERS))!= 1) return -1;
+	if(fscanf(fp, "%i", &(d->CG_MAX_ITS))!= 1) return -1;
+	if(fscanf(fp, "%i", &(d->VERBOSE))!= 1) return -1;
+	if(fscanf(fp, "%i", &(d->NORMALIZE))!= 1) return -1;
+	if(fscanf(fp, "%lf", &(d->ALPH))!= 1) return -1;
+	if(fscanf(fp, "%lf", &(d->UNDET_TOL))!= 1) return -1;
+	if(fscanf(fp, "%lf", &(d->EPS_ABS))!= 1) return -1;
+	if(fscanf(fp, "%lf", &(d->CG_TOL))!= 1) return -1;
+	if(fscanf(fp, "%i", &(d->Anz))!= 1) return -1;
 
 	k->q = malloc(sizeof(int)*k->qsize);
 	for(int i = 0; i < k->qsize; i++)
 	{ 
-		fscanf(fp, "%i", &k->q[i]);
+		if(fscanf(fp, "%i", &k->q[i])!= 1) return -1;
 	}
     k->s = malloc(sizeof(int)*k->ssize);
     for(int i = 0; i < k->ssize; i++)
     {   
-        fscanf(fp, "%i", &k->s[i]);
+        if(fscanf(fp, "%i", &k->s[i])!= 1) return -1;
     }   
 	d->b = malloc(sizeof(double)*d->m);
 	for(int i = 0; i < d->m; i++)
 	{ 
-		fscanf(fp, "%lf", &d->b[i]);
+		if(fscanf(fp, "%lf", &d->b[i])!= 1) return -1;
 	}
-
 	d->c = malloc(sizeof(double)*d->n);
 	for(int i = 0; i < d->n; i++)
 	{ 
-		fscanf(fp, "%lf", &d->c[i]);
+		if(fscanf(fp, "%lf", &d->c[i])!= 1) return -1;
 	}
-	fscanf(fp, "%i", &(d->MAX_ITERS));
-	fscanf(fp, "%i", &(d->CG_MAX_ITS)); 
-
-	fscanf(fp, "%lf", &(d->ALPH));
-	fscanf(fp, "%lf", &(d->UNDET_TOL)); 
-	fscanf(fp, "%lf", &(d->EPS_ABS)); 
-	fscanf(fp, "%lf", &(d->CG_TOL));
-	fscanf(fp, "%i", &(d->VERBOSE));
-	fscanf(fp, "%i", &(d->NORMALIZE));
-
-	fscanf(fp, "%i", &(d->Anz));
 	d->Ai = malloc(sizeof(int)*(d->Anz));
 	for(int i = 0; i < d->Anz; i++)
 	{
-		fscanf(fp, "%i", &d->Ai[i]);
+		if(fscanf(fp, "%i", &d->Ai[i])!= 1) return -1;
 	}
 	d->Ap = malloc(sizeof(int)*(d->n+1));
 	for(int i = 0; i < d->n+1; i++) 
 	{
-		fscanf(fp, "%i", &d->Ap[i]);
+		if(fscanf(fp, "%i", &d->Ap[i])!= 1) return -1;
 	}
 	d->Ax = malloc(sizeof(double)*(d->Anz));
 	for(int i = 0; i < (d->Anz); i++)
 	{
-		fscanf(fp, "%lf", &d->Ax[i]);
+		if(fscanf(fp, "%lf", &d->Ax[i])!= 1) return -1;
 	}
-
-
 	//		fscanf(fp, "%zu", &NNZ);
 	//		int *Kr = malloc(sizeof(int)*NNZ);
 	//		for(int i = 0; i < NNZ; i++)
@@ -104,7 +102,7 @@ void read_in_data(FILE * fp,Data * d, Cone * k){
 	//		{
 	//		fscanf(fp, "%lf", &Kx[i]);
 	//		}
-
+    return 0;
 }
 
 void freeData(Data * d, Cone * k){

@@ -6,6 +6,7 @@
 #endif 
 
 #define NUM_TRIALS 1 
+#define RHOX 1e-3
 
 int main(int argc, char **argv)
 {
@@ -28,52 +29,50 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-void read_in_data(FILE * fp,Data * d, Cone * k){
+int read_in_data(FILE * fp,Data * d, Cone * k){
 	/* MATRIX IN DATA FILE MUST BE DENSE COLUMN MAJOR FORMAT */
-	d->RHO_X = 1e-3;
+	d->RHO_X = RHOX;
+    if(fscanf(fp, "%i", &(d->n)) != 1) return -1;
+	if(fscanf(fp, "%i", &(d->m))!= 1) return -1;
+	if(fscanf(fp, "%i", &(k->f))!= 1) return -1;
+	if(fscanf(fp, "%i", &(k->l))!= 1) return -1;
+	if(fscanf(fp, "%i", &(k->qsize))!= 1) return -1;
+	if(fscanf(fp, "%i", &(k->ssize))!= 1) return -1;
+	if(fscanf(fp, "%i", &(d->MAX_ITERS))!= 1) return -1;
+	if(fscanf(fp, "%i", &(d->CG_MAX_ITS))!= 1) return -1;
+	if(fscanf(fp, "%i", &(d->VERBOSE))!= 1) return -1;
+	if(fscanf(fp, "%i", &(d->NORMALIZE))!= 1) return -1;
+	if(fscanf(fp, "%lf", &(d->ALPH))!= 1) return -1;
+	if(fscanf(fp, "%lf", &(d->UNDET_TOL))!= 1) return -1;
+	if(fscanf(fp, "%lf", &(d->EPS_ABS))!= 1) return -1;
+	if(fscanf(fp, "%lf", &(d->CG_TOL))!= 1) return -1;
 
-  fscanf(fp, "%i", &(d->n));
-	fscanf(fp, "%i", &(d->m));
-	fscanf(fp, "%i", &(k->f));
-	fscanf(fp, "%i", &(k->l));
-	fscanf(fp, "%i", &(k->qsize)); 
-	fscanf(fp, "%i", &(k->ssize)); 
-
-	k->q = coneOS_malloc(sizeof(int)*k->qsize);
+	k->q = malloc(sizeof(int)*k->qsize);
 	for(int i = 0; i < k->qsize; i++)
 	{ 
-		fscanf(fp, "%i", &k->q[i]);
+		if(fscanf(fp, "%i", &k->q[i])!= 1) return -1;
 	}
-	k->s = coneOS_malloc(sizeof(int)*k->ssize);
-	for(int i = 0; i < k->ssize; i++)
-	{ 
-		fscanf(fp, "%i", &k->s[i]);
-	}
-	d->b = coneOS_malloc(sizeof(double)*d->m);
+    k->s = malloc(sizeof(int)*k->ssize);
+    for(int i = 0; i < k->ssize; i++)
+    {   
+        if(fscanf(fp, "%i", &k->s[i])!= 1) return -1;
+    }   
+	d->b = malloc(sizeof(double)*d->m);
 	for(int i = 0; i < d->m; i++)
 	{ 
-		fscanf(fp, "%lf", &d->b[i]);
+		if(fscanf(fp, "%lf", &d->b[i])!= 1) return -1;
 	}
-	d->c = coneOS_malloc(sizeof(double)*d->n);
+	d->c = malloc(sizeof(double)*d->n);
 	for(int i = 0; i < d->n; i++)
 	{ 
-		fscanf(fp, "%lf", &d->c[i]);
+		if(fscanf(fp, "%lf", &d->c[i])!= 1) return -1;
 	}
-	fscanf(fp, "%i", &(d->MAX_ITERS));
-	fscanf(fp, "%i", &(d->CG_MAX_ITS)); 
 
-	fscanf(fp, "%lf", &(d->ALPH));
-	fscanf(fp, "%lf", &(d->UNDET_TOL)); 
-	fscanf(fp, "%lf", &(d->EPS_ABS)); 
-	fscanf(fp, "%lf", &(d->CG_TOL));
-	fscanf(fp, "%i", &(d->VERBOSE));
-	fscanf(fp, "%i", &(d->NORMALIZE));
-	
 	d->Anz = d->n*d->m;
 	d->Ax = coneOS_malloc(sizeof(double)*d->Anz);
 	for(int i = 0; i < d->Anz; i++)
 	{
-		fscanf(fp, "%lf", &d->Ax[i]);
+		if(fscanf(fp, "%lf", &d->Ax[i])!= 1) return -1;
 	}
 	d->Ai = NULL;
 	d->Ap = NULL;
@@ -94,7 +93,7 @@ void read_in_data(FILE * fp,Data * d, Cone * k){
 	//		{
 	//		fscanf(fp, "%lf", &Kx[i]);
 	//		}
-
+    return 0;
 }
 
 int open_file(int argc, char ** argv, int idx, char * default_file, FILE ** fb) 

@@ -5,7 +5,7 @@ for i=1:length(tests)
     szes(i) = tests(i).bytes;
 end
 [szes, solve_order] = sort(szes);
-params = struct('VERBOSE', 1, 'EPS_ABS', 1e-9, 'MAX_ITERS', 10000, 'CG_MAX_ITS', 15);
+params = struct('VERBOSE', 1, 'EPS_ABS', 1e-4, 'MAX_ITERS', 2500, 'CG_MAX_ITS', 15);
 %%
 N = length(tests);
 for ii = 1:N
