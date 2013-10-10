@@ -1,5 +1,5 @@
 close all; clear all
-cd 'DIMACS/mat_files'
+cd 'DIMACS'
 tests = dir('*.mat');
 for i=1:length(tests)
     szes(i) = tests(i).bytes;
@@ -13,7 +13,7 @@ for ii = 1:N
     
     clear A At b c K
     test_name = tests(i).name;
-    f = ['DIMACS/mat_files/' test_name];
+    f = ['DIMACS/' test_name];
     test_name = test_name(1:end-4); % strip .mat
     fprintf('converting test %i out of %i : %s\n', ii, N, test_name);
     

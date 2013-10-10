@@ -102,6 +102,24 @@ void normalize(Data * d, Work * w, Cone * k){
 	*/
 }
 
+inline double calcScaledNormDiff(double * a, double * b, Data * d, Work * w) {
+    double nmDiff = 0.0, tmp;
+    double * D = w->D;
+    double * E = w->E;
+    int i;
+    for (i = 0; i < d->n; ++i){
+        tmp = (a[i] - b[i])/(E[i] * w->sc_b);
+        nmDiff += tmp * tmp;    
+    }    
+    for (i = 0; i < d->m; ++i){
+        tmp = (a[i + d->n] - b[i + d->n])/(D[i] * w->sc_c);
+        nmDiff += tmp * tmp;
+    }   
+    tmp = a[w->l-1] - b[w->l-1];
+    nmDiff += tmp * tmp;
+    return sqrt(nmDiff);
+}
+
 void unNormalize(Data *d, Work * w, Sol * sol){
 	int i;
 	double * D = w->D;
