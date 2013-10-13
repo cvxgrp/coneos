@@ -40,7 +40,7 @@ CG_MAX_ITS = 30; % max iterations for CG
 CG_TOL = 1e-9; % max CG quitting tolerance
 CG_VERBOSE = false; % CG prints summary
 % experimental:
-rho_x = 1e-3;
+rho_x = 1;%1e-3;
 %%
 if nargin==3
     if isfield(params,'GEN_PLOTS');GEN_PLOTS = params.GEN_PLOTS;end
@@ -384,7 +384,7 @@ z = z(:);
 end
 
 function [y,itn] = solveLinSystem(w,data,rhs,n,m,CG_MAX_ITERS,CG_TOL,warm_start,rho_x)
-% assumes matrix [I A';A -I]
+% assumes matrix [rho_x*I A';A -I]
 if w.USE_INDIRECT
     y=zeros(n+m,1);
     [y(1:n), itn] = pcg_A(data.A,rhs(1:n)+data.A'*rhs(n+1:n+m),warm_start(1:n),rho_x,CG_MAX_ITERS,CG_TOL,w.CG_VERBOSE);

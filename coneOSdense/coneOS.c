@@ -103,13 +103,15 @@ static inline void normalizeCertificate(Work * w, Data * d, Sol * sol, int statu
 static inline int converged(Data * d, Work * w, struct residuals * r){
 	double tau = fabs((w->u[w->l-1]+w->u_t[w->l-1])/2);
 	double kap = fabs(w->v[w->l-1]);
+    /*
     if (d->NORMALIZE){
         r->resPri = calcScaledNormDiff(w->u, w->u_t, d, w); 
         r->resDual = calcScaledNormDiff(w->u, w->u_prev, d, w); 
     } else {
-        r->resPri = calcNormDiff(w->u, w->u_t, w->l);
-        r->resDual = calcNormDiff(w->u, w->u_prev, w->l);
-    }   
+    */
+    r->resPri = calcNormDiff(w->u, w->u_t, w->l);
+    r->resDual = calcNormDiff(w->u, w->u_prev, w->l);
+    //}   
     r->tau = tau;
     r->kap = kap;
 	if (fmin(tau,kap)/fmax(tau,kap) < 1e-6 && fmax(r->resPri,r->resDual) < d->EPS_ABS*(tau+kap))
