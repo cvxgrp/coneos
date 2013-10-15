@@ -140,13 +140,15 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r){
         c_inf = calcNormInf(d->c, d->n);
     }
     */
+
     /*
+    // requires mult by A:
     double * s = &(w->v[d->n]);
     accumByA(d,x,pr); // pr = Ax
     addScaledArray(pr,s,d->m,1.0); // pr = Ax + s
     addScaledArray(pr,d->b,d->m,-tau); // pr = Ax + s - b * tau
     */
-
+    // does not require mult by A:
     memcpy(pr,&(w->u[d->n]),d->m * sizeof(double));
     addScaledArray(pr,&(w->u_prev[d->n]),d->m,d->ALPH-2);
     addScaledArray(pr,&(w->u_t[d->n]),d->m,1-d->ALPH);
@@ -157,7 +159,6 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r){
 
     double cTx = innerProd(x,d->c,d->n);
     double bTy = innerProd(y,d->b,d->m);
-    double gap = fabs(kap + cTx + bTy);
 
     if (d->NORMALIZE) {
         for (i = 0; i < d->m; ++i) {
@@ -175,7 +176,7 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r){
 
     double rpri = calcNorm(pr,d->m) / (1+w->b_inf) / scale;
     double rdua = calcNorm(dr,d->n) / (1+w->c_inf) / scale;
-    gap /= (scale + fabs(cTx) + fabs(bTy));
+    double gap = fabs(kap + cTx + bTy) / (scale + fabs(cTx) + fabs(bTy));
 
     // coneOS_printf("primal resid: %4e, dual resid %4e, pobj %4e, dobj %4e, gap %4e\n", rpri,rdua,cTx,-bTy,gap);
     // coneOS_printf("primal resid: %4e, dual resid %4e, gap %4e\n",rpri,rdua,gap);
