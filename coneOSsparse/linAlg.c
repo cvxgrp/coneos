@@ -48,7 +48,7 @@ inline double calcNorm(const double * v,int len){
 inline double calcNormInf(const double *a, int l){
 	double tmp, max = 0.0;
 	int i;
-	for ( i=0; i<l; ++i){
+	for (i=0; i<l; ++i){
 		tmp = fabs(a[i]);
 		if(tmp > max) max = tmp;
 	}

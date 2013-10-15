@@ -104,35 +104,63 @@ void normalize(Data * d, Work * w, Cone * k){
 
 	coneOS_free(nms);
 
-	// heuristic scaling factor
-	scaleArray(d->Ax,w->scale,d->Anz);
-	scaleArray(d->b,w->scale,d->m);
-	scaleArray(d->c,w->scale,d->n);
-/*
-	coneOS_printf("norm D is %4f\n", calcNorm(D,d->m));
-	coneOS_printf("norm E is %4f\n", calcNorm(E,d->n));
-    coneOS_printf("norm A is %4f\n", calcNorm(d->Ax,d->Anz));
-    coneOS_printf("norm b is %4f\n", calcNorm(d->b,d->m));
-    coneOS_printf("norm c is %4f\n", calcNorm(d->c,d->n));
-*/
+    // heuristic scaling factor
+    scaleArray(d->Ax,w->scale,d->Anz);
+    scaleArray(d->b,w->scale,d->m);
+    scaleArray(d->c,w->scale,d->n);
+    /*
+       coneOS_printf("norm D is %4f\n", calcNorm(D,d->m));
+       coneOS_printf("norm E is %4f\n", calcNorm(E,d->n));
+       coneOS_printf("norm A is %4f\n", calcNorm(d->Ax,d->Anz));
+       coneOS_printf("norm b is %4f\n", calcNorm(d->b,d->m));
+       coneOS_printf("norm c is %4f\n", calcNorm(d->c,d->n));
+     */
 }
 
-inline double calcScaledNormDiff(double * a, double * b, Data * d, Work * w) {
-    double nmDiff = 0.0, tmp;
+void calcScaledResids(Data * d, Work * w, struct residuals * r) {
     double * D = w->D;
     double * E = w->E;
+    double * u = w->u;
+    double * u_t = w->u_t;
+    double * u_prev = w->u_prev;
+    double tmp;
     int i;
+
+    r->resPri = 0;
     for (i = 0; i < d->n; ++i){
-        tmp = (a[i] - b[i])/(E[i] * w->sc_b);
-        nmDiff += tmp * tmp;        
-    }       
-    for (i = 0; i < d->m; ++i){
-        tmp = (a[i + d->n] - b[i + d->n])/(D[i] * w->sc_c);
-        nmDiff += tmp * tmp;
+        tmp = (u[i] - u_t[i])/(E[i] * w->sc_b);
+        r->resPri += tmp * tmp;        
     }
-    tmp = a[w->l-1] - b[w->l-1];
-    nmDiff += tmp * tmp;
-    return sqrt(nmDiff);
+    for (i = 0; i < d->m; ++i){
+        tmp = (u[i + d->n] - u_t[i + d->n])/(D[i] * w->sc_c);
+        r->resPri += tmp * tmp;
+    }
+    tmp = u[w->l-1] - u_t[w->l-1];
+    r->resPri += tmp * tmp;
+    r->resPri = sqrt(r->resPri);
+
+    r->resDual = 0;
+    for (i = 0; i < d->n; ++i){
+        tmp = (u[i] - u_prev[i]) * E[i] / w->sc_b;
+        r->resDual += tmp * tmp;        
+    }
+    for (i = 0; i < d->m; ++i){
+        tmp = (u[i + d->n] - u_prev[i + d->n]) * D[i] / w->sc_c;
+        r->resDual += tmp * tmp;
+    }
+    tmp = u[w->l-1] - u_t[w->l-1];
+    r->resDual += tmp * tmp;
+    r->resDual = sqrt(r->resDual);
+}
+
+double calcScaledNormInf(const double *a, const double * s, int l){ 
+    double tmp, max = 0.0;
+    int i;
+    for ( i=0; i<l; ++i){
+        tmp = fabs(s[i] * a[i]);
+        if(tmp > max) max = tmp;
+    }   
+    return max;
 }
 
 void unNormalize(Data *d, Work * w, Sol * sol){

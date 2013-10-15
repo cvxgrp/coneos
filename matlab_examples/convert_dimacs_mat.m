@@ -1,11 +1,16 @@
 close all; clear all
-cd 'DIMACS'
+input_path = 'DIMACS_mat_files'
+output_path = 'DIMACS'
+
+mkdir(output_path)
+cd(input_path)
+
 tests = dir('*.mat');
 for i=1:length(tests)
     szes(i) = tests(i).bytes;
 end
 [szes, solve_order] = sort(szes);
-params = struct('VERBOSE', 1, 'EPS_ABS', 1e-4, 'MAX_ITERS', 2500, 'CG_MAX_ITS', 15);
+params = struct('VERBOSE', 1, 'EPS_ABS', 1e-5, 'MAX_ITERS', 2500, 'CG_MAX_ITS', 15);
 %%
 N = length(tests);
 for ii = 1:N
@@ -68,8 +73,8 @@ for ii = 1:N
         disp('rotated lorentz cones not currently supported');
     else
         cd ..
-        write_coneOS_data_sparse(data,cone,params,test_name);
-        cd mat_files
+        write_coneOS_data_sparse(data,cone,params,sprintf('%s/%s',output_path,test_name));
+        cd(input_path)
     end
 end
-cd ../..
+cd ..

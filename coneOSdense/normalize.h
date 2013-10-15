@@ -101,7 +101,7 @@ void normalize(Data * d, Work * w, Cone * k){
     coneOS_printf("norm c is %4f\n", calcNorm(d->c,d->n));
 	*/
 }
-
+/*
 inline double calcScaledNormDiff(double * a, double * b, Data * d, Work * w) {
     double nmDiff = 0.0, tmp;
     double * D = w->D;
@@ -119,7 +119,7 @@ inline double calcScaledNormDiff(double * a, double * b, Data * d, Work * w) {
     nmDiff += tmp * tmp;
     return sqrt(nmDiff);
 }
-
+*/
 void unNormalize(Data *d, Work * w, Sol * sol){
 	int i;
 	double * D = w->D;

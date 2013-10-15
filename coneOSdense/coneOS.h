@@ -40,7 +40,7 @@ typedef struct PROBLEM_DATA {
 
 /* contains primal-dual solution vectors */
 typedef struct SOL_VARS {
-  double * x, * y, * s;
+  double * x, * y, *s;
 } Sol;
 
 /* contains terminating information */
@@ -61,6 +61,7 @@ typedef struct WORK {
   double *u, *v, *u_t, *u_prev;
   double *h, *g;  
   double gTh, sc_b, sc_c, scale;
+  double b_inf, c_inf, nm_Q;
   double *D, *E;
   Priv * p;
   /* workspace for eigenvector decompositions: */
@@ -69,12 +70,21 @@ typedef struct WORK {
   char method[16];
 } Work;
 
+// to hold residual information
+struct residuals {
+	double resDual;
+	double resPri;
+    double relGap;
+    double tau;
+	double kap;
+};
+
 #include <string.h>    
 #include <sys/time.h>
 #include <math.h>
 #include "cones.h"
-#include "util.h"
 #include "linAlg.h"
+#include "util.h"
 
 // these are actually library "api"'s
 int coneOS(Data * d, Cone * k, Sol * sol, Info * info);

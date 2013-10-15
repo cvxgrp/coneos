@@ -61,6 +61,7 @@ typedef struct WORK {
   double *u, *v, *u_t, *u_prev;
   double *h, *g;  
   double gTh, sc_b, sc_c, scale;
+  double b_inf, c_inf, nm_Q;
   double *D, *E;
   Priv * p;
   /* workspace for eigenvector decompositions: */
@@ -68,6 +69,15 @@ typedef struct WORK {
   int l;
   char method[16];
 } Work;
+
+// to hold residual information
+struct residuals {
+	double resDual;
+	double resPri;
+    double relGap;
+    double tau;
+	double kap;
+};
 
 #include <string.h>    
 #include <sys/time.h>

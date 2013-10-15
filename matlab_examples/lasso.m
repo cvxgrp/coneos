@@ -52,7 +52,7 @@ for i = 1:length(ns)
         variable x_c(n)
         minimize(0.5*sum_square(A*x_c - b) + mu*norm(x_c,1))
         output = evalc('cvx_end')
-        toc
+        toc   
         
         coneos_direct.x{i} = x_c;
         coneos_direct.obj(i) = 0.5*sum_square(A*x_c - b) + mu*norm(x_c,1);
