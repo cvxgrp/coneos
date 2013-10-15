@@ -8,7 +8,7 @@ disp('------------------------------------------------------------')
 
 run ../coneOSsparse/matlab/install_coneos_cvx.m
 
-save_results = false;
+save_results = true;
 run_sdpt3 = false;
 run_coneos = true;
 
@@ -74,7 +74,7 @@ for i = 1:length(ns)
         tic
         cvx_begin
         cvx_solver coneos
-        cvx_solver_settings('USE_INDIRECT',1,'CG_MAX_ITS',2)
+        cvx_solver_settings('USE_INDIRECT',1,'CG_MAX_ITS',5)
         cvx_solver_settings('GEN_PLOTS',1) % only works if 'cvx_solver coneos_matlab'
         variables Lc(m,n) Sc(m,n)
         dual variable Yc

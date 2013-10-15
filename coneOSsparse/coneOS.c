@@ -125,11 +125,12 @@ static inline int converged(Data * d, Work * w, struct residuals * r, int iter){
 static inline int exactConverged(Data * d, Work * w, struct residuals * r){
     double * dr = coneOS_calloc(d->n,sizeof(double));
     double * pr = coneOS_calloc(d->m,sizeof(double));
-    double tau = w->u[w->l-1];
-    double kap = w->v[w->l-1];
+    double tau = fabs(w->u[w->l-1]);
+    double kap = fabs(w->v[w->l-1]);
     double * x = w->u, * y = &(w->u[d->n]);
     double * D = w->D, * E = w->E;
     int i;
+ 
     /*    
     if (d->NORMALIZE) {
         b_inf = calcScaledNormInf(d->b, D, d->m)/(w->sc_b * w->scale);
@@ -145,16 +146,17 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r){
     addScaledArray(pr,s,d->m,1.0); // pr = Ax + s
     addScaledArray(pr,d->b,d->m,-tau); // pr = Ax + s - b * tau
     */
+
     memcpy(pr,&(w->u[d->n]),d->m * sizeof(double));
     addScaledArray(pr,&(w->u_prev[d->n]),d->m,d->ALPH-2);
     addScaledArray(pr,&(w->u_t[d->n]),d->m,1-d->ALPH);
     addScaledArray(pr,d->b,d->m, w->u_t[w->l-1] - tau) ; // pr = Ax + s - b * tau
-    
+ 
     accumByAtrans(d,y,dr); // dr = A'y
     addScaledArray(dr,d->c,d->n,tau); // dr = A'y + c * tau    
 
-    double cTx = innerProd(x,d->c,d->n) / (w->scale * w->sc_c * w->sc_b);
-    double bTy = innerProd(y,d->b,d->m) / (w->scale * w->sc_c * w->sc_b);
+    double cTx = innerProd(x,d->c,d->n);
+    double bTy = innerProd(y,d->b,d->m);
     double gap = fabs(kap + cTx + bTy);
 
     if (d->NORMALIZE) {
@@ -164,18 +166,22 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r){
         for (i = 0; i < d->n; ++i) {
             dr[i] *= E[i]/(w->sc_c * w->scale);
         }
+        cTx /= (w->scale * w->sc_c * w->sc_b);
+        bTy /= (w->scale * w->sc_c * w->sc_b);
     }
 
     // DIMACS:
-    double rpri = calcNorm(pr,d->m) / (1+w->b_inf) / (tau + kap);
-    double rdua = calcNorm(dr,d->n) / (1+w->c_inf) / (tau + kap);
-    gap /= (1 + fabs(cTx)/(kap+tau) + fabs(bTy)/(kap+tau)) * (tau + kap);
+    double scale = tau + kap;
+
+    double rpri = calcNorm(pr,d->m) / (1+w->b_inf) / scale;
+    double rdua = calcNorm(dr,d->n) / (1+w->c_inf) / scale;
+    gap /= (scale + fabs(cTx) + fabs(bTy));
 
     // coneOS_printf("primal resid: %4e, dual resid %4e, pobj %4e, dobj %4e, gap %4e\n", rpri,rdua,cTx,-bTy,gap);
     // coneOS_printf("primal resid: %4e, dual resid %4e, gap %4e\n",rpri,rdua,gap);
 
     coneOS_free(dr); coneOS_free(pr);
-    
+ 
     r->resPri = rpri;
     r->resDual = rdua;
     r->relGap = gap;
@@ -391,46 +397,47 @@ static inline void projectCones(Data *d,Work * w,Cone * k){
 }
 
 static inline int getSolution(Data * d,Work * w,Sol * sol, Info * info){
-	//double tau = (w->u[w->l-1]+w->u_t[w->l-1])/2;
-	double tau = w->u[w->l-1];
-	double kap = fabs(w->v[w->l-1]);
-	setx(d,w,sol);
-	sety(d,w,sol);
-	sets(d,w,sol);
+    //double tau = (w->u[w->l-1]+w->u_t[w->l-1])/2;
+    double tau = w->u[w->l-1];
+    double kap = fabs(w->v[w->l-1]);
+    //coneOS_printf("tau %4e, kap %4e\n",tau, kap);
+    setx(d,w,sol);
+    sety(d,w,sol);
+    sets(d,w,sol);
     if (tau > d->UNDET_TOL && tau > kap){
-		memcpy(info->status,"Solved", 7);
-		scaleArray(sol->x,1.0/tau,d->n);
-		scaleArray(sol->y,1.0/tau,d->m);
-		scaleArray(sol->s,1.0/tau,d->m);
+        memcpy(info->status,"Solved", 7);
+        scaleArray(sol->x,1.0/tau,d->n);
+        scaleArray(sol->y,1.0/tau,d->m);
+        scaleArray(sol->s,1.0/tau,d->m);
         return 0;
-	}   
-	else{ 
-		if (calcNorm(w->u,w->l)<d->UNDET_TOL*sqrt(w->l)){
-			memcpy(info->status, "Indeterminate", 15);
-			scaleArray(sol->x,NAN,d->n);
-			scaleArray(sol->y,NAN,d->m);
-		    scaleArray(sol->s,NAN,d->m);
-		    return -1;
-		}   
-		else {
-			double ip_y = innerProd(d->b,sol->y,d->m);  
-			double ip_x = innerProd(d->c,sol->x,d->n);  
-			if (ip_y < ip_x){
-				memcpy(info->status,"Infeasible", 12);
-				//scaleArray(sol->y,-1/ip_y,d->m);
-				scaleArray(sol->x,NAN,d->n);
-		        scaleArray(sol->s,NAN,d->m);
-				return 1;
-			}   
-			else{
-				memcpy(info->status,"Unbounded", 11);
-				//scaleArray(sol->x,-1/ip_x,d->n);
-				scaleArray(sol->y,NAN,d->m);
+    }   
+    else{ 
+        if (calcNorm(w->u,w->l)<d->UNDET_TOL*sqrt(w->l)){
+            memcpy(info->status, "Indeterminate", 15);
+            scaleArray(sol->x,NAN,d->n);
+            scaleArray(sol->y,NAN,d->m);
+            scaleArray(sol->s,NAN,d->m);
+            return -1;
+        }   
+        else {
+            double ip_y = innerProd(d->b,sol->y,d->m);  
+            double ip_x = innerProd(d->c,sol->x,d->n);  
+            if (ip_y < ip_x){
+                memcpy(info->status,"Infeasible", 12);
+                //scaleArray(sol->y,-1/ip_y,d->m);
+                scaleArray(sol->x,NAN,d->n);
+                scaleArray(sol->s,NAN,d->m);
+                return 1;
+            }   
+            else{
+                memcpy(info->status,"Unbounded", 11);
+                //scaleArray(sol->x,-1/ip_x,d->n);
+                scaleArray(sol->y,NAN,d->m);
                 //scaleArray(sol->s,0.0,d->m);
-				return 2;
-			}
-		}
-	}
+                return 2;
+            }
+        }
+    }
 }
 
 static inline void sety(Data * d,Work * w, Sol * sol){
