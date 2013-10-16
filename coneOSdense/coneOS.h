@@ -61,7 +61,7 @@ typedef struct WORK {
   double *u, *v, *u_t, *u_prev;
   double *h, *g;  
   double gTh, sc_b, sc_c, scale;
-  double b_inf, c_inf, nm_Q;
+  double nm_b, nm_c, nm_Q;
   double *D, *E;
   Priv * p;
   /* workspace for eigenvector decompositions: */

@@ -136,11 +136,11 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r, int i
  
     /*    
     if (d->NORMALIZE) {
-        b_inf = calcScaledNormInf(d->b, D, d->m)/(w->sc_b * w->scale);
-        c_inf = calcScaledNormInf(d->c, E, d->n)/(w->sc_c * w->scale);
+        nm_b = calcScaledNormInf(d->b, D, d->m)/(w->sc_b * w->scale);
+        nm_c = calcScaledNormInf(d->c, E, d->n)/(w->sc_c * w->scale);
     } else {
-        b_inf = calcNormInf(d->b, d->m);
-        c_inf = calcNormInf(d->c, d->n);
+        nm_b = calcNormInf(d->b, d->m);
+        nm_c = calcNormInf(d->c, d->n);
     }
     */
 
@@ -163,7 +163,7 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r, int i
         } 
     }
     double scale = tau + kap;
-    double rpri = calcNorm(pr,d->m) / (1+w->b_inf) / scale;
+    double rpri = calcNorm(pr,d->m) / (1+w->nm_b) / scale;
     
     if (rpri > d->EPS_ABS && !(d->VERBOSE && iter % PRINT_INTERVAL == 0)) {
         return 0;
@@ -186,8 +186,8 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r, int i
         bTy /= (w->scale * w->sc_c * w->sc_b);
     }
 
-    // DIMACS:
-    double rdua = calcNorm(dr,d->n) / (1+w->c_inf) / scale;
+    // errors:
+    double rdua = calcNorm(dr,d->n) / (1+w->nm_c) / scale;
     double gap = fabs(kap + cTx + bTy) / (scale + fabs(cTx) + fabs(bTy));
 
     // coneOS_printf("primal resid: %4e, dual resid %4e, pobj %4e, dobj %4e, gap %4e\n", rpri,rdua,cTx,-bTy,gap);
@@ -260,8 +260,11 @@ static inline Work * initWork(Data *d, Cone * k) {
 
 	Work * w = coneOS_malloc(sizeof(Work));
     
-    w->b_inf = calcNormInf(d->b, d->m);
-    w->c_inf = calcNormInf(d->c, d->n);
+    w->nm_b = calcNorm(d->b, d->m);
+    w->nm_c = calcNorm(d->c, d->n);
+
+    //w->nm_b = calcNormInf(d->b, d->m);
+    //w->nm_c = calcNormInf(d->c, d->n);
     //w->nm_Q = calcNormFroQ(d);
 
     if(d->NORMALIZE) {
@@ -520,8 +523,8 @@ static inline void printHeader(Data * d, Work * w, Cone * k) {
 }
 
 static inline void printFooter(Data * d, Info * info, Work * w, int status) {
-//    double b_inf = calcNormInf(d->b, d->m);
-//    double c_inf = calcNormInf(d->c, d->n);
+//    double nm_b = calcNormInf(d->b, d->m);
+//    double nm_c = calcNormInf(d->c, d->n);
     double gap_rel = 1 + fabs(info->pobj) + fabs(info->dobj);
 	int i;  
 	for(i = 0; i < _lineLen_; ++i) {
@@ -542,19 +545,19 @@ static inline void printFooter(Data * d, Info * info, Work * w, int status) {
 
     if (status == 1) {
         coneOS_printf("Certificate of primal infeasibility:\n");
-        coneOS_printf("|A'y|_2/(1+|c|_inf) = %2e\n", info->dresid/(1+w->c_inf));
+        coneOS_printf("|A'y|_2/(1+|c|_2) = %2e\n", info->dresid/(1+w->nm_c));
         coneOS_printf("dist(y,K*) = 0\n");
         coneOS_printf("b'y = %.4f\n", -info->dobj);
     } 
     else if (status == 2) {
         coneOS_printf("Certificate of dual infeasibility:\n");
-        coneOS_printf("|Ax+s|_2/(1+|b|_inf) = %2e\n", info->presid/(1+w->b_inf));
+        coneOS_printf("|Ax+s|_2/(1+|b|_2) = %2e\n", info->presid/(1+w->nm_b));
         coneOS_printf("dist(s,K) = 0\n");
         coneOS_printf("c'x = %.4f\n", info->pobj);
     }
     else {
-        coneOS_printf("DIMACS error metrics:\n");
-        coneOS_printf("|Ax+s-b|_2/(1+|b|_inf) = %2e\n|A'y+c|_2/(1+|c|_inf) = %2e\n",info->presid/(1+w->b_inf), info->dresid/(1+w->c_inf));
+        coneOS_printf("Error metrics:\n");
+        coneOS_printf("|Ax+s-b|_2/(1+|b|_2) = %2e\n|A'y+c|_2/(1+|c|_2) = %2e\n",info->presid/(1+w->nm_b), info->dresid/(1+w->nm_c));
         coneOS_printf("|c'x+b'y|/(1+|c'x|+|b'y|) = %2e\n", fabs(info->gap/gap_rel)); 
         coneOS_printf("dist(s,K) = 0, dist(y,K*) = 0, s'y = 0\n");
         for(i = 0; i < _lineLen_; ++i) {
