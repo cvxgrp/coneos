@@ -31,7 +31,10 @@ static inline void projectLinSys(Data * d,Work * w);
 static inline Work * initWork(Data * d, Cone * k);
 static inline int converged(Data * d, Work * w, struct residuals * r, int iter);
 static inline void normalizeCertificate(Work * w, Data * d, Sol * sol, int status);
-static inline int exactConverged(Data * d, Work * w, struct residuals * r);
+static inline int exactConverged(Data * d, Work * w, struct residuals * r, int iter);
+
+#define PRINT_INTERVAL 100
+#define CONVERGED_INTERVAL 20
 
 /* coneOS returns the following integers:
    -2 failure
@@ -62,7 +65,7 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
 	
 		if (converged(d,w,&r,i)) break;
 
-		if (i % 100 == 0){
+		if (i % PRINT_INTERVAL == 0){
 			if (d->VERBOSE) printSummary(d,w,i,&r);
 		}
 	}
@@ -113,16 +116,16 @@ static inline int converged(Data * d, Work * w, struct residuals * r, int iter){
     //    (w->nm_Q * r->resPri / sqrt(w->l) + r->resDual) < d->EPS_ABS*(tau+kap)*10)
     //if (fmin(tau,kap)/fmax(tau,kap) < 1e-6 && fmax(r->resPri, r->resDual) / 100 < d->EPS_ABS*(tau+kap))
     // {
-    // exact convergence check is expensive, only do every 20 iters:
-    if (iter % 20 == 0) {
+    // exact convergence check is expensive, only do every CONVERGED_INTERVAL iters:
+    if (iter % CONVERGED_INTERVAL == 0) {
         //coneOS_printf("checking exact convergence\n");
-        return exactConverged(d,w,r);
+        return exactConverged(d,w,r,iter);
     }
     //}
     return 0;
 }
 
-static inline int exactConverged(Data * d, Work * w, struct residuals * r){
+static inline int exactConverged(Data * d, Work * w, struct residuals * r, int iter){
     double * dr = coneOS_calloc(d->n,sizeof(double));
     double * pr = coneOS_calloc(d->m,sizeof(double));
     double tau = fabs(w->u[w->l-1]);
@@ -153,7 +156,19 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r){
     addScaledArray(pr,&(w->u_prev[d->n]),d->m,d->ALPH-2);
     addScaledArray(pr,&(w->u_t[d->n]),d->m,1-d->ALPH);
     addScaledArray(pr,d->b,d->m, w->u_t[w->l-1] - tau) ; // pr = Ax + s - b * tau
- 
+
+    if (d->NORMALIZE) {
+        for (i = 0; i < d->m; ++i) {
+            pr[i] *= D[i]/(w->sc_b * w->scale);
+        } 
+    }
+    double scale = tau + kap;
+    double rpri = calcNorm(pr,d->m) / (1+w->b_inf) / scale;
+    
+    if (rpri > d->EPS_ABS && !(d->VERBOSE && iter % PRINT_INTERVAL == 0)) {
+        return 0;
+    }
+
     accumByAtrans(d,y,dr); // dr = A'y
     addScaledArray(dr,d->c,d->n,tau); // dr = A'y + c * tau    
 
@@ -172,9 +187,6 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r){
     }
 
     // DIMACS:
-    double scale = tau + kap;
-
-    double rpri = calcNorm(pr,d->m) / (1+w->b_inf) / scale;
     double rdua = calcNorm(dr,d->n) / (1+w->c_inf) / scale;
     double gap = fabs(kap + cTx + bTy) / (scale + fabs(cTx) + fabs(bTy));
 
