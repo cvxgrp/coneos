@@ -9,7 +9,7 @@ static const char* HEADER[] = {
 	" pri resid ",
 	" dua resid ",
     "  rel gap  ",
-	"  kap/tau  ",
+	"    kap    ",
 	"  time (s) ",
 };
 
@@ -50,7 +50,7 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
 		return FAILURE;
 	}
     tic();
-	info->stint = 0;
+	info->stint = 0; // not yet converged
     int i;
 	struct residuals r = {-1, -1, -1, -1, -1};
     Work * w = initWork(d,k);
@@ -66,7 +66,7 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
 	    
         info->stint = converged(d,w,&r,i);
 
-		if (info->stint) break;
+		if (info->stint != 0) break;
 
 		if (i % PRINT_INTERVAL == 0){
 			if (d->VERBOSE) printSummary(d,w,i,&r);
@@ -104,8 +104,8 @@ static inline int converged(Data * d, Work * w, struct residuals * r, int iter){
 }
 
 static inline int exactConverged(Data * d, Work * w, struct residuals * r, int iter){
-    double * dr = coneOS_calloc(d->n,sizeof(double));
     double * pr = coneOS_calloc(d->m,sizeof(double));
+    double * dr = coneOS_calloc(d->n,sizeof(double));
     double * Axs = coneOS_calloc(d->m,sizeof(double));
     double * ATy = coneOS_calloc(d->n,sizeof(double));
 
@@ -138,14 +138,18 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r, int i
         kap /= (w->scale * w->sc_c * w->sc_b);
         for (i = 0; i < d->m; ++i) {
             pr[i] *= D[i]/(w->sc_b * w->scale);
+            Axs[i] *= D[i]/(w->sc_b * w->scale);
         } 
         cTx /= (w->scale * w->sc_c * w->sc_b);
     }
+    r->tau = tau;
+    r->kap = kap;
 
     double nmAxs = calcNorm(Axs,d->m);
-
+    //coneOS_printf("unbounded cert: %4e\n", w->nm_c * nmAxs / (1+w->nm_b) / -cTx);
     if (w->nm_c * nmAxs / (1+w->nm_b) < - cTx * d->EPS_ABS) {
-        return INFEASIBLE;
+        r->resPri = w->nm_c * nmAxs / (1+w->nm_b);
+        return UNBOUNDED;
     }
 
     accumByAtrans(d,y,ATy); // ATy = A'y
@@ -157,14 +161,16 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r, int i
     if (d->NORMALIZE) {
         for (i = 0; i < d->n; ++i) {
             dr[i] *= E[i]/(w->sc_c * w->scale);
+            ATy[i] *= E[i]/(w->sc_c * w->scale);
         }
         bTy /= (w->scale * w->sc_c * w->sc_b);
     }
 
     double nmATy = calcNorm(ATy,d->n);
-
-    if (w->nm_b * nmATy / (1+w->nm_c) < - bTy * d->EPS_ABS) {
-        return UNBOUNDED;
+    //coneOS_printf("infeas cert: %4e\n", w->nm_b * nmATy / (1+w->nm_c) /  - bTy );
+    if (w->nm_b * nmATy / (1+w->nm_c) <  - bTy * d->EPS_ABS) {
+        r->resDual = w->nm_b * nmATy / (1+w->nm_c);
+        return INFEASIBLE;
     }
 
     double scale = tau + kap;
@@ -180,8 +186,6 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r, int i
     r->resPri = rpri;
     r->resDual = rdua;
     r->relGap = gap;
-    r->tau = tau;
-    r->kap = kap;
     if (fmax(fmax(rpri,rdua),gap) < d->EPS_ABS) {
         return SOLVED;
     }
@@ -218,7 +222,7 @@ static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct re
         if (info->stint == UNBOUNDED) {    
             info->dobj = NAN;
             info->relGap = NAN;
-            info->resPri = r->resPri / info->pobj;
+            info->resPri = r->resPri / -cTx;
             info->resDual = NAN;
             scaleArray(x,-1/cTx,d->n);
             scaleArray(s,-1/cTx,d->m);
@@ -228,7 +232,7 @@ static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct re
             info->pobj = NAN;
             info->relGap = NAN;
             info->resPri = NAN;
-            info->resDual = r->resDual / info->dobj;
+            info->resDual = r->resDual / -bTy;
             scaleArray(y,-1/bTy,d->m);
             info->dobj = -1;
         }
@@ -425,12 +429,12 @@ static inline int unbounded(Data * d, Sol * sol, Info * info){
 }
 
 static inline void setSolution(Data * d,Work * w,Sol * sol, Info * info){
+    setx(d,w,sol);
+    sety(d,w,sol);
+    sets(d,w,sol);
     if (info->stint == 0 || info->stint == SOLVED){
         double tau = w->u[w->l-1];
         double kap = fabs(w->v[w->l-1]);
-        setx(d,w,sol);
-        sety(d,w,sol);
-        sets(d,w,sol);
         if (tau > d->UNDET_TOL && tau > kap){
             info->stint = solved(d,sol,info,tau);
         }   
@@ -439,9 +443,9 @@ static inline void setSolution(Data * d,Work * w,Sol * sol, Info * info){
                 info->stint = indeterminate(d,sol,info);
             }   
             else {
-                double ip_y = innerProd(d->b,sol->y,d->m);  
-                double ip_x = innerProd(d->c,sol->x,d->n);  
-                if (ip_y < ip_x){
+                double bTy = innerProd(d->b,sol->y,d->m);  
+                double cTx = innerProd(d->c,sol->x,d->n);  
+                if (bTy < cTx){
                     info->stint = infeasible(d,sol,info);
                 }   
                 else{
@@ -460,9 +464,6 @@ static inline void sety(Data * d,Work * w, Sol * sol){
 	sol->y = coneOS_malloc(sizeof(double)*d->m);
 	int i;
 	for(i = 0; i < d->m; ++i) {
-		/* not taking average has desirable properties, like returning sparse
-		   solutions if l1 penalty used (for example), but will have worse accuracy
-		   and worse dual equality constraint residual */
 		//sol->y[i] = 0.5 * (w->u[i + d->n]+w->u_t[i + d->n]);
 		sol->y[i] = w->u[i + d->n];
 	}
@@ -483,7 +484,7 @@ static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
 	coneOS_printf("%*.2e ", (int)strlen(HEADER[1])-1, r->resPri);
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[2])-1, r->resDual);
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[3])-1, r->relGap);
-	coneOS_printf(" %*.2e ", (int)strlen(HEADER[4])-1, r->kap/r->tau);
+	coneOS_printf(" %*.2e ", (int)strlen(HEADER[4])-1, r->kap);
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[5])-1, tocq()/1e3);
 	coneOS_printf("\n");
 #ifdef MATLAB_MEX_FILE
@@ -540,13 +541,13 @@ static inline void printFooter(Data * d, Info * info, Work * w) {
 
     if (info->stint == INFEASIBLE) {
         coneOS_printf("Certificate of primal infeasibility:\n");
-        coneOS_printf("|b|_2 * |A'y|_2 / (1 + |c|_2) = %2e\n", w->nm_b * info->resDual);
+        coneOS_printf("|b|_2 * |A'y|_2 / (1 + |c|_2) = %2e\n", info->resDual);
         coneOS_printf("dist(y, K*) = 0\n");
-        coneOS_printf("b'y = %.4f\n", -info->dobj);
+        coneOS_printf("b'y = %.4f\n", info->dobj);
     } 
     else if (info->stint == UNBOUNDED) {
         coneOS_printf("Certificate of dual infeasibility:\n");
-        coneOS_printf("|c|_2 * |Ax + s|_2 / (1 + |b|_2) = %2e\n", w->nm_c * info->resPri);
+        coneOS_printf("|c|_2 * |Ax + s|_2 / (1 + |b|_2) = %2e\n", info->resPri);
         coneOS_printf("dist(s, K) = 0\n");
         coneOS_printf("c'x = %.4f\n", info->pobj);
     }

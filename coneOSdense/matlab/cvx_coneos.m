@@ -276,7 +276,7 @@ y = yy;
 z = real( reord * ( c - At * yy ) );
 if add_row, y = zeros( 0, 1 ); end
 
-tol = max(info.presid,info.dresid);
+tol = max(info.resPri,info.resDual);
 iters = info.iter;
 status = info.status;
 % coneOS targets the dual to sedumi formulation:

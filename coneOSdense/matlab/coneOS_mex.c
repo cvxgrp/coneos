@@ -112,7 +112,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   mxSetM(plhs[1], d->m); 
   mxSetN(plhs[1], 1); 
   
-  const char * infoFields[] = {"iter","status","pobj","dobj","presid","dresid","gap","time"}; 
+  const char * infoFields[] = {"iter","status","pobj","dobj","resPri","resDual","relGap","time"}; 
   const int numInfoFields = 8;
   mwSize one[1] = {1};
   mxArray * xm;
@@ -133,16 +133,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   *mxGetPr(xm) = info.dobj;
   
   xm = mxCreateDoubleMatrix(1, 1, mxREAL);
-  mxSetField(plhs[2], 0, "presid", xm);
-  *mxGetPr(xm) = info.presid;
+  mxSetField(plhs[2], 0, "resPri", xm);
+  *mxGetPr(xm) = info.resPri;
   
   xm = mxCreateDoubleMatrix(1, 1, mxREAL);
-  mxSetField(plhs[2], 0, "dresid", xm);
-  *mxGetPr(xm) = info.dresid;
+  mxSetField(plhs[2], 0, "resDual", xm);
+  *mxGetPr(xm) = info.resDual;
   
   xm = mxCreateDoubleMatrix(1, 1, mxREAL);
-  mxSetField(plhs[2], 0, "gap", xm);
-  *mxGetPr(xm) = info.gap;
+  mxSetField(plhs[2], 0, "relGap", xm);
+  *mxGetPr(xm) = info.relGap;
 
   //info.time is millisecs - return value in secs
   xm = mxCreateDoubleMatrix(1, 1, mxREAL);

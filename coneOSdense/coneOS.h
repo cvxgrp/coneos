@@ -47,11 +47,12 @@ typedef struct SOL_VARS {
 typedef struct INFO {
 	int iter;
 	char status[16];
-	double pobj;
+	int stint; // status as int
+    double pobj;
 	double dobj;
-	double presid;
-	double dresid;
-	double gap;
+	double resPri;
+	double resDual;
+	double relGap;
 	double time;
 } Info;
 
