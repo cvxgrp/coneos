@@ -1,6 +1,8 @@
 #ifndef NORMAL_H_GUARD
 #define NORMAL_H_GUARD
 
+#define MIN_SCALE 1e-2
+
 void normalize(Data * d, Work * w, Cone * k){
     
 	double * D = coneOS_calloc(d->m, sizeof(double));
@@ -60,7 +62,7 @@ void normalize(Data * d, Work * w, Cone * k){
 		count += (k->s[i])*(k->s[i]);
     }
     for (i=0; i<d->m; ++i){
-        if (D[i] < 1e-1) D[i] = 1;
+        if (D[i] < MIN_SCALE) D[i] = MIN_SCALE;
     }
 	// scale the rows with D
 	for(i = 0; i < d->n; ++i){
@@ -71,14 +73,14 @@ void normalize(Data * d, Work * w, Cone * k){
 	// calculate and scale by col norms, E
 	for (i = 0; i < d->n; ++i){
 		E[i] = calcNorm(&(d->Ax[d->Ap[i]]),d->Ap[i+1] - d->Ap[i]);
-        if (E[i] < 1e-1) E[i] = 1;
+        if (E[i] < MIN_SCALE) E[i] = MIN_SCALE;
 		scaleArray(&(d->Ax[d->Ap[i]]), 1.0/E[i], d->Ap[i+1] - d->Ap[i]);
 	}
 	// scale b
 	for (i = 0; i < d->m; ++i){
 		d->b[i] /= D[i];
 	}
-	w->sc_b = 1/fmax(calcNorm(d->b,d->m),1e-1);
+	w->sc_b = 1/fmax(calcNorm(d->b,d->m),MIN_SCALE);
 	scaleArray(d->b, w->sc_b, d->m);
 	// scale c
 	for (i = 0; i < d->n; ++i){
@@ -96,7 +98,7 @@ void normalize(Data * d, Work * w, Cone * k){
 	for (i=0; i < d->m; ++i){
 		meanNormRowA += sqrt(nms[i])/d->m;
 	}
-	w->sc_c = meanNormRowA/fmax(calcNorm(d->c,d->n),1e-1);
+	w->sc_c = meanNormRowA/fmax(calcNorm(d->c,d->n),MIN_SCALE);
 	scaleArray(d->c, w->sc_c, d->n);
 
 	w->D = D;
