@@ -193,36 +193,31 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r, int i
 }
 
 static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct residuals * r){
-       double * x = sol->x, * y = sol->y, * s = sol->s;
-    /*
-       double * dr = coneOS_calloc(d->n,sizeof(double));
-       double * pr = coneOS_calloc(d->m,sizeof(double));
+    double * x = sol->x, * y = sol->y, * s = sol->s;
+    
+    double * dr = coneOS_calloc(d->n,sizeof(double));
+    double * pr = coneOS_calloc(d->m,sizeof(double));
 
-       accumByA(d,x,pr); // pr = Ax
-       addScaledArray(pr,s,d->m,1.0); // pr = Ax + s
+    accumByA(d,x,pr); // pr = Ax
+    addScaledArray(pr,s,d->m,1.0); // pr = Ax + s
 
-       accumByAtrans(d,y,dr); // dr = A'y
-     */	
+    accumByAtrans(d,y,dr); // dr = A'y
+
     double cTx = innerProd(x,d->c,d->n);
     double bTy = innerProd(y,d->b,d->m);
     info->pobj = cTx;
     info->dobj = -bTy;
     if (info->stint == SOLVED){
-        info->relGap = fabs(info->pobj-info->dobj) / (1 + fabs(cTx) + fabs(bTy));
-        info->resPri = r->resPri;
-        info->resDual = r->resDual ;
-        /*
-           addScaledArray(pr,d->b,d->m,-1.0); // pr = Ax + s - b
-           addScaledArray(dr,d->c,d->n,1.0); // dr = A'y + c
-           info->relGap = info->pobj-info->dobj;
-           info->resPri = calcNorm(pr,d->m);
-           info->resDual = calcNorm(dr,d->n);
-         */
+        addScaledArray(pr,d->b,d->m,-1.0); // pr = Ax + s - b
+        addScaledArray(dr,d->c,d->n,1.0); // dr = A'y + c
+        info->relGap = info->pobj-info->dobj / (1 + fabs(cTx) + fabs(bTy));
+        info->resPri = calcNorm(pr,d->m) / (1 + w->nm_b);
+        info->resDual = calcNorm(dr,d->n) / (1+ w->nm_c);
     } else {
         if (info->stint == UNBOUNDED) {    
             info->dobj = NAN;
             info->relGap = NAN;
-            info->resPri = r->resPri / -cTx;
+            info->resPri = calcNorm(pr,d->m) * w->nm_c / -cTx / (1+ w->nm_b);
             info->resDual = NAN;
             scaleArray(x,-1/cTx,d->n);
             scaleArray(s,-1/cTx,d->m);
@@ -232,13 +227,13 @@ static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct re
             info->pobj = NAN;
             info->relGap = NAN;
             info->resPri = NAN;
-            info->resDual = r->resDual / -bTy;
+            info->resDual = calcNorm(dr,d->n) * w->nm_b / -bTy / (1+ w->nm_c);
             scaleArray(y,-1/bTy,d->m);
             info->dobj = -1;
         }
     }
     info->time = tocq();
-    //coneOS_free(dr); coneOS_free(pr);
+    coneOS_free(dr); coneOS_free(pr);
 }
 
 static inline Work * initWork(Data *d, Cone * k) {
