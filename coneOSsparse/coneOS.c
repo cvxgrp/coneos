@@ -146,9 +146,9 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r, int i
     r->kap = kap;
 
     double nmAxs = calcNorm(Axs,d->m);
+    r->resPri = cTx < 0 ? w->nm_c * nmAxs / (1+w->nm_b) / -cTx : NAN;
     //coneOS_printf("unbounded cert: %4e\n", w->nm_c * nmAxs / (1+w->nm_b) / -cTx);
-    if (w->nm_c * nmAxs / (1+w->nm_b) < - cTx * d->EPS_ABS) {
-        r->resPri = w->nm_c * nmAxs / (1+w->nm_b);
+    if (r->resPri < d->EPS_ABS) {
         return UNBOUNDED;
     }
 
@@ -167,29 +167,30 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r, int i
     }
 
     double nmATy = calcNorm(ATy,d->n);
+    r->resDual = bTy < 0 ? w->nm_b * nmATy / (1+w->nm_c) / -bTy : NAN;
     //coneOS_printf("infeas cert: %4e\n", w->nm_b * nmATy / (1+w->nm_c) /  - bTy );
-    if (w->nm_b * nmATy / (1+w->nm_c) <  - bTy * d->EPS_ABS) {
-        r->resDual = w->nm_b * nmATy / (1+w->nm_c);
+    if (r->resDual < d->EPS_ABS) {
         return INFEASIBLE;
     }
+    r->relGap = NAN;
 
-    double scale = tau + kap;
-    double rpri = calcNorm(pr,d->m) / (1+w->nm_b) / scale;
-    double rdua = calcNorm(dr,d->n) / (1+w->nm_c) / scale;
-    double gap = fabs(kap + cTx + bTy) / (scale + fabs(cTx) + fabs(bTy));
+    int status = 0;
+    if (tau > kap){
+        double rpri = calcNorm(pr,d->m) / (1+w->nm_b) / tau;
+        double rdua = calcNorm(dr,d->n) / (1+w->nm_c) / tau;
+        double gap = fabs(cTx + bTy) / (tau + fabs(cTx) + fabs(bTy));
 
-    // coneOS_printf("primal resid: %4e, dual resid %4e, pobj %4e, dobj %4e, gap %4e\n", rpri,rdua,cTx,-bTy,gap);
-    // coneOS_printf("primal resid: %4e, dual resid %4e, gap %4e\n",rpri,rdua,gap);
-
-    coneOS_free(dr); coneOS_free(pr); coneOS_free(Axs); coneOS_free(ATy);
-
-    r->resPri = rpri;
-    r->resDual = rdua;
-    r->relGap = gap;
-    if (fmax(fmax(rpri,rdua),gap) < d->EPS_ABS) {
-        return SOLVED;
+        r->resPri = rpri;
+        r->resDual = rdua;
+        r->relGap = gap;
+        // coneOS_printf("primal resid: %4e, dual resid %4e, pobj %4e, dobj %4e, gap %4e\n", rpri,rdua,cTx,-bTy,gap);
+        // coneOS_printf("primal resid: %4e, dual resid %4e, gap %4e\n",rpri,rdua,gap);
+        if (fmax(fmax(rpri,rdua),gap) < d->EPS_ABS) {
+            status = SOLVED;
+        }
     }
-    return 0;
+    coneOS_free(dr); coneOS_free(pr); coneOS_free(Axs); coneOS_free(ATy);
+    return status;
 }
 
 static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct residuals * r){
