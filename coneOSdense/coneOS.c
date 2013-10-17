@@ -158,6 +158,7 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r, int i
     addScaledArray(pr,d->b,d->m, w->u_t[w->l-1] - tau) ; // pr = Ax + s - b * tau
 
     if (d->NORMALIZE) {
+        kap /= (w->scale * w->sc_c * w->sc_b);
         for (i = 0; i < d->m; ++i) {
             pr[i] *= D[i]/(w->sc_b * w->scale);
         } 
