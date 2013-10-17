@@ -210,7 +210,7 @@ static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct re
     if (info->stint == SOLVED){
         addScaledArray(pr,d->b,d->m,-1.0); // pr = Ax + s - b
         addScaledArray(dr,d->c,d->n,1.0); // dr = A'y + c
-        info->relGap = info->pobj-info->dobj / (1 + fabs(cTx) + fabs(bTy));
+        info->relGap = fabs(cTx + bTy) / (1 + fabs(cTx) + fabs(bTy));
         info->resPri = calcNorm(pr,d->m) / (1 + w->nm_b);
         info->resDual = calcNorm(dr,d->n) / (1+ w->nm_c);
     } else {
