@@ -146,7 +146,7 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r, int i
     r->kap = kap;
 
     double nmAxs = calcNorm(Axs,d->m);
-    r->resPri = cTx < 0 ? w->nm_c * nmAxs / (1+w->nm_b) / -cTx : NAN;
+    r->resPri = cTx < 0 ? nmAxs / -cTx : NAN;
     //coneOS_printf("unbounded cert: %4e\n", w->nm_c * nmAxs / (1+w->nm_b) / -cTx);
     if (r->resPri < d->EPS_ABS) {
         return UNBOUNDED;
@@ -167,7 +167,7 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r, int i
     }
 
     double nmATy = calcNorm(ATy,d->n);
-    r->resDual = bTy < 0 ? w->nm_b * nmATy / (1+w->nm_c) / -bTy : NAN;
+    r->resDual = bTy < 0 ? nmATy / -bTy : NAN;
     //coneOS_printf("infeas cert: %4e\n", w->nm_b * nmATy / (1+w->nm_c) /  - bTy );
     if (r->resDual < d->EPS_ABS) {
         return INFEASIBLE;
@@ -175,7 +175,7 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r, int i
     r->relGap = NAN;
 
     int status = 0;
-    if (tau > kap){
+    if (tau > kap) {
         double rpri = calcNorm(pr,d->m) / (1+w->nm_b) / tau;
         double rdua = calcNorm(dr,d->n) / (1+w->nm_c) / tau;
         double gap = fabs(cTx + bTy) / (tau + fabs(cTx) + fabs(bTy));
@@ -218,7 +218,7 @@ static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct re
         if (info->stint == UNBOUNDED) {    
             info->dobj = NAN;
             info->relGap = NAN;
-            info->resPri = calcNorm(pr,d->m) * w->nm_c / -cTx / (1+ w->nm_b);
+            info->resPri = calcNorm(pr,d->m) / -cTx ;
             info->resDual = NAN;
             scaleArray(x,-1/cTx,d->n);
             scaleArray(s,-1/cTx,d->m);
@@ -228,7 +228,7 @@ static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct re
             info->pobj = NAN;
             info->relGap = NAN;
             info->resPri = NAN;
-            info->resDual = calcNorm(dr,d->n) * w->nm_b / -bTy / (1+ w->nm_c);
+            info->resDual = calcNorm(dr,d->n) / -bTy ;
             scaleArray(y,-1/bTy,d->m);
             info->dobj = -1;
         }
@@ -537,13 +537,13 @@ static inline void printFooter(Data * d, Info * info, Work * w) {
 
     if (info->stint == INFEASIBLE) {
         coneOS_printf("Certificate of primal infeasibility:\n");
-        coneOS_printf("|b|_2 * |A'y|_2 / (1 + |c|_2) = %2e\n", info->resDual);
+        coneOS_printf("|A'y|_2 = %2e\n", info->resDual);
         coneOS_printf("dist(y, K*) = 0\n");
         coneOS_printf("b'y = %.4f\n", info->dobj);
     } 
     else if (info->stint == UNBOUNDED) {
         coneOS_printf("Certificate of dual infeasibility:\n");
-        coneOS_printf("|c|_2 * |Ax + s|_2 / (1 + |b|_2) = %2e\n", info->resPri);
+        coneOS_printf("|Ax + s|_2 = %2e\n", info->resPri);
         coneOS_printf("dist(s, K) = 0\n");
         coneOS_printf("c'x = %.4f\n", info->pobj);
     }
