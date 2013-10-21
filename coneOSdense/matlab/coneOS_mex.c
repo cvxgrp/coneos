@@ -53,11 +53,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   else d->RHO_X = (double)*mxGetPr(RHO_X_mex);
 
   const mxArray *MAX_ITERS_mex = mxGetField(params,0,"MAX_ITERS");
-  if (MAX_ITERS_mex == NULL) d->MAX_ITERS = 2000;
+  if (MAX_ITERS_mex == NULL) d->MAX_ITERS = 2500;
   else d->MAX_ITERS = (int)*mxGetPr(MAX_ITERS_mex);
 
   const mxArray *EPS_ABS_mex = mxGetField(params,0,"EPS_ABS");
-  if (EPS_ABS_mex == NULL) d->EPS_ABS = 5e-3;
+  if (EPS_ABS_mex == NULL) d->EPS_ABS = 1e-3;
   else d->EPS_ABS = (double)*mxGetPr(EPS_ABS_mex);
 
   const mxArray *UNDET_TOL_mex = mxGetField(params,0,"UNDET_TOL");

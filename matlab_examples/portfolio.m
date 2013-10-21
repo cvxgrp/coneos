@@ -67,7 +67,6 @@ for i = 1:length(ns)
         if (save_results); save('data/portfolio_coneos_direct', 'coneos_direct'); end
         
         %%
-        
         tic
         cvx_begin
         cvx_solver coneos

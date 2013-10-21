@@ -1,12 +1,12 @@
 close all; clear all
-cd 'DIMACS'
+cd 'DIMACS_mat_files'
 
 run ../../coneOSsparse/matlab/install_coneos_cvx.m
 copyfile('../../coneOSsparse/matlab/coneos_direct.m*','.');
 
-cvx_on = false;
-coneos_on = true;
-save_data = true;
+cvx_on = true;
+coneos_on = false;
+save_data = false;
 tests = dir('*.mat');
 params = struct('VERBOSE', 1, 'EPS_ABS', 1e-5, 'MAX_ITERS', 10000);
 for i=1:length(tests)
@@ -25,7 +25,7 @@ for ii = 1:N
     
     clear A At b c K
     test_name = tests(i).name;
-    f = ['DIMACS/' test_name];
+    f = ['DIMACS_mat_files/' test_name];
     test_name = test_name(1:end-4); % strip .mat
     fprintf('running test %i out of %i : %s\n', ii, N, test_name);
 
@@ -83,6 +83,7 @@ for ii = 1:N
         
         cvx_begin %quiet
         cvx_solver coneos%_matlab
+        %cvx_solver_settings('MAX_ITERS',20000)
         variables xcvx(n) scvx(m)
         dual variable zcvx
         minimize(data.c'*xcvx)
