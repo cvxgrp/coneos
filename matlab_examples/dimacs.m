@@ -9,6 +9,7 @@ cvx_use_solver = 'sdpt3';
 
 coneos_on = false;
 save_results = true;
+
 tests = dir('*.mat');
 params = struct('VERBOSE', 1, 'EPS_ABS', 1e-5, 'MAX_ITERS', 10000);
 for i=1:length(tests)
@@ -21,6 +22,11 @@ time_pat_cvx = 'Total CPU time \(secs\)\s*=\s*(?<total>[\d\.]+)';
 iter_pat_coneos = {'(?<iter>[\d]+)\|'};
 
 %%
+
+if exist('data/dimacs_cvx.mat')
+    load('data/dimacs_cvx.mat')
+end
+
 N = length(tests);
 for ii = 1:N
     i = solve_order(ii); %% solve in increasing order of size
@@ -30,7 +36,7 @@ for ii = 1:N
     f = ['DIMACS_mat_files/' test_name];
     test_name = test_name(1:end-4); % strip .mat
     fprintf('running test %i out of %i : %s\n', ii, N, test_name);
-
+    
     load(f)
     
     [m1,n1] = size(b);
@@ -80,37 +86,44 @@ for ii = 1:N
     
     
     if cvx_on
-        [m,n] = size(data.A);
+        if (exist('dimacs_cvx') && ~isfield(dimacs_cvx,test_name))
+            try
+                [m,n] = size(data.A);
                 
-        cvx_begin %quiet
-        cvx_solver(cvx_use_solver)
-        %cvx_solver_settings('MAX_ITERS',2500,'EPS',1e-3)
-        variables xcvx(n) scvx(m)
-        dual variable zcvx
-        minimize(data.c'*xcvx)
-        zcvx: data.A*xcvx + scvx == data.b
-        scvx(1:cone.f) == 0
-        scvx(cone.f+1:cone.f+cone.l) >= 0
-        idx=cone.f+cone.l;
-        if isempty(idx) idx = 0; end
-        for kk =1:length(cone.q)
-            norm(scvx(idx + 2: idx + cone.q(kk))) <= scvx(idx + 1)
-            idx = idx + cone.q(kk);
+                cvx_begin %quiet
+                cvx_solver(cvx_use_solver)
+                %cvx_solver_settings('MAX_ITERS',2500,'EPS',1e-3)
+                variables xcvx(n) scvx(m)
+                dual variable zcvx
+                minimize(data.c'*xcvx)
+                zcvx: data.A*xcvx + scvx == data.b
+                scvx(1:cone.f) == 0
+                scvx(cone.f+1:cone.f+cone.l) >= 0
+                idx=cone.f+cone.l;
+                if isempty(idx) idx = 0; end
+                for kk =1:length(cone.q)
+                    norm(scvx(idx + 2: idx + cone.q(kk))) <= scvx(idx + 1)
+                    idx = idx + cone.q(kk);
+                end
+                for kk =1:length(cone.s)
+                    reshape(scvx(idx+1:idx + cone.s(kk)^2),cone.s(kk),cone.s(kk)) == semidefinite(cone.s(kk));
+                    idx = idx + cone.s(kk)^2;
+                end
+                cvx_end
+                %output = evalc('cvx_end')
+                
+                if (cvx_use_solver=='sdpt3')
+                    cvx.(test_name).obj(i) = cvx_optval;
+                    timing = regexp(output, time_pat_cvx, 'names');
+                    cvx.(test_name).time{i} = str2num(timing.total);
+                    cvx.(test_name).output = output;
+                    if (save_results); save('../data/dimacs_cvx', 'dimacs_cvx'); end;
+                end
+            catch err
+                cvx.(test_name).err = err;
+            end
         end
-        for kk =1:length(cone.s)
-            reshape(scvx(idx+1:idx + cone.s(kk)^2),cone.s(kk),cone.s(kk)) == semidefinite(cone.s(kk));
-            idx = idx + cone.s(kk)^2;
-        end
-        output = evalc('cvx_end')
         
-        if (cvx_use_solver=='sdpt3')
-            cvx.(test_name).obj(i) = cvx_optval;
-            timing = regexp(output, time_pat_cvx, 'names');
-            cvx.(test_name).time{i} = str2num(timing.total);
-            cvx.(test_name).output = output;
-            if (save_results); save('../data/dimacs_cvx', 'cvx'); end;
-        end
-                
     end
     
     if coneos_on
@@ -140,7 +153,7 @@ for ii = 1:N
             if save_results; save('../data/dimacs_coneos','coneos'); end
         end
     end
-        
+    
 end
 delete 'coneos_direct.m*'
 cd ..
