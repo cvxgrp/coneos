@@ -86,7 +86,7 @@ for ii = 1:N
     
     
     if cvx_on
-        if (exist('dimacs_cvx') && ~isfield(dimacs_cvx,test_name))
+        if (~exist('dimacs_cvx') || ~isfield(dimacs_cvx,test_name))
             try
                 [m,n] = size(data.A);
                 
