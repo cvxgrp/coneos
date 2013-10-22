@@ -1,12 +1,14 @@
 close all; clear all
 cd 'DIMACS_mat_files'
 
-run ../../coneOSsparse/matlab/install_coneos_cvx.m
-copyfile('../../coneOSsparse/matlab/coneos_direct.m*','.');
+%run ../../coneOSsparse/matlab/install_coneos_cvx.m
+%copyfile('../../coneOSsparse/matlab/coneos_direct.m*','.');
 
 cvx_on = true;
+cvx_use_solver = 'sdpt3';
+
 coneos_on = false;
-save_data = false;
+save_results = true;
 tests = dir('*.mat');
 params = struct('VERBOSE', 1, 'EPS_ABS', 1e-5, 'MAX_ITERS', 10000);
 for i=1:length(tests)
@@ -78,12 +80,11 @@ for ii = 1:N
     
     
     if cvx_on
-        % CVX:
         [m,n] = size(data.A);
-        
+                
         cvx_begin %quiet
-        cvx_solver coneos%_matlab
-        %cvx_solver_settings('MAX_ITERS',20000)
+        cvx_solver(cvx_use_solver)
+        %cvx_solver_settings('MAX_ITERS',2500,'EPS',1e-3)
         variables xcvx(n) scvx(m)
         dual variable zcvx
         minimize(data.c'*xcvx)
@@ -100,9 +101,16 @@ for ii = 1:N
             reshape(scvx(idx+1:idx + cone.s(kk)^2),cone.s(kk),cone.s(kk)) == semidefinite(cone.s(kk));
             idx = idx + cone.s(kk)^2;
         end
-        cvx_end
+        output = evalc('cvx_end')
         
-        cvx_objval.(test_name) =  cvx_optval;
+        if (cvx_use_solver=='sdpt3')
+            cvx.(test_name).obj(i) = cvx_optval;
+            timing = regexp(output, time_pat_cvx, 'names');
+            cvx.(test_name).time{i} = str2num(timing.total);
+            cvx.(test_name).output = output;
+            if (save_results); save('../data/dimacs_cvx', 'cvx'); end;
+        end
+                
     end
     
     if coneos_on
@@ -128,11 +136,11 @@ for ii = 1:N
             coneos_dobjval.(test_name) = data.b'*z_m;
             coneos_pobjval.(test_name) = data.c'*x_m;
             coneos_output.(test_name) = output;
+            
+            if save_results; save('../data/dimacs_coneos','coneos'); end
         end
     end
-    
-    if save_data; save ../data/dimacs_run_data; end
-    
+        
 end
 delete 'coneos_direct.m*'
 cd ..
