@@ -23,8 +23,8 @@ iter_pat_coneos = {'(?<iter>[\d]+)\|'};
 
 %%
 
-if exist('data/dimacs_cvx.mat')
-    load('data/dimacs_cvx.mat')
+if exist('../data/dimacs_cvx.mat')
+    load('../data/dimacs_cvx.mat')
 end
 
 N = length(tests);
@@ -112,16 +112,15 @@ for ii = 1:N
                 cvx_end
                 %output = evalc('cvx_end')
                 
-                if (cvx_use_solver=='sdpt3')
-                    cvx.(test_name).obj(i) = cvx_optval;
-                    timing = regexp(output, time_pat_cvx, 'names');
-                    cvx.(test_name).time{i} = str2num(timing.total);
-                    cvx.(test_name).output = output;
-                    if (save_results); save('../data/dimacs_cvx', 'dimacs_cvx'); end;
-                end
+                dimacs_cvx.(test_name).obj(i) = cvx_optval;
+                timing = regexp(output, time_pat_cvx, 'names');
+                dimacs_cvx.(test_name).time{i} = str2num(timing.total);
+                dimacs_cvx.(test_name).output = output;
             catch err
-                cvx.(test_name).err = err;
+                dimacs_cvx.(test_name).err = err;
             end
+            if (save_results); save('../data/dimacs_cvx', 'dimacs_cvx','-v7.3'); end;
+            
         end
         
     end
@@ -150,7 +149,7 @@ for ii = 1:N
             coneos_pobjval.(test_name) = data.c'*x_m;
             coneos_output.(test_name) = output;
             
-            if save_results; save('../data/dimacs_coneos','coneos'); end
+            if save_results; save('../data/dimacs_coneos','coneos','-v7.3'); end
         end
     end
     
