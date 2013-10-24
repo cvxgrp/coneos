@@ -5,7 +5,7 @@ cd 'DIMACS_mat_files'
 %copyfile('../../coneOSsparse/matlab/coneos_direct.m*','.');
 
 cvx_on = true;
-cvx_use_solver = 'sdpt3';
+%cvx_use_solver = 'sdpt3';
 
 coneos_on = false;
 save_results = true;
@@ -17,28 +17,38 @@ for i=1:length(tests)
 end
 [szes, solve_order] = sort(szes);
 
-time_pat_coneos = 'Time taken: (?<total>[\d\.]+)';
+
+%time_pat_coneos = 'Time taken: (?<total>[\d\.]+)';
 time_pat_cvx = 'Total CPU time \(secs\)\s*=\s*(?<total>[\d\.]+)';
-iter_pat_coneos = {'(?<iter>[\d]+)\|'};
+%iter_pat_coneos = {'(?<iter>[\d]+)\|'};
 
 %%
 
-if exist('../data/dimacs_cvx.mat')
-    load('../data/dimacs_cvx.mat')
+if exist('../data/dimacs_sdpt3.mat')
+    load('../data/dimacs_sdpt3.mat')
 end
 
 N = length(tests);
+
+[ ver, isoctave, fs, ps ] = cvx_version;
+addpath(strcat(fs,'/sdpt3/'));
+addpath(strcat(fs,'/sdpt3/Solver'));
+addpath(strcat(fs,'/sdpt3/Solver/Mexfun'));
+addpath(strcat(fs,'/sdpt3/HSDSolver'));
+
+
 for ii = 1:N
     i = solve_order(ii); %% solve in increasing order of size
     
-    clear A At b c K
+    %clear A At b c K
+    clear blk A C b output obj X y Z info runhist
     test_name = tests(i).name;
     f = ['DIMACS_mat_files/' test_name];
     test_name = test_name(1:end-4); % strip .mat
     fprintf('running test %i out of %i : %s\n', ii, N, test_name);
     
-    load(f)
-    
+    %load(f)
+    %{
     [m1,n1] = size(b);
     [m2,n2] = size(c);
     if m1 == 1,
@@ -83,11 +93,14 @@ for ii = 1:N
     end
     if (data.b == 0); data.b = zeros(size(data.A,1),1); end
     if (data.c == 0); data.c = zeros(size(data.A,2),1); end
-    
+    %}
     
     if cvx_on
-        if (~exist('dimacs_cvx') || ~isfield(dimacs_cvx,test_name))
+        
+        if (~exist('dimacs_sdpt3') || ~isfield(dimacs_sdpt3,test_name))
             try
+                
+                %{
                 [m,n] = size(data.A);
                 
                 cvx_begin %quiet
@@ -109,17 +122,28 @@ for ii = 1:N
                     reshape(scvx(idx+1:idx + cone.s(kk)^2),cone.s(kk),cone.s(kk)) == semidefinite(cone.s(kk));
                     idx = idx + cone.s(kk)^2;
                 end
-                cvx_end
-                %output = evalc('cvx_end')
+                output = evalc('cvx_end')
                 
-                dimacs_cvx.(test_name).obj(i) = cvx_optval;
+                sdpt3.(test_name).obj = cvx_optval;
                 timing = regexp(output, time_pat_cvx, 'names');
-                dimacs_cvx.(test_name).time{i} = str2num(timing.total);
-                dimacs_cvx.(test_name).output = output;
+                sdpt3.(test_name).time = str2num(timing.total);
+                sdpt3.(test_name).output = output;
+                %}
+                
+                [blk,A,C,b] = read_sedumi(f);
+                [output,obj,X,y,Z,info,runhist] = evalc('sdpt3(blk,A,C,b)');
+                
+                output
+                
+                timing = regexp(output, time_pat_cvx, 'names');
+                dimacs_sdpt3.(test_name).time = str2num(timing.total);
+                dimacs_sdpt3.(test_name).info = info;
+                dimacs_sdpt3.(test_name).output = output;
+                
             catch err
-                dimacs_cvx.(test_name).err = err;
+                dimacs_sdpt3.(test_name).err = err;
             end
-            if (save_results); save('../data/dimacs_cvx', 'dimacs_cvx','-v7.3'); end;
+            if (save_results); save('../data/dimacs_sdpt3', 'dimacs_sdpt3','-v7.3'); end;
             
         end
         
