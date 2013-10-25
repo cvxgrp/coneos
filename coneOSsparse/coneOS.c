@@ -122,7 +122,7 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r, int i
     addScaledArray(Axs,s,d->m,1.0); // Axs = Ax + s
     memcpy(pr, Axs, d->m * sizeof(double)); // pr = Ax + s
     addScaledArray(pr,d->b,d->m,-tau); // pr = Ax + s - b * tau
-     */
+    */
 
     // does not require mult by A:
     memcpy(pr,&(w->u[d->n]),d->m * sizeof(double));
@@ -458,11 +458,7 @@ static inline void setSolution(Data * d,Work * w,Sol * sol, Info * info){
 
 static inline void sety(Data * d,Work * w, Sol * sol){
 	sol->y = coneOS_malloc(sizeof(double)*d->m);
-	int i;
-	for(i = 0; i < d->m; ++i) {
-		//sol->y[i] = 0.5 * (w->u[i + d->n]+w->u_t[i + d->n]);
-		sol->y[i] = w->u[i + d->n];
-	}
+	memcpy(sol->y, &(w->u[d->n]), d->m*sizeof(double));
 }
 
 static inline void sets(Data * d,Work * w, Sol * sol){
