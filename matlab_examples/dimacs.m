@@ -132,7 +132,8 @@ for ii = 1:N
                 
                 [blk,A,C,b] = read_sedumi(f);
                 [output,obj,X,y,Z,info,runhist] = evalc('sdpt3(blk,A,C,b)');
-                
+                %[obj,X,y,Z,info,runhist] = sdpt3(blk,A,C,b);
+
                 output
                 
                 timing = regexp(output, time_pat_cvx, 'names');
