@@ -498,7 +498,7 @@ static inline void printHeader(Data * d, Work * w, Cone * k) {
 		coneOS_printf("-");
 	}
 	coneOS_printf("\nvariables n = %i, constraints m = %i\n", d->n, d->m);
-    coneOS_printf("EPS = %.2e, MAX_ITERS = %i\nNon-zeros in A = %i\n", d->EPS_ABS, d->MAX_ITERS, d->Anz);
+    coneOS_printf("non-zeros in A = %i\n", d->Anz);
     
     int socVars = 0;
     for (int i=0;i<k->qsize;i++){
@@ -511,6 +511,8 @@ static inline void printHeader(Data * d, Work * w, Cone * k) {
 
     coneOS_printf("cones:\tfree/zero vars: %i\n\tlinear vars: %i\n\tsoc vars: %i, soc blks: %i\n\tsd vars: %i, sd blks: %i\n", k->f, k->l, socVars, k->qsize, sdVars,k->ssize);
     
+    coneOS_printf("EPS = %.2e, MAX_ITERS = %i\n", d->EPS_ABS, d->MAX_ITERS);
+ 
     for(i = 0; i < _lineLen_; ++i) {
 		coneOS_printf("-");
 	}
