@@ -1,7 +1,10 @@
 #include "private.h"
 
 int privateInitWork(Data * d, Work * w){
-  memcpy(w->method, "dense-indirect", 15);	
+  int len = 43;
+  char str[len]; 
+  sprintf(str, "dense-indirect, CG: iters %i, tol %.2e", d->CG_MAX_ITS, d->CG_TOL);
+  memcpy(w->method, str, len);	
   int j;
   w->p = coneOS_malloc(sizeof(Priv));
 	w->p->x = coneOS_malloc(d->n*sizeof(double));
