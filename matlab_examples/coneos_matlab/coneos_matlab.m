@@ -379,7 +379,7 @@ z = reshape(z,n,n);
 zs=z+z';
 [V,S] = eig(zs);
 S(S>0) = 0;
-z = V*(-S/2)*V' + z;
+z = V*(-S/2)*V' + zs/2;
 z = z(:);
 end
 
