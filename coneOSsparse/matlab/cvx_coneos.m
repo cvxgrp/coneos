@@ -209,12 +209,37 @@ if( ~isreal(At) || ~isreal(c) || ~isreal(b) )
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-fprintf('A matrix density: %4f\n',nnz(At)/(size(At,1)*size(At,2)));
 data.A = sparse(At);
-data.bnz = nnz(c);
 data.b = full(c);
-data.cnz = nnz(b);
 data.c = -full(b);
+
+% symmetrize SD cone matrices:
+[mm,nn]=size(data.A);
+idx = K.f + K.l + sum(K.q);
+for i=1:size(K.s)
+    for j=1:nn
+        work = data.A(idx+1:idx+K.s(i)^2, j);
+        work = reshape(work,K.s(i),K.s(i));
+        if any(any(work~=work'))
+            %fprintf('warning: symmetrizing A\n')
+            work = (work+work')/2;
+            data.A(idx+1:idx+K.s(i)^2, j) = work(:);
+        end
+    end
+    
+    work = data.b(idx+1:idx+K.s(i)^2);
+    work = reshape(work,K.s(i),K.s(i));
+    if any(any(work~=work'))
+        %fprintf('warning: symmetrizing b\n')
+        work = (work+work')/2;
+        data.b(idx+1:idx+K.s(i)^2) = work(:);
+    end
+    
+    idx = idx + K.s(i)^2;
+end
+clear work;
+
+%fprintf('A matrix density: %4f\n',nnz(data.A)/(mm*nn));
 
 [m1,n1] = size(K.q);
 if m1 == 1,

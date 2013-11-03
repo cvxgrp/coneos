@@ -1,4 +1,4 @@
-function write_coneOS_data_sparse(data,cone,params,name)
+function write_coneOS_data_sparse(data,K,params,name)
 
 MAX_ITERS = 2500; % maximum num iterations for admm
 EPS_ABS   = 1e-3; % quitting tolerances
@@ -41,11 +41,37 @@ NNZ=length(i);
 %    -data.c' -data.b' 0]);
 %W=sparse([speye(n+m+1) Q';Q -speye(n+m+1)]);
 
+% symmetrize SD cone matrices:
+[mm,nn]=size(data.A);
+idx = K.f + K.l + sum(K.q);
+for i=1:size(K.s)
+    for j=1:nn
+        work = data.A(idx+1:idx+K.s(i)^2, j);
+        work = reshape(work,K.s(i),K.s(i));
+        if any(any(work~=work'))
+            %fprintf('warning: symmetrizing A\n')
+            work = (work+work')/2;
+            data.A(idx+1:idx+K.s(i)^2, j) = work(:);
+        end
+    end
+    
+    work = data.b(idx+1:idx+K.s(i)^2);
+    work = reshape(work,K.s(i),K.s(i));
+    if any(any(work~=work'))
+        %fprintf('warning: symmetrizing b\n')
+        work = (work+work')/2;
+        data.b(idx+1:idx+K.s(i)^2) = work(:);
+    end
+    
+    idx = idx + K.s(i)^2;
+end
+clear work;
+
 delete(name);
 fi = fopen(name,'w');
 fprintf(fi,'%u ',n);fprintf(fi,'%u ',m);
 fprintf(fi,'\n');
-fprintf(fi,'%u ',cone.f);fprintf(fi,'%u ',cone.l);fprintf(fi,'%u ',length(cone.q));fprintf(fi,'%u ',length(cone.s));
+fprintf(fi,'%u ',K.f);fprintf(fi,'%u ',K.l);fprintf(fi,'%u ',length(K.q));fprintf(fi,'%u ',length(K.s));
 fprintf(fi,'\n');
 fprintf(fi,'%u ',params.MAX_ITERS);fprintf(fi,'%u ',params.CG_MAX_ITS);
 fprintf(fi,'\n');
@@ -61,9 +87,9 @@ fprintf(fi,'%6.18f ',params.CG_TOL);
 fprintf(fi,'\n');
 fprintf(fi,'%u ',NNZ);
 
-fprintf(fi,'%u ',cone.q');
+fprintf(fi,'%u ',K.q');
 fprintf(fi,'\n');
-fprintf(fi,'%u ',cone.s');
+fprintf(fi,'%u ',K.s');
 fprintf(fi,'\n');
 fprintf(fi,'%6.18f ',data.b');
 fprintf(fi,'\n');
