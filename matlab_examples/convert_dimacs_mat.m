@@ -18,7 +18,7 @@ for ii = 1:N
     
     clear A At b c K
     test_name = tests(i).name;
-    f = ['DIMACS/' test_name];
+    f = [input_path '/' test_name];
     test_name = test_name(1:end-4); % strip .mat
     fprintf('converting test %i out of %i : %s\n', ii, N, test_name);
     

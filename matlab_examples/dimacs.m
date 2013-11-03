@@ -8,7 +8,7 @@ cvx_on = true;
 %cvx_use_solver = 'sdpt3';
 
 coneos_on = false;
-save_results = true;
+save_results = false;
 
 tests = dir('*.mat');
 params = struct('VERBOSE', 1, 'EPS_ABS', 1e-5, 'MAX_ITERS', 10000);
@@ -131,8 +131,8 @@ for ii = 1:N
                 %}
                 
                 [blk,A,C,b] = read_sedumi(f);
-                [output,obj,X,y,Z,info,runhist] = evalc('sdpt3(blk,A,C,b)');
-                %[obj,X,y,Z,info,runhist] = sdpt3(blk,A,C,b);
+                %[output,obj,X,y,Z,info,runhist] = evalc('sdpt3(blk,A,C,b)');
+                [obj,X,y,Z,info,runhist] = sdpt3(blk,A,C,b);
 
                 output
                 

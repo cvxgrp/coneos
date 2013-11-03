@@ -52,8 +52,8 @@ void projCone(double *x, Cone * k, Work * w)
 
 #ifdef LAPACK_LIB_FOUND
 void projectsdc(double *X, int n, Work * w)
-{ /* project onto the dual positive semi-definite cone */
-  if (n == 1){
+{ /* project onto the positive semi-definite cone */
+  if (n == 1) {
     if(X[0] < 0.0) X[0] = 0.0; 
     return;
   }
