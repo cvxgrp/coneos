@@ -1,6 +1,6 @@
 UNAME = $(shell uname -s)
 CC = gcc
-CFLAGS = -g -Wall -pedantic -O3 -I.
+CFLAGS = -g -Wall -pedantic -O3 -I. #-funroll-loops
 LDFLAGS = -lm 
 OPENFLAG = #-fopenmp
 

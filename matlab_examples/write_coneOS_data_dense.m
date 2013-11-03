@@ -33,6 +33,7 @@ m = size(data.A,1);
 %    -data.c' -data.b' 0]);
 %W=sparse([speye(n+m+1) Q';Q -speye(n+m+1)]);
 
+%{
 % symmetrize SD cone matrices:
 [mm,nn]=size(data.A);
 idx = K.f + K.l + sum(K.q);
@@ -58,7 +59,7 @@ for i=1:size(K.s)
     idx = idx + K.s(i)^2;
 end
 clear work;
-
+%}
 delete(name);
 fi = fopen(name,'w');
 fprintf(fi,'%u ',n);fprintf(fi,'%u ',m);

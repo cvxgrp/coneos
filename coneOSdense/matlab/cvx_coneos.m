@@ -213,6 +213,7 @@ data.A = full(At);
 data.b = full(c);
 data.c = -full(b);
 
+%{
 % symmetrize SD cone matrices:
 [mm,nn]=size(data.A);
 idx = K.f + K.l + sum(K.q);
@@ -238,7 +239,7 @@ for i=1:size(K.s)
     idx = idx + K.s(i)^2;
 end
 clear work;
-
+%}
 %fprintf('A matrix density: %4f\n',nnz(data.A)/(mm*nn));
 
 [m1,n1] = size(K.q);

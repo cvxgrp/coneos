@@ -1,9 +1,9 @@
 UNAME = $(shell uname -s)
 CC = gcc
-CFLAGS = -g -Wall -pedantic -O3 -I.
+CFLAGS = -g -Wall -pedantic -O3 -I. -funroll-loops
 LDFLAGS = -lm 
 # for openmp:
-CFLAGS += -fopenmp
+# CFLAGS += -fopenmp
 
 ifeq ($(UNAME), Darwin)
 	CFLAGS   += -std=c99
@@ -12,7 +12,7 @@ else
 endif
 
 ifeq (1,1)
-  CFLAGS += -I/opt/local/include -I/usr/local/include 
+  CFLAGS += -I/opt/local/include -I/usr/local/include
   LDFLAGS += -L/opt/local/lib -L/usr/local/lib
   LDFLAGS += -lopenblas -llapack -llapacke
   CFLAGS += -DLAPACK_LIB_FOUND
