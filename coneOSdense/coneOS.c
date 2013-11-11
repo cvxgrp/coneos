@@ -6,14 +6,16 @@ static int _lineLen_;
 // constants and data structures
 static const char* HEADER[] = {
 	" Iter ", 
-	" pri resid ",
-	" dua resid ",
-    "  rel gap  ",
-	"    kap    ",
-	"  time (s) ",
+	" pri res ",
+	" dua res ",
+    " rel gap ",
+	" pri obj ",
+    " dua obj ",
+    "   kap   ",
+	" time (s)",
 };
 
-static const int HEADER_LEN = 6;
+static const int HEADER_LEN = 8;
 
 static inline void updateDualVars(Data * d, Work * w);
 static inline void projectCones(Data * d,Work * w,Cone * k);
@@ -52,7 +54,7 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
     tic();
 	info->stint = 0; // not yet converged
     int i;
-	struct residuals r = {-1, -1, -1, -1, -1};
+	struct residuals r = {-1, -1, -1, -1, -1, -1, -1};
     Work * w = initWork(d,k);
 	if(d->VERBOSE) {
 		printHeader(d, w, k);
@@ -183,11 +185,16 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r, int i
         r->resPri = rpri;
         r->resDual = rdua;
         r->relGap = gap;
+        r->cTx = cTx / tau;
+        r->bTy = bTy / tau;
         // coneOS_printf("primal resid: %4e, dual resid %4e, pobj %4e, dobj %4e, gap %4e\n", rpri,rdua,cTx,-bTy,gap);
         // coneOS_printf("primal resid: %4e, dual resid %4e, gap %4e\n",rpri,rdua,gap);
         if (fmax(fmax(rpri,rdua),gap) < d->EPS_ABS) {
             status = SOLVED;
         }
+    } else {
+        r->cTx = NAN;
+        r->bTy = NAN;
     }
     coneOS_free(dr); coneOS_free(pr); coneOS_free(Axs); coneOS_free(ATy);
     return status;
@@ -473,11 +480,18 @@ static inline void setx(Data * d,Work * w, Sol * sol){
 
 static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
     coneOS_printf("%*i|", (int)strlen(HEADER[0]), i);
-	coneOS_printf("%*.2e ", (int)strlen(HEADER[1])-1, r->resPri);
+	coneOS_printf(" %*.2e ", (int)strlen(HEADER[1])-1, r->resPri);
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[2])-1, r->resDual);
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[3])-1, r->relGap);
-	coneOS_printf(" %*.2e ", (int)strlen(HEADER[4])-1, r->kap);
-	coneOS_printf(" %*.2e ", (int)strlen(HEADER[5])-1, tocq()/1e3);
+    if (r->cTx < 0) {
+	    coneOS_printf("%*.2e ", (int)strlen(HEADER[4])-1, r->cTx);
+	    coneOS_printf("%*.2e ", (int)strlen(HEADER[5])-1, -r->bTy);
+    } else {
+        coneOS_printf(" %*.2e ", (int)strlen(HEADER[4])-1, r->cTx);
+	    coneOS_printf(" %*.2e ", (int)strlen(HEADER[5])-1, -r->bTy);
+    }
+    coneOS_printf(" %*.2e ", (int)strlen(HEADER[6])-1, r->kap);
+	coneOS_printf(" %*.2e ", (int)strlen(HEADER[7])-1, tocq()/1e3);
 	coneOS_printf("\n");
 #ifdef MATLAB_MEX_FILE
 	mexEvalString("drawnow;");

@@ -76,6 +76,8 @@ struct residuals {
 	double resDual;
 	double resPri;
     double relGap;
+    double cTx;
+    double bTy;
     double tau;
 	double kap;
 };
