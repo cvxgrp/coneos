@@ -232,7 +232,17 @@ end
 
 %G = eye(n) + data.A'*data.A;
 
+global iter zs_old err ii num_eigs positive;
+positive = true;
+ii = 0;
+err = 0;
+zs_old = 0;
+num_eigs = 0;
+V = eye(K.s(1));
+S = zeros(K.s(1),1);
+tic
 for i=1:MAX_ITERS
+    iter = i;
     u_prev = u;
     % solve linear system
     ut = u+v;
@@ -285,8 +295,9 @@ for i=1:MAX_ITERS
         fprintf('Iteration %i, primal residual %4e, dual residual %4e, kap/tau %4e\n',i-1,err_pri/(tau+kap),err_dual/(tau+kap),kap/tau);
     end
 end
+num_eigs
 fprintf('Iteration %i, primal residual %4e, dual residual %4e, kap/tau %4e\n',i-1,err_pri/(tau+kap),err_dual/(tau+kap),kap/tau);
-
+toc
 %%
 tau = u(l);
 kap = v(end);
@@ -375,12 +386,87 @@ z=[v1;v2];
 end
 
 function z = proj_sdp(z,n)
+global V S zs_old err ii num_eigs positive iter;
 z = reshape(z,n,n);
-zs=z+z';
-[V,S] = eig(zs);
-S(S>0) = 0;
-z = V*(-S/2)*V' + zs/2;
+zs=(z+z')/2;
+
+err = sqrt(err^2 + norm(zs - zs_old,'fro')^2);
+
+if (1 || iter==1 || err > 100/(iter^2) || ii>=50)
+    
+    %ii
+    [V,S] = eig(zs);
+    S = diag(S);
+    err = 0;
+    ii = 0;
+    num_eigs = num_eigs + 1;
+    
+    num_pos = sum(S>0);
+    num_neg = sum(S<0);
+    if (num_pos < num_neg)
+        positive = true;
+        idx = find(S>0);
+        V = V(:,idx);
+        S = S(idx);
+    else
+        positive = false;
+        idx = find(S<0);
+        V = V(:,idx);
+        S = S(idx);
+    end
+    
+else
+    ii = ii + 1;
+    if (~isempty(S))
+        W = V'*(zs - zs_old)*V;
+        
+        S_plus = S + diag(W);
+        ll = length(S);
+        for i=1:ll
+            mEi = 1;
+            for j=1:ll
+                if (i~=j)
+                    mEi = min(mEi,abs(S(i) - S(j)));
+                end
+            end
+            if (mEi < 1e-1)
+                W(i,:) = 0;
+                W(i,i) = 1;
+            else
+                for j=1:ll
+                    if (i==j)
+                        W(i,j) = 1;
+                    else
+                        W(i,j) = W(i,j)/(S(j) - S(i));
+                    end
+                end
+            end
+        end
+        V = V*W;
+        V = V./(ones(n,1)*norms(V));
+        S = S_plus;
+    end
+    
+    %T = diag(S);
+    %T(T<0) = 0;
+    %norm(V*diag(S)*V - zs,'fro')/norm(zs,'fro')
+    %[Vt,St] = eig(zs);
+    %St(St<0) = 0;
+    %norm(Vt*St*Vt' - V*T*V','fro')/norm(Vt*St*Vt','fro')
+    
+end
+
+if (positive)
+    T = S;
+    T(T<0) = 0;
+    z = V*diag(T)*V';
+else
+    T = S;
+    T(T>0) = 0;
+    z = zs - V*diag(T)*V';
+end
 z = z(:);
+zs_old = zs;
 end
 
 function [y,itn] = solveLinSystem(w,data,rhs,n,m,CG_MAX_ITERS,CG_TOL,warm_start,rho_x)
