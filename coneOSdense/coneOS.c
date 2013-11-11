@@ -485,9 +485,12 @@ static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
 	coneOS_printf(" %*.2e ", (int)strlen(HEADER[3])-1, r->relGap);
     if (r->cTx < 0) {
 	    coneOS_printf("%*.2e ", (int)strlen(HEADER[4])-1, r->cTx);
-	    coneOS_printf("%*.2e ", (int)strlen(HEADER[5])-1, -r->bTy);
     } else {
         coneOS_printf(" %*.2e ", (int)strlen(HEADER[4])-1, r->cTx);
+    }
+    if (r->bTy > 0) {
+	    coneOS_printf("%*.2e ", (int)strlen(HEADER[5])-1, -r->bTy);
+    } else {
 	    coneOS_printf(" %*.2e ", (int)strlen(HEADER[5])-1, -r->bTy);
     }
     coneOS_printf(" %*.2e ", (int)strlen(HEADER[6])-1, r->kap);
