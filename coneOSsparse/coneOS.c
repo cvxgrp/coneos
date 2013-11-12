@@ -11,7 +11,7 @@ static const char* HEADER[] = {
     " rel gap ",
 	" pri obj ",
     " dua obj ",
-    "   kap   ",
+    "  kappa  ",
 	" time (s)",
 };
 
