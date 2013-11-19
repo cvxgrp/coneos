@@ -331,7 +331,8 @@ static inline void projectLinSys(Data * d,Work * w){
 static inline void freeWork(Work * w){
 	freePriv(w);
 	if(w){
-		if(w->Xs) coneOS_free(w->Xs);
+        if(w->method) coneOS_free(w->method);
+        if(w->Xs) coneOS_free(w->Xs);
 		if(w->Z) coneOS_free(w->Z);
 		if(w->e) coneOS_free(w->e);
 		if(w->u) coneOS_free(w->u);
@@ -488,7 +489,7 @@ static inline void printSummary(Data * d,Work * w,int i, struct residuals *r){
     } else {
         coneOS_printf(" %*.2e ", (int)strlen(HEADER[4])-1, r->cTx);
     }
-    if (r->bTy > 0) {
+    if (r->bTy >= 0) {
 	    coneOS_printf("%*.2e ", (int)strlen(HEADER[5])-1, -r->bTy);
     } else {
 	    coneOS_printf(" %*.2e ", (int)strlen(HEADER[5])-1, -r->bTy);

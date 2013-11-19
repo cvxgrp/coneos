@@ -1,7 +1,7 @@
 #include "private.h"
 
 int privateInitWork(Data * d, Work * w){
-  memcpy(w->method, "dense-direct", 13);
+  w->method = strdup("dense-direct");
   int k,j, n=d->n, m=d->m;
 	w->p = coneOS_malloc(sizeof(Priv));
 	double * A = d->Ax;

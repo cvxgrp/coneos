@@ -8,10 +8,9 @@ static inline void CGaccumByAtrans(Data *d, Work * w, const double *x, double *y
 static inline void transpose (Data * d, Work * w);
 
 int privateInitWork(Data * d, Work * w){
-  int len = 44;
-  char str[len]; 
-  sprintf(str, "sparse-indirect, CG: iters %i, tol %.2e", d->CG_MAX_ITS, d->CG_TOL);
-  memcpy(w->method, str, len);	
+  char str[80];
+  int len = sprintf(str,"sparse-indirect, CG: iters %i, tol %.2e", d->CG_MAX_ITS, d->CG_TOL);
+  w->method = strndup(str, len);
   w->p = coneOS_malloc(sizeof(Priv));
   w->p->p = coneOS_malloc((d->n)*sizeof(double));
   w->p->r = coneOS_malloc((d->n)*sizeof(double));
