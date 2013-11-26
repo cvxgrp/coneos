@@ -2,6 +2,7 @@
 #define NORMAL_H_GUARD
 
 #define MIN_SCALE 1e-2
+#define MAX_SCALE 1e3
 
 void normalize(Data * d, Work * w, Cone * k){
     
@@ -12,7 +13,7 @@ void normalize(Data * d, Work * w, Cone * k){
 	double wrk;
 	
 	// heuristic rescaling, seems to do well with a scaling of about 4
-	w->scale = 4.0;
+	w->scale = fmax( fmin( sqrt( d->n * d->m / d->Anz ) , MAX_SCALE) , 1);
 
 	// calculate row norms
 	for(i = 0; i < d->n; ++i){
@@ -63,6 +64,8 @@ void normalize(Data * d, Work * w, Cone * k){
     }
     for (i=0; i<d->m; ++i){
         if (D[i] < MIN_SCALE) D[i] = MIN_SCALE;
+        else if (D[i] > MAX_SCALE) D[i] = MAX_SCALE;
+
     }
 	// scale the rows with D
 	for(i = 0; i < d->n; ++i){
@@ -74,7 +77,8 @@ void normalize(Data * d, Work * w, Cone * k){
 	for (i = 0; i < d->n; ++i){
 		E[i] = calcNorm(&(d->Ax[d->Ap[i]]),d->Ap[i+1] - d->Ap[i]);
         if (E[i] < MIN_SCALE) E[i] = MIN_SCALE;
-		scaleArray(&(d->Ax[d->Ap[i]]), 1.0/E[i], d->Ap[i+1] - d->Ap[i]);
+		else if (E[i] > MAX_SCALE) E[i] = MAX_SCALE;
+        scaleArray(&(d->Ax[d->Ap[i]]), 1.0/E[i], d->Ap[i+1] - d->Ap[i]);
 	}
 	// scale b
 	for (i = 0; i < d->m; ++i){
