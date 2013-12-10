@@ -39,6 +39,8 @@ int read_in_data(FILE * fp,Data * d, Cone * k){
 	if(fscanf(fp, "%i", &(d->m))!= 1) return -1;
 	if(fscanf(fp, "%i", &(k->f))!= 1) return -1;
 	if(fscanf(fp, "%i", &(k->l))!= 1) return -1;
+	if(fscanf(fp, "%i", &(k->ep))!= 1) return -1;
+	if(fscanf(fp, "%i", &(k->ed))!= 1) return -1;
 	if(fscanf(fp, "%i", &(k->qsize))!= 1) return -1;
 	if(fscanf(fp, "%i", &(k->ssize))!= 1) return -1;
 	if(fscanf(fp, "%i", &(d->MAX_ITERS))!= 1) return -1;

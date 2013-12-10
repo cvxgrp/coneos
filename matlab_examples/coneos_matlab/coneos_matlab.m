@@ -58,7 +58,6 @@ if nargin==3
     if isfield(params,'CG_TOL');CG_TOL = params.CG_TOL;end
     if isfield(params,'CG_VERBOSE');CG_VERBOSE = params.CG_VERBOSE;end
 end
-
 %%
 
 n = length(data.c);
@@ -194,6 +193,9 @@ if (NORMALIZE)
     %}
     
 end
+Q=sparse([zeros(n) data.A' data.c;
+    -data.A zeros(m,m) data.b;
+   -data.c' -data.b' 0]);
 
 %%
 work = struct('USE_INDIRECT', USE_INDIRECT);
@@ -229,17 +231,11 @@ else
     u = zeros(l,1);u(end) = 1;
     v = zeros(l,1);%v(end) = 0;
 end
+%u = randn(l,1);u = u / norm(u);
+
+%sum_nm2(1) = norm(Q*u)^2 + norm(v)^2;
 
 %G = eye(n) + data.A'*data.A;
-
-global iter zs_old err ii num_eigs positive;
-positive = true;
-ii = 0;
-err = 0;
-zs_old = 0;
-num_eigs = 0;
-V = eye(K.s(1));
-S = zeros(K.s(1),1);
 tic
 for i=1:MAX_ITERS
     iter = i;
@@ -283,6 +279,9 @@ for i=1:MAX_ITERS
         kap_i(i) = v(end);
         pobj(i) = data.c'*ut(1:n)/tau;
         dobj(i) = -data.b'*ut(n+1:n+m)/tau;
+        sum_nm2(i) = norm(u - v)^2;
+        %sum_nm2_t(i) = norm(ut)^2 + norm(Q*ut)^2;
+
         %utv(i) = abs(ut'*v/(tau+kap));
         %vtu(i) = abs(vt'*u/(tau+kap));
     end
@@ -295,7 +294,6 @@ for i=1:MAX_ITERS
         fprintf('Iteration %i, primal residual %4e, dual residual %4e, kap/tau %4e\n',i-1,err_pri/(tau+kap),err_dual/(tau+kap),kap/tau);
     end
 end
-num_eigs
 fprintf('Iteration %i, primal residual %4e, dual residual %4e, kap/tau %4e\n',i-1,err_pri/(tau+kap),err_dual/(tau+kap),kap/tau);
 toc
 %%
@@ -342,6 +340,7 @@ if GEN_PLOTS
     legend('tau','kappa')
     figure();plot(pobj);hold on;plot(dobj,'r');
     legend('primal obj','dual obj')
+    figure();plot(sum_nm2);hold on;%plot(sum_nm2_t,'r');
     %figure(); semilogy(utv);hold on;semilogy(vtu,'r');
     if USE_INDIRECT;
         figure();plot(cg_its);xlabel('k');ylabel('Conjugate Gradient Iterations');
@@ -386,13 +385,9 @@ z=[v1;v2];
 end
 
 function z = proj_sdp(z,n)
-global V S zs_old err ii num_eigs positive iter;
 z = reshape(z,n,n);
 zs=(z+z')/2;
 
-err = sqrt(err^2 + norm(zs - zs_old,'fro')^2);
-
-if (1 || iter==1 || err > 100/(iter^2) || ii>=50)
     
     %ii
     [V,S] = eig(zs);
@@ -415,46 +410,6 @@ if (1 || iter==1 || err > 100/(iter^2) || ii>=50)
         S = S(idx);
     end
     
-else
-    ii = ii + 1;
-    if (~isempty(S))
-        W = V'*(zs - zs_old)*V;
-        
-        S_plus = S + diag(W);
-        ll = length(S);
-        for i=1:ll
-            mEi = 1;
-            for j=1:ll
-                if (i~=j)
-                    mEi = min(mEi,abs(S(i) - S(j)));
-                end
-            end
-            if (mEi < 1e-1)
-                W(i,:) = 0;
-                W(i,i) = 1;
-            else
-                for j=1:ll
-                    if (i==j)
-                        W(i,j) = 1;
-                    else
-                        W(i,j) = W(i,j)/(S(j) - S(i));
-                    end
-                end
-            end
-        end
-        V = V*W;
-        V = V./(ones(n,1)*norms(V));
-        S = S_plus;
-    end
-    
-    %T = diag(S);
-    %T(T<0) = 0;
-    %norm(V*diag(S)*V - zs,'fro')/norm(zs,'fro')
-    %[Vt,St] = eig(zs);
-    %St(St<0) = 0;
-    %norm(Vt*St*Vt' - V*T*V','fro')/norm(Vt*St*Vt','fro')
-    
-end
 
 if (positive)
     T = S;

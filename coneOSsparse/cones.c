@@ -47,7 +47,120 @@ void projCone(double *x, Cone * k, Work * w)
     coneOS_printf("ConeOS will return a wrong answer!\n");
 }
 #endif
-	/* project onto OTHER cones */
+
+    // exponential cone:
+#pragma omp parallel for
+    for (i=0; i < k->ep; ++i) {
+        projExpCone(&(x[count + 3*i]));
+    }
+    count += 3*k->ep;
+    
+    // dual exponential cone, via Moreau:
+    scaleArray(&(x[count]), -1, 3*k->ed); // x = -x;
+    double r,s,t;
+    int idx;
+#pragma omp parallel for private(r,s,t,idx)
+    for (i=0; i < k->ed; ++i) {
+        idx = count + 3*i;
+        r = x[idx];
+        s = x[idx+1];
+        t = x[idx+2];
+         
+        projExpCone(&(x[idx]));
+        
+        x[idx] -= r;
+        x[idx+1] -= s;
+        x[idx+2] -= t;
+    }
+    count += 3*k->ed;
+
+    /* project onto OTHER cones */
+}
+
+double expNewtonOneD(double rho, double y_hat, double z_hat) {
+    double t = fmax( -z_hat , 1e-6);
+    double f, fp;
+    for (int i=0; i<100; ++i){
+        
+        f = t * (t + z_hat) / rho / rho - y_hat/rho + log(t/rho) + 1;
+        fp = (2 * t + z_hat) / rho / rho + 1/t;
+
+        t = t - f/fp;
+        
+        if (t <= -z_hat) {
+            return 0;
+        } else if (t <= 0) {
+            return z_hat;
+        } else if ( fabs(f) < 1e-6 ) {
+            break;
+        }
+    }
+    return t + z_hat;
+}
+
+void expSolveForXWithRho(double * v, double * x, double rho) {
+    x[2] = expNewtonOneD(rho, v[1], v[2]);
+    x[1] = (x[2] - v[2]) * x[2] / rho;
+    x[0] = v[0] - rho;
+}
+
+double expCalcGrad(double * v, double * x, double rho) {
+    expSolveForXWithRho(v, x, rho);
+    if (x[1] <= 1e-12) {
+        return x[0];
+    } else {
+        return x[0] + x[1] * log( x[1] / x[2] ); 
+    }
+}
+
+void expGetRhoUb(double * v, double * x, double * ub, double * lb) {
+    *lb = 0;
+    *ub = 0.125;
+    while(expCalcGrad(v, x, *ub) > 0) {
+        *lb = *ub;
+        (*ub) *= 2;
+    }
+}
+
+// project onto the exponential cone, v has dimension *exactly* 3
+void projExpCone(double * v) {
+
+    double r = v[0], s = v[1], t = v[2];
+    // v in cl(Kexp)
+    if( (s*exp(r/s) <= t && s > 0) || (r <= 0 && s == 0 && t >= 0) ) {
+        return;
+    }
+
+    // -v in Kexp^*
+    if ( (-r < 0 && r*exp(s/r) <= -exp(1)*t) || (-r == 0 && -s >= 0 && -t >= 0) ) {
+        memset(v, 0, 3*sizeof(double));
+        return;
+    }
+
+    // special case with analytical solution
+    if(r < 0 && s < 0) {
+        v[1] = 0.0;
+        v[2] = fmax(v[2],0);
+        return;
+    }
+
+    double ub, lb, rho, g, x[3];
+    expGetRhoUb(v, x, &ub, &lb);
+    for(int i = 0; i < 100; ++i){
+        rho = (ub + lb)/2;
+        g = expCalcGrad(v, x, rho);
+        if (g > 0) {
+            lb = rho;
+        } else{
+            ub = rho;
+        }
+        if (ub - lb < 1e-6) {
+            break;
+        }
+    }
+    v[0] = x[0];
+    v[1] = x[1];
+    v[2] = x[2];
 }
 
 #ifdef LAPACK_LIB_FOUND

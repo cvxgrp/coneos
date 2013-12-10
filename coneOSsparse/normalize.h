@@ -62,6 +62,16 @@ void normalize(Data * d, Work * w, Cone * k){
 		}
 		count += (k->s[i])*(k->s[i]);
     }
+    
+    for(i = 0; i < k->ep + k->ed; ++i)
+    {
+        wrk = D[count]/3 + D[count + 1]/3 + D[count + 2]/3;
+        D[count] = wrk;
+        D[count + 1] = wrk;
+        D[count + 2] = wrk;
+        count += 3;
+    }
+
     for (i=0; i<d->m; ++i){
         if (D[i] < MIN_SCALE) D[i] = MIN_SCALE;
         else if (D[i] > MAX_SCALE) D[i] = MAX_SCALE;

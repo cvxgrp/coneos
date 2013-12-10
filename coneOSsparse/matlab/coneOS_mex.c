@@ -81,6 +81,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   k->f = (int)*mxGetPr(mxGetField(cone,0,"f"));
   k->l = (int)*mxGetPr(mxGetField(cone,0,"l"));
   
+  mxArray * ep = mxGetField(cone,0,"ep");
+  if(ep) k->ep = (int)*mxGetPr(ep);
+  else k->ep = 0;
+  mxArray * ed = mxGetField(cone,0,"ed");
+  if(ed) k->ed = (int)*mxGetPr(ed);
+  else k->ed = 0;
+ 
   double * q_mex = mxGetPr(mxGetField(cone,0,"q"));
   k->qsize = *(mxGetDimensions(mxGetField(cone,0,"q")));
   int i;

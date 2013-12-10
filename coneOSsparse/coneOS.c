@@ -527,7 +527,7 @@ static inline void printHeader(Data * d, Work * w, Cone * k) {
         sdVars += k->s[i]*k->s[i];
     }
 
-    coneOS_printf("cones:\tfree/zero vars: %i\n\tlinear vars: %i\n\tsoc vars: %i, soc blks: %i\n\tsd vars: %i, sd blks: %i\n", k->f, k->l, socVars, k->qsize, sdVars,k->ssize);
+    coneOS_printf("cones:\tfree/zero vars: %i\n\tlinear vars: %i\n\texp vars: %i\n\tdual exp vars: %i\n\tsoc vars: %i, soc blks: %i\n\tsd vars: %i, sd blks: %i\n", k->f, k->l, k->ep*3, k->ed*3, socVars, k->qsize, sdVars,k->ssize);
     
  
     for(i = 0; i < _lineLen_; ++i) {
