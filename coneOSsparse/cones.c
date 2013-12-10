@@ -8,72 +8,75 @@ void projectsdc(double * X, int n, Work * w);
 /* in place projection (with branches) */
 void projCone(double *x, Cone * k, Work * w)
 {
-	int i;
-	int count;
+    int i;
+    int count;
 
-	/* project onto positive orthant */
-	for(i = k->f; i < k->f+k->l; ++i)
-	{
-		if(x[i] < 0.0) x[i] = 0.0;
-		//x[i] = (x[i] < 0.0) ? 0.0 : x[i];
-	}
-	count = k->l+k->f;
-	/* project onto SOC */
-	for(i = 0; i < k->qsize; ++i)
-	{
-		double v1 = x[count];
-		double s = calcNorm(&(x[count+1]),k->q[i]-1);
-		double alpha = (s + v1)/2.0;
+    /* project onto positive orthant */
+    for(i = k->f; i < k->f+k->l; ++i)
+    {
+        if(x[i] < 0.0) x[i] = 0.0;
+        //x[i] = (x[i] < 0.0) ? 0.0 : x[i];
+    }
+    count = k->l+k->f;
+    /* project onto SOC */
+    for(i = 0; i < k->qsize; ++i)
+    {
+        double v1 = x[count];
+        double s = calcNorm(&(x[count+1]),k->q[i]-1);
+        double alpha = (s + v1)/2.0;
 
-		if(s <= v1) { /* do nothing */ }
-		else if (s <= - v1) {
-			memset(&(x[count]), 0, k->q[i]*sizeof(double));
-		} else {    
-			x[count] = alpha;
-			scaleArray(&(x[count+1]), alpha/s, k->q[i]-1);
-      //cblas_dscal(k->q[i]-1, alpha/s, &(x[count+1]),1);
-		}           
-		count += k->q[i];
-	}
+        if(s <= v1) { /* do nothing */ }
+        else if (s <= - v1) {
+            memset(&(x[count]), 0, k->q[i]*sizeof(double));
+        } else {    
+            x[count] = alpha;
+            scaleArray(&(x[count+1]), alpha/s, k->q[i]-1);
+            //cblas_dscal(k->q[i]-1, alpha/s, &(x[count+1]),1);
+        }           
+        count += k->q[i];
+    }
 #ifdef LAPACK_LIB_FOUND
-	/* project onto PSD cone */
-	for (i=0; i < k->ssize; ++i){
-		projectsdc(&(x[count]),k->s[i],w);
-		count += (k->s[i])*(k->s[i]);
-	}
+    /* project onto PSD cone */
+    for (i=0; i < k->ssize; ++i){
+        projectsdc(&(x[count]),k->s[i],w);
+        count += (k->s[i])*(k->s[i]);
+    }
 #else
-  if(k->ssize > 0){
-    coneOS_printf("WARNING: solving SDP, no lapack library specified in makefile!\n");
-    coneOS_printf("ConeOS will return a wrong answer!\n");
-}
+    if(k->ssize > 0){
+        coneOS_printf("WARNING: solving SDP, no lapack library specified in makefile!\n");
+        coneOS_printf("ConeOS will return a wrong answer!\n");
+    }
 #endif
 
-    // exponential cone:
-#pragma omp parallel for
-    for (i=0; i < k->ep; ++i) {
-        projExpCone(&(x[count + 3*i]));
-    }
-    count += 3*k->ep;
-    
-    // dual exponential cone, via Moreau:
-    scaleArray(&(x[count]), -1, 3*k->ed); // x = -x;
+    /*
+    * exponential cone is not self dual, if s \in K
+    * then y \in K^* and so if K is the primal cone
+    * here we project onto K^*, via Moreau
+    */
+    scaleArray(&(x[count]), -1, 3*k->ep); // x = -x;
     double r,s,t;
     int idx;
 #pragma omp parallel for private(r,s,t,idx)
-    for (i=0; i < k->ed; ++i) {
+    for (i=0; i < k->ep; ++i) {
         idx = count + 3*i;
         r = x[idx];
         s = x[idx+1];
         t = x[idx+2];
-         
+
         projExpCone(&(x[idx]));
-        
+
         x[idx] -= r;
         x[idx+1] -= s;
         x[idx+2] -= t;
     }
-    count += 3*k->ed;
+    count += 3*k->ep;
 
+    // exponential cone:
+#pragma omp parallel for
+    for (i=0; i < k->ed; ++i) {
+        projExpCone(&(x[count + 3*i]));
+    }
+    count += 3*k->ed;
     /* project onto OTHER cones */
 }
 

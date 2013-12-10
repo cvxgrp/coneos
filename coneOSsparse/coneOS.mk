@@ -3,7 +3,7 @@ CC = gcc
 CFLAGS = -g -Wall -pedantic -O3 -I. -funroll-loops
 LDFLAGS = -lm 
 # for openmp:
-# CFLAGS += -fopenmp
+CFLAGS += -fopenmp
 
 ifeq ($(UNAME), Darwin)
 	CFLAGS   += -std=c99

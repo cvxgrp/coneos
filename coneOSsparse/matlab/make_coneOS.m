@@ -77,7 +77,7 @@ catch err
     end
     eval(cmd);
     
-    disp('Compiled without lapack support - unable to solve SDPs (can solve LPs, QPs, SOCPs)')
+    disp('Compiled without lapack support - unable to solve SDPs (can solve LPs, QPs, SOCPs, EXPs)')
     
 end
 

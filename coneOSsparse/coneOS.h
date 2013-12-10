@@ -91,6 +91,7 @@ struct residuals {
 
 // these are actually library "api"'s
 int coneOS(Data * d, Cone * k, Sol * sol, Info * info);
+void printSol(Data * d, Sol * sol, Info * info);
 
 // these are pulled in from private.o
 int privateInitWork(Data * d, Work * w);

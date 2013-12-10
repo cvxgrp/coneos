@@ -13,7 +13,7 @@ void normalize(Data * d, Work * w, Cone * k){
 	double wrk;
 	
 	// heuristic rescaling, seems to do well with a scaling of about 4
-	w->scale = fmax( fmin( sqrt( d->n * d->m / d->Anz ) , MAX_SCALE) , 1);
+	w->scale =  4; //fmax( fmin( sqrt( d->n * d->m / d->Anz ) , MAX_SCALE) , 1);
 
 	// calculate row norms
 	for(i = 0; i < d->n; ++i){

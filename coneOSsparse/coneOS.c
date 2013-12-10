@@ -27,7 +27,6 @@ static inline void getInfo(Data * d, Work * w, Sol * sol, Info * info, struct re
 static inline void printSummary(Data * d,Work * w,int i, struct residuals *r);
 static inline void printHeader(Data * d, Work * w, Cone * k);
 static inline void printFooter(Data * d, Info * info, Work * w); 
-static inline void printSol(Data * d, Sol * sol, Info * info);
 static inline void freeWork(Work * w);
 static inline void projectLinSys(Data * d,Work * w);
 static inline Work * initWork(Data * d, Cone * k);
@@ -347,7 +346,7 @@ static inline void freeWork(Work * w){
 	}
 }
 
-static inline void printSol(Data * d, Sol * sol, Info * info){
+void printSol(Data * d, Sol * sol, Info * info){
 	int i;
 	coneOS_printf("%s\n",info->status); 
 	if (sol->x != NULL){
@@ -527,7 +526,7 @@ static inline void printHeader(Data * d, Work * w, Cone * k) {
         sdVars += k->s[i]*k->s[i];
     }
 
-    coneOS_printf("cones:\tfree/zero vars: %i\n\tlinear vars: %i\n\texp vars: %i\n\tdual exp vars: %i\n\tsoc vars: %i, soc blks: %i\n\tsd vars: %i, sd blks: %i\n", k->f, k->l, k->ep*3, k->ed*3, socVars, k->qsize, sdVars,k->ssize);
+    coneOS_printf("cones:\tfree/zero vars: %i\n\tlinear vars: %i\n\tsoc vars: %i, soc blks: %i\n\tsd vars: %i, sd blks: %i\n\texp vars: %i\n\tdual exp vars: %i\n", k->f, k->l, socVars, k->qsize, sdVars,k->ssize, k->ep*3, k->ed*3);
     
  
     for(i = 0; i < _lineLen_; ++i) {
