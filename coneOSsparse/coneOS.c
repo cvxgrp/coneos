@@ -267,9 +267,9 @@ static inline Work * initWork(Data *d, Cone * k) {
 
 	w->l = d->n+d->m+1;
 	w->u = coneOS_calloc(w->l,sizeof(double));
-	w->u[w->l-1] = w->l;
+	w->u[w->l-1] = sqrt(w->l);
 	w->v = coneOS_calloc(w->l,sizeof(double));
-	//w->v[w->l-1] = 0.0;
+	w->v[w->l-1] = sqrt(w->l);
 	w->u_t = coneOS_calloc(w->l,sizeof(double));
 	w->u_prev = coneOS_calloc(w->l,sizeof(double));
 	w->h = coneOS_calloc((w->l-1),sizeof(double));
@@ -526,7 +526,7 @@ static inline void printHeader(Data * d, Work * w, Cone * k) {
         sdVars += k->s[i]*k->s[i];
     }
 
-    coneOS_printf("cones:\tfree/zero vars: %i\n\tlinear vars: %i\n\tsoc vars: %i, soc blks: %i\n\tsd vars: %i, sd blks: %i\n\texp vars: %i\n\tdual exp vars: %i\n", k->f, k->l, socVars, k->qsize, sdVars,k->ssize, k->ep*3, k->ed*3);
+    coneOS_printf("cones:\tzero/free vars: %i\n\tlinear vars: %i\n\tsoc vars: %i, soc blks: %i\n\tsd vars: %i, sd blks: %i\n\texp vars: %i\n\tdual exp vars: %i\n", k->f, k->l, socVars, k->qsize, sdVars,k->ssize, k->ep*3, k->ed*3);
     
  
     for(i = 0; i < _lineLen_; ++i) {

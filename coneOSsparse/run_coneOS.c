@@ -26,7 +26,8 @@ int main(int argc, char **argv)
 	{
 		coneOS(d,k,sol,info);
 	}
-	freeData(d,k);
+	//printSol(d,sol,info);
+    freeData(d,k);
 	freeSol(sol);
 	coneOS_free(info);
 	return 0;
