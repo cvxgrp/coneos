@@ -38,7 +38,6 @@ static inline int exactConverged(Data * d, Work * w, struct residuals * r, int i
 
 /* coneOS returns one of the following integers: */
 /* (zero should never be returned) */
-
 #define FAILURE -4
 #define INDETERMINATE -3
 #define INFEASIBLE -2 // primal infeasible, dual unbounded
@@ -299,13 +298,14 @@ static inline Work * initWork(Data *d, Cone * k) {
 		w->Z = NULL;
 		w->e = NULL;
 	}
-
+    // hack:
     d->CG_MAX_ITS = d->CG_MAX_ITS*100;
 	d->CG_TOL = d->CG_TOL/100;
 	solveLinSys(d,w,w->g, NULL); 
 	d->CG_MAX_ITS = d->CG_MAX_ITS/100;
 	d->CG_TOL = d->CG_TOL*100;
-	scaleArray(&(w->g[d->n]),-1,d->m);
+	
+    scaleArray(&(w->g[d->n]),-1,d->m);
 	w->gTh = innerProd(w->h, w->g, w->l-1); 
 	return w;
 }

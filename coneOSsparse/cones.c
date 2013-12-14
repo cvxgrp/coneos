@@ -94,7 +94,7 @@ double expNewtonOneD(double rho, double y_hat, double z_hat) {
             return 0;
         } else if (t <= 0) {
             return z_hat;
-        } else if ( fabs(f) < 1e-6 ) {
+        } else if ( fabs(f) < 1e-9 ) {
             break;
         }
     }
@@ -157,7 +157,7 @@ void projExpCone(double * v) {
         } else{
             ub = rho;
         }
-        if (ub - lb < 1e-6) {
+        if (ub - lb < 1e-9) {
             break;
         }
     }
