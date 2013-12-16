@@ -6,7 +6,7 @@ sze_str{2} = 'med';
 sze_str{3} = 'large';
 
 %%
-for i=1:1%size(sizes,1)
+for i=1:size(sizes,1)
     clearvars -except i sizes sze_str
     
     str = ['data/l1logreg_' sze_str{i}]

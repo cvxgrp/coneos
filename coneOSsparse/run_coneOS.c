@@ -12,8 +12,8 @@ int main(int argc, char **argv)
 {
 	FILE * fp;
 	if(open_file(argc, argv, 1, DEMO_PATH, &fp)==-1) return -1;
-	Cone * k = coneOS_malloc(sizeof(Cone));
-	Data * d = coneOS_malloc(sizeof(Data));
+	Cone * k = coneOS_calloc(1,sizeof(Cone));
+	Data * d = coneOS_calloc(1,sizeof(Data));
 	if (read_in_data(fp,d,k) == -1){
         printf("Error reading in data, aborting.\n");
         return -1;
@@ -38,12 +38,22 @@ int read_in_data(FILE * fp,Data * d, Cone * k){
 	d->RHO_X = RHOX;
     if(fscanf(fp, "%i", &(d->n)) != 1) return -1;
 	if(fscanf(fp, "%i", &(d->m))!= 1) return -1;
-	if(fscanf(fp, "%i", &(k->f))!= 1) return -1;
+    if(fscanf(fp, "%i", &(k->f))!= 1) return -1;
 	if(fscanf(fp, "%i", &(k->l))!= 1) return -1;
-	if(fscanf(fp, "%i", &(k->ep))!= 1) return -1;
-	if(fscanf(fp, "%i", &(k->ed))!= 1) return -1;
-	if(fscanf(fp, "%i", &(k->qsize))!= 1) return -1;
+    if(fscanf(fp, "%i", &(k->qsize))!= 1) return -1;
 	if(fscanf(fp, "%i", &(k->ssize))!= 1) return -1;
+
+    // allow arbitrary additional cones, simply add to below:
+    int len = 32;
+    char s[len];
+    if( fgets (s, len, fp) == NULL ) return -1;
+    char* token = strtok(s, " ");
+    if(token) k->ep = atoi(token); token = strtok(NULL, " ");
+    if(token) k->ed = atoi(token); token = strtok(NULL, " ");
+    
+	//if(fscanf(fp, "%i", &(k->ep))!= 1) return -1;
+	//if(fscanf(fp, "%i", &(k->ed))!= 1) return -1;
+	
 	if(fscanf(fp, "%i", &(d->MAX_ITERS))!= 1) return -1;
 	if(fscanf(fp, "%i", &(d->CG_MAX_ITS))!= 1) return -1;
 	if(fscanf(fp, "%i", &(d->VERBOSE))!= 1) return -1;
