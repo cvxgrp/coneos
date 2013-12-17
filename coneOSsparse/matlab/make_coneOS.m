@@ -67,11 +67,11 @@ catch err
     for i = 1 : length (amd_files)
         cmd = sprintf ('%s ../direct/%s.c', cmd, amd_files {i}) ;
     end
-    cmd = sprintf ('%s ../direct/ldl.c %s ../direct/private.c -lm %s %s -o coneos_direct', cmd, common_coneOS, LOCS, BLASLIB) ;
+    cmd = sprintf ('%s ../direct/ldl.c %s ../direct/private.c -lm %s %s -output coneos_direct', cmd, common_coneOS, LOCS, BLASLIB) ;
     eval(cmd);
     
     if (COMPILE_WITH_OPENMP)
-        cmd = sprintf('mex -O %s COMPFLAGS="/openmp \\$COMPFLAGS" CFLAGS="\\$CFLAGS -std=c99 -O3 -fopenmp -pthread -DMATLAB_MEX_FILE %s %s" ../indirect/private.c %s -I../ %s -o coneos_indirect LDFLAGS="\\$LDFLAGS -fopenmp -lm  %s %s"',  arr, d, LCFLAG, common_coneOS, INCS, LOCS, BLASLIB);
+        cmd = sprintf('mex -O %s COMPFLAGS="/openmp \\$COMPFLAGS" CFLAGS="\\$CFLAGS -std=c99 -O3 -fopenmp -pthread -DMATLAB_MEX_FILE %s %s" ../indirect/private.c %s -I../ %s -output coneos_indirect LDFLAGS="\\$LDFLAGS -fopenmp -lm  %s %s"',  arr, d, LCFLAG, common_coneOS, INCS, LOCS, BLASLIB);
     else
         cmd = sprintf('mex -O %s CFLAGS="-std=c99 -O3 -pthread -DMATLAB_MEX_FILE %s %s" ../indirect/private.c %s -I../ %s -o coneos_indirect LDFLAGS="\\$LDFLAGS -lm  %s %s"',  arr, d, LCFLAG, common_coneOS, INCS, LOCS, BLASLIB);
     end

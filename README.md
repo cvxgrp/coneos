@@ -5,6 +5,11 @@ A C package for solving large-scale convex cone problems.
 based on "Operator Splitting for Conic Optimization" by  
 Brendan O’Donoghue, Eric Chu, Neal Parikh, and Stephen Boyd
 
+******DISCLAIMER*******
+----------
+This code is in alpha, it still has issues and very bad input sanitizing
+and error reporting. If you're having trouble running this please email us.
+
 This code provides a solver for convex cone problems. It is an
 implementation of the algorithm described in [this
 paper](http://www.stanford.edu/~boyd/). It provides both a direct and an
