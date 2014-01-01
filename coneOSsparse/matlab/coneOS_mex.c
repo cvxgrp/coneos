@@ -87,7 +87,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   mxArray * ed = mxGetField(cone,0,"ed");
   if(ed) k->ed = (int)*mxGetPr(ed);
   else k->ed = 0;
- 
+  
   double * q_mex = mxGetPr(mxGetField(cone,0,"q"));
   k->qsize = *(mxGetDimensions(mxGetField(cone,0,"q")));
   int i;
@@ -119,6 +119,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   
   Sol sol;
   Info info;
+
   int status = coneOS(d,k,&sol,&info);
 
   plhs[0] = mxCreateDoubleMatrix(0, 0, mxREAL);
@@ -130,7 +131,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   mxSetPr(plhs[1], sol.y);
   mxSetM(plhs[1], d->m); 
   mxSetN(plhs[1], 1); 
-  
+
   const char * infoFields[] = {"iter","status","pobj","dobj","resPri","resDual","relGap","time"}; 
   const int numInfoFields = 8;
   mwSize one[1] = {1};

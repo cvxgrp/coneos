@@ -82,9 +82,9 @@ fprintf(fi,'%u ',K.q');
 fprintf(fi,'\n');
 fprintf(fi,'%u ',K.s');
 fprintf(fi,'\n');
-fprintf(fi,'%6.18f ',data.b');
+fprintf(fi,'%6.18f ',full(data.b'));
 fprintf(fi,'\n');
-fprintf(fi,'%6.18f ',data.c');
+fprintf(fi,'%6.18f ',full(data.c'));
 fprintf(fi,'\n');
 
 % dense A

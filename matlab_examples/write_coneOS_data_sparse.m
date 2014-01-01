@@ -88,6 +88,7 @@ fprintf(fi,'\n');
 fprintf(fi,'%6.18f ',params.CG_TOL);
 fprintf(fi,'\n');
 fprintf(fi,'%u ',NNZ);
+fprintf(fi,'\n');
 
 fprintf(fi,'%u ',K.q');
 fprintf(fi,'\n');
@@ -98,7 +99,6 @@ fprintf(fi,'\n');
 fprintf(fi,'%6.18f ',full(data.c)');
 fprintf(fi,'\n');
 
-fprintf(fi,'\n');
 fprintf(fi,'%u ',i');
 fprintf(fi,'\n');
 fprintf(fi,'%u ',pw);

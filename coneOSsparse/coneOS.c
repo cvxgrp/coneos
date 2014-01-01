@@ -330,7 +330,7 @@ static inline void projectLinSys(Data * d,Work * w){
 static inline void freeWork(Work * w){
 	freePriv(w);
 	if(w){
-        if(w->method) coneOS_free(w->method);
+        if(w->method) free(w->method); //called via malloc not mxMalloc
         if(w->Xs) coneOS_free(w->Xs);
 		if(w->Z) coneOS_free(w->Z);
 		if(w->e) coneOS_free(w->e);
@@ -401,7 +401,7 @@ static inline void projectCones(Data *d,Work * w,Cone * k){
 }
 
 static inline int solved(Data * d, Sol * sol, Info * info, double tau){
-    memcpy(info->status,"Solved", 7);
+    strcpy(info->status,"Solved");
     scaleArray(sol->x,1.0/tau,d->n);
     scaleArray(sol->y,1.0/tau,d->m);
     scaleArray(sol->s,1.0/tau,d->m);
@@ -409,7 +409,7 @@ static inline int solved(Data * d, Sol * sol, Info * info, double tau){
 }
 
 static inline int indeterminate(Data * d, Sol * sol, Info * info){
-    memcpy(info->status, "Indeterminate", 15);
+    strcpy(info->status, "Indeterminate");
     scaleArray(sol->x,NAN,d->n);
     scaleArray(sol->y,NAN,d->m);
     scaleArray(sol->s,NAN,d->m);
@@ -417,7 +417,7 @@ static inline int indeterminate(Data * d, Sol * sol, Info * info){
 }
 
 static inline int infeasible(Data * d, Sol * sol, Info * info){
-    memcpy(info->status,"Infeasible", 12);
+    strcpy(info->status,"Infeasible");
     //scaleArray(sol->y,-1/ip_y,d->m);
     scaleArray(sol->x,NAN,d->n);
     scaleArray(sol->s,NAN,d->m);
@@ -425,7 +425,7 @@ static inline int infeasible(Data * d, Sol * sol, Info * info){
 }
 
 static inline int unbounded(Data * d, Sol * sol, Info * info){
-    memcpy(info->status,"Unbounded", 11);
+    strcpy(info->status,"Unbounded");
     //scaleArray(sol->x,-1/ip_x,d->n);
     scaleArray(sol->y,NAN,d->m);
     return UNBOUNDED;
