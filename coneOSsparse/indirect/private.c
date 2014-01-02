@@ -3,17 +3,21 @@
 
 #define CG_BEST_TOL 1e-9
 #define CG_EXPONENT 1.5
+#define CG_VERBOSE 1
+#define PRINT_INTERVAL 100
 
 static inline void calcAx(Data * d, Work * w, const double * x, double * y);
-static void cgCustom(Data *d, Work *w, const double *s, double * b, int max_its, double tol);
+static int cgCustom(Data *d, Work *w, const double *s, double * b, int max_its, double tol);
 static inline void CGaccumByA(Data * d, Work * w, const double *x, double *y);
 static inline void CGaccumByAtrans(Data *d, Work * w, const double *x, double *y);
 static inline void transpose (Data * d, Work * w);
 
+static int totCgIts = 0;
+
 int privateInitWork(Data * d, Work * w){
   char str[80];
   // int len = sprintf(str,"sparse-indirect, CG: iters %i, tol %.2e", d->CG_MAX_ITS, d->CG_TOL);
-  int len = sprintf(str,"sparse-indirect");
+  int len = sprintf(str,"sparse-indirect, CG tol ~ 1/iter^(%2.2f)",CG_EXPONENT);
   w->method = strndup(str, len);
   w->p = coneOS_malloc(sizeof(Priv));
   w->p->p = coneOS_malloc((d->n)*sizeof(double));
@@ -72,12 +76,20 @@ void solveLinSys(Data *d, Work * w, double * b, const double * s, int iter){
 	// s contains warm-start (if available)
 	CGaccumByAtrans(d,w, &(b[d->n]), b);
    	// solves (I+A'A)x = b, s warm start, solution stored in b
-	cgCustom(d, w, s, b, d->n, cgTol);
-	scaleArray(&(b[d->n]),-1,d->m);
+	int cgIts = cgCustom(d, w, s, b, d->n, cgTol);
+    scaleArray(&(b[d->n]),-1,d->m);
 	CGaccumByA(d, w, b, &(b[d->n]));
+	
+    if(iter >= 0) {
+        totCgIts += cgIts;
+        if (CG_VERBOSE && d->VERBOSE && (iter + 1) % PRINT_INTERVAL == 0) {
+            coneOS_printf("\taverage CG iterations for last %i coneOS iters: %2.2f\n", PRINT_INTERVAL, (double) totCgIts / PRINT_INTERVAL);
+            totCgIts = 0;
+        }
+    }
 }
 
-static void cgCustom(Data *d, Work *w, const double * s, double * b, int max_its, double tol){
+static int cgCustom(Data *d, Work *w, const double * s, double * b, int max_its, double tol){
 	/* solves (I+A'A)x = b */
 	/* warm start cg with s */  
 	int i = 0, n = d->n;
@@ -109,13 +121,12 @@ static void cgCustom(Data *d, Work *w, const double * s, double * b, int max_its
         rsnew=calcNorm(r,n);
         if (rsnew < tol){
             //coneOS_printf("tol: %.4e, resid: %.4e, iters: %i\n", tol, rsnew, i+1);
-            break;
+            return i+1;
         }   
         scaleArray(p,(rsnew*rsnew)/(rsold*rsold),n);
         addScaledArray(p,r,n,1);
         rsold=rsnew;
     } 
-    //printf("terminating cg residual = %4f, took %i itns\n",rsnew,i);
 }
 
 static inline void calcAx(Data * d, Work * w, const double * x, double * y){
