@@ -3,6 +3,7 @@
 
 #include "cs.h"
 #include "coneOS.h"
+#include <math.h>
 
 struct PRIVATE_DATA{
   double *p;  // cg iterate

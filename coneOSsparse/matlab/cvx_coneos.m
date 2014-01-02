@@ -272,14 +272,8 @@ end
 if (isfield(settings,'NORMALIZE'))
     pars.NORMALIZE = settings.NORMALIZE;
 end
-if (isfield(settings,'CG_TOL'))
-    pars.CG_TOL = settings.CG_TOL;
-end
 if (isfield(settings,'RHO_X'))
     pars.RHO_X = settings.RHO_X;
-end
-if (isfield(settings,'CG_MAX_ITS'))
-    pars.CG_MAX_ITS = settings.CG_MAX_ITS;
 end
 if (isfield(settings,'ALPHA'))
     pars.ALPHA = settings.ALPHA;

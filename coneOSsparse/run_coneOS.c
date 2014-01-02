@@ -55,13 +55,11 @@ int read_in_data(FILE * fp,Data * d, Cone * k){
 	//if(fscanf(fp, "%i", &(k->ed))!= 1) return -1;
 	
 	if(fscanf(fp, "%i", &(d->MAX_ITERS))!= 1) return -1;
-	if(fscanf(fp, "%i", &(d->CG_MAX_ITS))!= 1) return -1;
 	if(fscanf(fp, "%i", &(d->VERBOSE))!= 1) return -1;
 	if(fscanf(fp, "%i", &(d->NORMALIZE))!= 1) return -1;
 	if(fscanf(fp, "%lf", &(d->ALPH))!= 1) return -1;
 	if(fscanf(fp, "%lf", &(d->UNDET_TOL))!= 1) return -1;
 	if(fscanf(fp, "%lf", &(d->EPS_ABS))!= 1) return -1;
-	if(fscanf(fp, "%lf", &(d->CG_TOL))!= 1) return -1;
 	if(fscanf(fp, "%i", &(d->Anz))!= 1) return -1;
 
 	k->q = malloc(sizeof(int)*k->qsize);

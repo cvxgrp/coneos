@@ -1,4 +1,2 @@
 consolidate into one package
 rename everything to scs
-change CG to decreasing sequence rather than fixed num iters
-propagate LINKLIBS matlab fix

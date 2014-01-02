@@ -29,7 +29,5 @@ function [x, y, status] = coneOS_direct(A, b, c, cone, params)
 %   MAX_ITERS   : maximum number of ADMM iterations.
 %   EPS_ABS     : accuracy of solution
 %   EPS_INFEAS  : tolerance for infeasibility
-%   CG_MAX_ITS  : maximum number of CG iterations
-%   CG_TOL      : tolerance of CG
 %   VERBOSE     : verbosity level (0 or 1)
 error ('coneOS_direct mexFunction not found') ;

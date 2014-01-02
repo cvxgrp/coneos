@@ -11,7 +11,7 @@ void freePriv(Work * w){
 	coneOS_free(w->p);
 }
 
-void solveLinSys(Data *d, Work * w, double * b, const double * s){
+void solveLinSys(Data *d, Work * w, double * b, const double * s, int iter){
   // returns solution to linear system
   // Ax = b with solution stored in b
   LDLSolve(b, b, w->p->L, w->p->D, w->p->P, w->p->bp);

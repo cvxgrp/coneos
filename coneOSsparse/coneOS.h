@@ -33,8 +33,8 @@ typedef struct PROBLEM_DATA {
   int * Ai, * Ap;
   int Anz;
   double * b, * c;
-  int MAX_ITERS, CG_MAX_ITS;
-  double EPS_ABS, ALPH, CG_TOL, UNDET_TOL, RHO_X;
+  int MAX_ITERS;
+  double EPS_ABS, ALPH, UNDET_TOL, RHO_X;
   int VERBOSE, NORMALIZE;  // boolean
 } Data;
 
@@ -96,7 +96,7 @@ void printSol(Data * d, Sol * sol, Info * info);
 // these are pulled in from private.o
 int privateInitWork(Data * d, Work * w);
 // solves [I A';A -I] x = b, stores result in b, s contains warm-start
-void solveLinSys(Data * d, Work * w, double * b, const double * s);
+void solveLinSys(Data * d, Work * w, double * b, const double * s, int iter);
 void freePriv(Work * w);
 
 #endif

@@ -16,6 +16,6 @@ typedef struct Cone_t {
 } Cone;
 
 #include "coneOS.h"
-void projCone(double *x,Cone *k, Work * w);
+void projCone(double *x,Cone *k, Work * w, int iter);
 void projExpCone(double * v);
 #endif

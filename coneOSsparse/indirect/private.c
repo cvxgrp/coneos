@@ -1,6 +1,9 @@
 #include "private.h"
 #include "linAlg.h"
 
+#define CG_BEST_TOL 1e-9
+#define CG_EXPONENT 1.5
+
 static inline void calcAx(Data * d, Work * w, const double * x, double * y);
 static void cgCustom(Data *d, Work *w, const double *s, double * b, int max_its, double tol);
 static inline void CGaccumByA(Data * d, Work * w, const double *x, double *y);
@@ -9,7 +12,8 @@ static inline void transpose (Data * d, Work * w);
 
 int privateInitWork(Data * d, Work * w){
   char str[80];
-  int len = sprintf(str,"sparse-indirect, CG: iters %i, tol %.2e", d->CG_MAX_ITS, d->CG_TOL);
+  // int len = sprintf(str,"sparse-indirect, CG: iters %i, tol %.2e", d->CG_MAX_ITS, d->CG_TOL);
+  int len = sprintf(str,"sparse-indirect");
   w->method = strndup(str, len);
   w->p = coneOS_malloc(sizeof(Priv));
   w->p->p = coneOS_malloc((d->n)*sizeof(double));
@@ -62,19 +66,20 @@ void freePriv(Work * w){
 	coneOS_free(w->p);
 }
 
-void solveLinSys(Data *d, Work * w, double * b, const double * s){
+void solveLinSys(Data *d, Work * w, double * b, const double * s, int iter){
+    double cgTol = iter < 0 ? CG_BEST_TOL : calcNorm(b,d->n) / pow(iter + 1, CG_EXPONENT);
 	// solves Mx = b, for x but stores result in b
 	// s contains warm-start (if available)
 	CGaccumByAtrans(d,w, &(b[d->n]), b);
-	// solves (I+A'A)x = b, s warm start, solution stored in b
-	cgCustom(d, w, s, b, d->CG_MAX_ITS, d->CG_TOL);
+   	// solves (I+A'A)x = b, s warm start, solution stored in b
+	cgCustom(d, w, s, b, d->n, cgTol);
 	scaleArray(&(b[d->n]),-1,d->m);
 	CGaccumByA(d, w, b, &(b[d->n]));
 }
 
 static void cgCustom(Data *d, Work *w, const double * s, double * b, int max_its, double tol){
 	/* solves (I+A'A)x = b */
-	/* warm start cg with x */  
+	/* warm start cg with s */  
 	int i = 0, n = d->n;
 	double *p = w->p->p; // cg direction
 	double *Ap = w->p->Ap; // updated CG direction
@@ -94,22 +99,23 @@ static void cgCustom(Data *d, Work *w, const double * s, double * b, int max_its
 	memcpy(p,r,n*sizeof(double));
 	double rsold=calcNorm(r,n);
 
-	for (i=0; i< max_its; i++){
+	for (i=0; i < max_its; i++){
 		calcAx(d,w,p,Ap);
 		
 		alpha=(rsold*rsold)/innerProd(p,Ap,n);
 		addScaledArray(b,p,n,alpha);
 		addScaledArray(r,Ap,n,-alpha);   
 
-		rsnew=calcNorm(r,n);
-		if (rsnew<tol){
-			break;
-		}   
-		scaleArray(p,(rsnew*rsnew)/(rsold*rsold),n);
-		addScaledArray(p,r,n,1);
-		rsold=rsnew;
-	} 
-	//printf("terminating cg residual = %4f, took %i itns\n",rsnew,i);
+        rsnew=calcNorm(r,n);
+        if (rsnew < tol){
+            //coneOS_printf("tol: %.4e, resid: %.4e, iters: %i\n", tol, rsnew, i+1);
+            break;
+        }   
+        scaleArray(p,(rsnew*rsnew)/(rsold*rsold),n);
+        addScaledArray(p,r,n,1);
+        rsold=rsnew;
+    } 
+    //printf("terminating cg residual = %4f, took %i itns\n",rsnew,i);
 }
 
 static inline void calcAx(Data * d, Work * w, const double * x, double * y){

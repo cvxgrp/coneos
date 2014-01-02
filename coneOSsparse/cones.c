@@ -6,7 +6,7 @@
 void projectsdc(double * X, int n, Work * w); 
 
 /* in place projection (with branches) */
-void projCone(double *x, Cone * k, Work * w)
+void projCone(double *x, Cone * k, Work * w, int iter)
 {
     int i;
     int count;

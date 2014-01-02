@@ -9,9 +9,6 @@ VERBOSE = 1;
 
 % conjugate gradient (CG) settings:
 USE_INDIRECT = false; % use conjugate gradient rather than direct method
-CG_MAX_ITS = 15; % max iterations for CG
-CG_TOL = 1e-9; % max CG quitting tolerance
-CG_VERBOSE = false; % CG prints summary
 %%
 if ~isfield(params,'MAX_ITERS');params.MAX_ITERS = MAX_ITERS;end
 if ~isfield(params,'EPS_ABS');params.EPS_ABS = EPS_ABS;end
@@ -22,9 +19,6 @@ if ~isfield(params,'VERBOSE');params.VERBOSE = VERBOSE;end
 
 % CG:
 if ~isfield(params,'USE_INDIRECT');params.USE_INDIRECT = USE_INDIRECT;end
-if ~isfield(params,'CG_MAX_ITS');params.CG_MAX_ITS = CG_MAX_ITS;end
-if ~isfield(params,'CG_TOL');params.CG_TOL = CG_TOL;end
-if ~isfield(params,'CG_VERBOSE');params.CG_VERBOSE = CG_VERBOSE;end
 
 n = length(data.c);
 m = size(data.A,1);
@@ -75,7 +69,7 @@ fprintf(fi,'%u ',n);fprintf(fi,'%u ',m);
 fprintf(fi,'\n');
 fprintf(fi,'%u ',K.f);fprintf(fi,'%u ',K.l);fprintf(fi,'%u ',length(K.q));fprintf(fi,'%u ',length(K.s));fprintf(fi,'%u ',K.ep);fprintf(fi,'%u ',K.ed);
 fprintf(fi,'\n');
-fprintf(fi,'%u ',params.MAX_ITERS);fprintf(fi,'%u ',params.CG_MAX_ITS);
+fprintf(fi,'%u ',params.MAX_ITERS);
 fprintf(fi,'\n');
 fprintf(fi,'%u ',params.VERBOSE); fprintf(fi,'%u ',params.NORMALIZE);
 fprintf(fi,'\n');
@@ -84,8 +78,6 @@ fprintf(fi,'\n');
 fprintf(fi,'%6.18f ',params.UNDET_TOL);
 fprintf(fi,'\n');
 fprintf(fi,'%6.18f ',params.EPS_ABS);
-fprintf(fi,'\n');
-fprintf(fi,'%6.18f ',params.CG_TOL);
 fprintf(fi,'\n');
 fprintf(fi,'%u ',NNZ);
 fprintf(fi,'\n');

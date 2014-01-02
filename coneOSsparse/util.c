@@ -44,14 +44,12 @@ void printData(Data * d){
 	coneOS_printf("d->c[0] is %4f\n",d->c[0]);
 	coneOS_printf("d->Ax[0] is %4f\n",d->Ax[0]);
 	coneOS_printf("d->MAX_ITERS is %i\n",d->MAX_ITERS);
-	coneOS_printf("d->CG_MAX_ITS is %i\n",d->CG_MAX_ITS);
  	coneOS_printf("d->VERBOSE is %i\n",d->VERBOSE);
  	coneOS_printf("d->NORMALIZE is %i\n",d->VERBOSE);
 	coneOS_printf("d->ALPH is %6f\n",d->ALPH);
 	coneOS_printf("d->EPS_ABS is %6f\n",d->EPS_ABS);
 	coneOS_printf("d->EPS_ABS is %6f\n",d->EPS_ABS);
 	coneOS_printf("d->UNDET_TOL is %6f\n",d->UNDET_TOL);
-	coneOS_printf("d->CG_TOL is %6f\n",d->CG_TOL);
 }
 
 void printAll(Data * d, Work * w){

@@ -77,10 +77,11 @@ for i=1:size(sizes,1)
     
     disp('starting+3')
     params=[];
+    params.VERBOSE = 1;
     %params.EPS_ABS = 1e-12;
     write_coneOS_data_sparse(data,K,params,str)
     disp('written')
-    
+    %coneos_direct(data,K,params);
 end
 %{
 %%

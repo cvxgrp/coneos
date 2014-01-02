@@ -62,14 +62,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   if (UNDET_TOL_mex == NULL) d->UNDET_TOL = 1e-9;
   else d->UNDET_TOL = (double)*mxGetPr(UNDET_TOL_mex);
 
-  const mxArray *CG_MAX_ITS_mex = mxGetField(params,0,"CG_MAX_ITS");
-  if (CG_MAX_ITS_mex == NULL) d->CG_MAX_ITS = 30;
-  else d->CG_MAX_ITS = (int)*mxGetPr(CG_MAX_ITS_mex);
-
-  const mxArray *CG_TOL_mex = mxGetField(params,0,"CG_TOL");
-  if (CG_TOL_mex == NULL) d->CG_TOL = 1e-9;
-  else d->CG_TOL = (double)*mxGetPr(CG_TOL_mex);
-
   const mxArray *VERBOSE_mex = mxGetField(params,0,"VERBOSE");
   if (VERBOSE_mex == NULL) d->VERBOSE = 0;
   else d->VERBOSE = (int)*mxGetPr(VERBOSE_mex);

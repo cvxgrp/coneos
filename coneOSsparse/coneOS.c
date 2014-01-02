@@ -18,7 +18,7 @@ static const char* HEADER[] = {
 static const int HEADER_LEN = 8;
 
 static inline void updateDualVars(Data * d, Work * w);
-static inline void projectCones(Data * d,Work * w,Cone * k);
+static inline void projectCones(Data * d,Work * w,Cone * k, int iter);
 static inline void sety(Data * d, Work * w, Sol * sol);
 static inline void setx(Data * d, Work * w, Sol * sol);
 static inline void sets(Data * d, Work * w, Sol * sol);
@@ -28,7 +28,7 @@ static inline void printSummary(Data * d,Work * w,int i, struct residuals *r);
 static inline void printHeader(Data * d, Work * w, Cone * k);
 static inline void printFooter(Data * d, Info * info, Work * w); 
 static inline void freeWork(Work * w);
-static inline void projectLinSys(Data * d,Work * w);
+static inline void projectLinSys(Data * d,Work * w, int iter);
 static inline Work * initWork(Data * d, Cone * k);
 static inline int converged(Data * d, Work * w, struct residuals * r, int iter);
 static inline int exactConverged(Data * d, Work * w, struct residuals * r, int iter);
@@ -60,8 +60,8 @@ int coneOS(Data * d, Cone * k, Sol * sol, Info * info)
 	for (i=0; i < d->MAX_ITERS; ++i){
 		memcpy(w->u_prev, w->u, w->l*sizeof(double));
 		
-		projectLinSys(d,w);
-		projectCones(d,w,k);
+		projectLinSys(d,w,i);
+		projectCones(d,w,k,i);
 		updateDualVars(d,w);
 	    
         info->stint = converged(d,w,&r,i);
@@ -298,19 +298,14 @@ static inline Work * initWork(Data *d, Cone * k) {
 		w->Z = NULL;
 		w->e = NULL;
 	}
-    // hack:
-    d->CG_MAX_ITS = d->CG_MAX_ITS*100;
-	d->CG_TOL = d->CG_TOL/100;
-	solveLinSys(d,w,w->g, NULL); 
-	d->CG_MAX_ITS = d->CG_MAX_ITS/100;
-	d->CG_TOL = d->CG_TOL*100;
+	solveLinSys(d,w,w->g, NULL, -1); 
 	
     scaleArray(&(w->g[d->n]),-1,d->m);
 	w->gTh = innerProd(w->h, w->g, w->l-1); 
 	return w;
 }
 
-static inline void projectLinSys(Data * d,Work * w){
+static inline void projectLinSys(Data * d,Work * w, int iter){
 
 	// ut = u + v
 	memcpy(w->u_t,w->u,w->l*sizeof(double));
@@ -322,7 +317,7 @@ static inline void projectLinSys(Data * d,Work * w){
 	addScaledArray(w->u_t, w->h, w->l-1, -innerProd(w->u_t,w->g,w->l-1)/(w->gTh+1));
 	scaleArray(&(w->u_t[d->n]),-1,d->m);
 	
-	solveLinSys(d, w, w->u_t, w->u);
+	solveLinSys(d, w, w->u_t, w->u, iter);
 	
 	w->u_t[w->l-1] += innerProd(w->u_t,w->h,w->l-1);
 }
@@ -385,7 +380,7 @@ static inline void updateDualVars(Data * d, Work * w){
 	}
 }
 
-static inline void projectCones(Data *d,Work * w,Cone * k){
+static inline void projectCones(Data *d,Work * w,Cone * k, int iter){
 	int i;
 	// this does not relax 'x' variable
 	for(i = 0; i < d->n; ++i) { 
@@ -396,7 +391,7 @@ static inline void projectCones(Data *d,Work * w,Cone * k){
 		w->u[i] = d->ALPH*w->u_t[i] + (1-d->ALPH)*w->u_prev[i] - w->v[i];
 	}
 	/* u = [x;y;tau] */
-	projCone(&(w->u[d->n]),k,w);
+	projCone(&(w->u[d->n]),k,w,iter);
 	if (w->u[w->l-1]<0.0) w->u[w->l-1] = 0.0;
 }
 
@@ -561,20 +556,20 @@ static inline void printFooter(Data * d, Info * info, Work * w) {
 
     if (info->stint == INFEASIBLE) {
         coneOS_printf("Certificate of primal infeasibility:\n");
-        coneOS_printf("|A'y|_2 * |b|_2 = %2e\n", info->resDual);
+        coneOS_printf("|A'y|_2 * |b|_2 = %.4e\n", info->resDual);
         coneOS_printf("dist(y, K*) = 0\n");
         coneOS_printf("b'y = %.4f\n", info->dobj);
     } 
     else if (info->stint == UNBOUNDED) {
         coneOS_printf("Certificate of dual infeasibility:\n");
-        coneOS_printf("|Ax + s|_2 * |c|_2 = %2e\n", info->resPri);
+        coneOS_printf("|Ax + s|_2 * |c|_2 = %.4e\n", info->resPri);
         coneOS_printf("dist(s, K) = 0\n");
         coneOS_printf("c'x = %.4f\n", info->pobj);
     }
     else {
         coneOS_printf("Error metrics:\n");
-        coneOS_printf("|Ax + s - b|_2 / (1 + |b|_2) = %2e\n|A'y + c|_2 / (1 + |c|_2) = %2e\n",info->resPri, info->resDual);
-        coneOS_printf("|c'x + b'y| / (1 + |c'x| + |b'y|) = %2e\n", info->relGap); 
+        coneOS_printf("|Ax + s - b|_2 / (1 + |b|_2) = %.4e\n|A'y + c|_2 / (1 + |c|_2) = %.4e\n",info->resPri, info->resDual);
+        coneOS_printf("|c'x + b'y| / (1 + |c'x| + |b'y|) = %.4e\n", info->relGap); 
         coneOS_printf("dist(s, K) = 0, dist(y, K*) = 0, s'y = 0\n");
         for(i = 0; i < _lineLen_; ++i) {
             coneOS_printf("-");
