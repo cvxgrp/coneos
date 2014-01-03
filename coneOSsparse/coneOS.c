@@ -568,7 +568,8 @@ static inline void printFooter(Data * d, Info * info, Work * w) {
     }
     else {
         coneOS_printf("Error metrics:\n");
-        coneOS_printf("|Ax + s - b|_2 / (1 + |b|_2) = %.4e\n|A'y + c|_2 / (1 + |c|_2) = %.4e\n",info->resPri, info->resDual);
+        coneOS_printf("|Ax + s - b|_2 / (1 + |b|_2) = %.4e\n",info->resPri); 
+        coneOS_printf("|A'y + c|_2 / (1 + |c|_2) = %.4e\n",info->resDual);
         coneOS_printf("|c'x + b'y| / (1 + |c'x| + |b'y|) = %.4e\n", info->relGap); 
         coneOS_printf("dist(s, K) = 0, dist(y, K*) = 0, s'y = 0\n");
         for(i = 0; i < _lineLen_; ++i) {

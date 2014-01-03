@@ -17,7 +17,7 @@ static int totCgIts = 0;
 int privateInitWork(Data * d, Work * w){
   char str[80];
   // int len = sprintf(str,"sparse-indirect, CG: iters %i, tol %.2e", d->CG_MAX_ITS, d->CG_TOL);
-  int len = sprintf(str,"sparse-indirect, CG tol ~ 1/iter^(%2.2f)",CG_EXPONENT);
+  int len = sprintf(str,"sparse-indirect, CG tol ~ 1/iter^(%2.2f)", (float) CG_EXPONENT);
   w->method = strndup(str, len);
   w->p = coneOS_malloc(sizeof(Priv));
   w->p->p = coneOS_malloc((d->n)*sizeof(double));
@@ -71,7 +71,7 @@ void freePriv(Work * w){
 }
 
 void solveLinSys(Data *d, Work * w, double * b, const double * s, int iter){
-    double cgTol = iter < 0 ? CG_BEST_TOL : calcNorm(b,d->n) / pow(iter + 1, CG_EXPONENT);
+    double cgTol = iter < 0 ? CG_BEST_TOL : calcNorm(b,d->n) / pow(iter + 1, (float) CG_EXPONENT);
 	// solves Mx = b, for x but stores result in b
 	// s contains warm-start (if available)
 	CGaccumByAtrans(d,w, &(b[d->n]), b);
@@ -111,7 +111,7 @@ static int cgCustom(Data *d, Work *w, const double * s, double * b, int max_its,
 	memcpy(p,r,n*sizeof(double));
 	double rsold=calcNorm(r,n);
 
-	for (i=0; i < max_its; i++){
+	for (i=0; i < max_its; ++i){
 		calcAx(d,w,p,Ap);
 		
 		alpha=(rsold*rsold)/innerProd(p,Ap,n);
@@ -126,7 +126,8 @@ static int cgCustom(Data *d, Work *w, const double * s, double * b, int max_its,
         scaleArray(p,(rsnew*rsnew)/(rsold*rsold),n);
         addScaledArray(p,r,n,1);
         rsold=rsnew;
-    } 
+    }
+    return i;
 }
 
 static inline void calcAx(Data * d, Work * w, const double * x, double * y){
