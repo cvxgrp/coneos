@@ -1,4 +1,4 @@
-coneos
+coneos (DEPRECATED, new project https://github.com/cvxgrp/scs)
 ============================================================ 
 A C package for solving large-scale convex cone problems.
 
